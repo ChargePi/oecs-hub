@@ -1,0 +1,47 @@
+# Explicit project name: this file lives in deployments/docker/, a directory name
+# shared with other repos (e.g. chargeflow-registry) that also keep a compose file
+# there. Without this, Compose derives the project name from the directory basename
+# ("docker") and containers/volumes collide across repos.
+name: oecs-hub
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: oecs-hub-postgres
+    hostname: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=oecs
+      - POSTGRES_PASSWORD=oecs
+      - POSTGRES_DB=oecs_hub
+    ports:
+      # Host port 5434: 5432/5433 are often already taken by other local postgres instances.
+      - "5434:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: oecs-hub-redis
+    hostname: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis:/data
+
+  memgraph:
+    image: memgraph/memgraph:latest
+    container_name: oecs-hub-memgraph
+    hostname: memgraph
+    restart: unless-stopped
+    ports:
+      - "7687:7687"
+      - "7444:7444"
+    volumes:
+      - memgraph:/var/lib/memgraph
+
+volumes:
+  postgres:
+  redis:
+  memgraph:

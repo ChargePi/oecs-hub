@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package admin.v1;
+
+import "registry/v1/registry.proto";
+
+message SearchSchemasRequest {
+  optional string query = 1;
+  optional string manufacturer_id = 2;
+  registry.v1.ChargerType charger_type = 3;
+  repeated registry.v1.ConnectorType connector_types = 4;
+  optional double min_power_kw = 5;
+  optional double max_power_kw = 6;
+  optional string country = 7;
+  repeated string protocols = 8;
+  registry.v1.SubmissionStatus status = 9;
+  int32 page_size = 10;
+  string page_token = 11;
+}
+
+message SearchSchemasResponse {
+  repeated registry.v1.ChargerVariant variants = 1;
+  int64 total_size = 2;
+  string next_page_token = 3;
+}
+
+message UpdateSchemaStatusRequest {
+  string id = 1;
+  registry.v1.SubmissionStatus status = 2;
+}
+
+message UpdateSchemaStatusResponse {
+  registry.v1.ChargerVariant variant = 1;
+}
+
+message CreateManufacturerRequest {
+  string name = 1;
+  optional string country = 2;
+  registry.v1.Contact contact = 3;
+}
+
+message CreateManufacturerResponse {
+  registry.v1.Manufacturer manufacturer = 1;
+}
+
+service AdminService {
+  rpc SearchSchemas(SearchSchemasRequest) returns (SearchSchemasResponse);
+  rpc UpdateSchemaStatus(UpdateSchemaStatusRequest) returns (UpdateSchemaStatusResponse);
+  rpc CreateManufacturer(CreateManufacturerRequest) returns (CreateManufacturerResponse);
+}

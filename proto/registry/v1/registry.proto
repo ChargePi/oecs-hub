@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package registry.v1;
+
+import "google/protobuf/timestamp.proto";
+
+enum ChargerType {
+  CHARGER_TYPE_UNSPECIFIED = 0;
+  CHARGER_TYPE_AC = 1;
+  CHARGER_TYPE_DC = 2;
+  CHARGER_TYPE_PORTABLE_EVSE = 3;
+  CHARGER_TYPE_WIRELESS = 4;
+}
+
+enum ModelStatus {
+  MODEL_STATUS_UNSPECIFIED = 0;
+  MODEL_STATUS_PRE_RELEASE = 1;
+  MODEL_STATUS_ACTIVE = 2;
+  MODEL_STATUS_DISCONTINUED = 3;
+  MODEL_STATUS_END_OF_LIFE = 4;
+}
+
+enum ConnectorType {
+  CONNECTOR_TYPE_UNSPECIFIED = 0;
+  CONNECTOR_TYPE_TYPE1_J1772 = 1;
+  CONNECTOR_TYPE_TYPE2_MENNEKES = 2;
+  CONNECTOR_TYPE_TYPE3A = 3;
+  CONNECTOR_TYPE_CCS1_COMBO1 = 4;
+  CONNECTOR_TYPE_CCS2_COMBO2 = 5;
+  CONNECTOR_TYPE_CHADEMO = 6;
+  CONNECTOR_TYPE_GBT_AC = 7;
+  CONNECTOR_TYPE_GBT_DC = 8;
+  CONNECTOR_TYPE_NACS_TESLA = 9;
+  CONNECTOR_TYPE_DOMESTIC_SOCKET = 10;
+  CONNECTOR_TYPE_INDUSTRIAL_IEC60309 = 11;
+  CONNECTOR_TYPE_MCS_MEGAWATT_CHARGING_SYSTEM = 12;
+  CONNECTOR_TYPE_OTHER = 13;
+}
+
+enum SubmissionStatus {
+  SUBMISSION_STATUS_UNSPECIFIED = 0;
+  SUBMISSION_STATUS_SUBMITTED = 1;
+  SUBMISSION_STATUS_VERIFIED = 2;
+  SUBMISSION_STATUS_REJECTED = 3;
+}
+
+message Contact {
+  optional string name = 1;
+  optional string email = 2;
+  optional string phone = 3;
+  optional string website = 4;
+}
+
+message Manufacturer {
+  string id = 1;
+  string name = 2;
+  optional string country = 3;
+  Contact contact = 4;
+}
+
+message ManufacturerSummary {
+  Manufacturer manufacturer = 1;
+  int64 product_count = 2;
+  int64 variant_count = 3;
+}
+
+message ChargerVariantSummary {
+  string id = 1;
+  string manufacturer_id = 2;
+  string manufacturer_name = 3;
+  optional string series = 4;
+  string model_name = 5;
+  ModelStatus model_status = 6;
+  ChargerType charger_type = 7;
+  repeated ConnectorType connector_types = 8;
+  optional double max_power_kw = 9;
+  optional string product_image_url = 10;
+  SubmissionStatus status = 11;
+}
+
+message ChargerVariant {
+  ChargerVariantSummary summary = 1;
+  bytes spec = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+message Product {
+  string id = 1;
+  string manufacturer_id = 2;
+  string series = 3;
+  repeated ChargerVariantSummary variants = 4;
+}
+
+message SearchChargersRequest {
+  optional string query = 1;
+  optional string manufacturer_id = 2;
+  ChargerType charger_type = 3;
+  repeated ConnectorType connector_types = 4;
+  optional double min_power_kw = 5;
+  optional double max_power_kw = 6;
+  optional string country = 7;
+  repeated string protocols = 8;
+  int32 page_size = 9;
+  string page_token = 10;
+}
+
+message SearchChargersResponse {
+  repeated ChargerVariantSummary variants = 1;
+  int64 total_size = 2;
+  string next_page_token = 3;
+}
+
+message GetManufacturersRequest {
+  optional string query = 1;
+  optional string country = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message GetManufacturersResponse {
+  repeated ManufacturerSummary manufacturers = 1;
+  int64 total_size = 2;
+  string next_page_token = 3;
+}
+
+message GetChargerRequest {
+  string id = 1;
+}
+
+message GetChargerResponse {
+  ChargerVariant variant = 1;
+}
+
+message GetManufacturerRequest {
+  string id = 1;
+}
+
+message GetManufacturerResponse {
+  Manufacturer manufacturer = 1;
+  repeated Product products = 2;
+}
+
+message SubmitChargerSpecRequest {
+  bytes spec = 1;
+  optional string submitted_by = 2;
+}
+
+message SubmitChargerSpecResponse {
+  string id = 1;
+  SubmissionStatus status = 2;
+}
+
+service RegistryService {
+  rpc SearchChargers(SearchChargersRequest) returns (SearchChargersResponse);
+  rpc GetManufacturers(GetManufacturersRequest) returns (GetManufacturersResponse);
+  rpc GetCharger(GetChargerRequest) returns (GetChargerResponse);
+  rpc GetManufacturer(GetManufacturerRequest) returns (GetManufacturerResponse);
+  rpc SubmitChargerSpec(SubmitChargerSpecRequest) returns (SubmitChargerSpecResponse);
+}

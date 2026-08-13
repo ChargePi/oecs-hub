@@ -1,0 +1,63 @@
+# Resolver for the /api/ proxy_pass below — must be an IP, not a hostname (nginx can't resolve
+# a resolver for its resolver). Defaults to Docker's embedded DNS (127.0.0.11), which is what you
+# get from a plain `docker run` or docker-compose. Override RESOLVER for other environments — e.g.
+# in Kubernetes, point it at your cluster DNS Service IP.
+resolver ${RESOLVER} valid=30s ipv6=off;
+
+server {
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_vary on;
+    gzip_types text/plain text/css application/json application/javascript application/wasm image/svg+xml font/woff2;
+
+    # Liveness/readiness probe target — cheap, no filesystem/app lookup.
+    location = /healthz {
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # Reverse-proxies to oecs-registry's API once it exists, so the browser only ever talks to
+    # this same origin — sidesteps CORS entirely. BACKEND_URL is substituted at container start
+    # (see Dockerfile); the app has no real API to call yet (see src/lib/registry/mock-client.ts),
+    # so this is inert infrastructure until a real backend is wired up.
+    #
+    # proxy_pass targets an nginx $variable (not the bare ${BACKEND_URL} substitution)
+    # deliberately: a literal proxy_pass target is resolved once, eagerly, when nginx loads its
+    # config — if that hostname doesn't resolve, nginx's master process refuses to start at all
+    # and takes the entire static-file server down with it. Routing through a variable defers
+    # resolution to request time instead, via the `resolver` above — worst case an actual /api/
+    # request 502s.
+    location /api/ {
+        set $backend "${BACKEND_URL}";
+        proxy_pass $backend/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Hashed build assets (Vite content-hashes filenames) are safe to cache forever; a new deploy
+    # ships new filenames, not new bytes at the old URL.
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # index.html must always be revalidated — it's what points at the current hashed asset
+    # filenames.
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    # Client-side routing (react-router): let unknown paths fall through to index.html instead
+    # of a raw 404 from nginx.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

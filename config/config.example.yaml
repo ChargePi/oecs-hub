@@ -1,0 +1,32 @@
+# Copy to config/config.yaml for local development against
+# deployments/docker/docker-compose.dev.yaml, or set the equivalent OECS_HUB_* env vars.
+database:
+  dsn: "postgres://oecs:oecs@localhost:5434/oecs_hub?sslmode=disable"
+
+redis:
+  address: "localhost:6379"
+  password: ""
+  db: 0
+  cacheTtl: 1h
+
+memgraph:
+  address: "bolt://localhost:7687"
+  username: ""
+  password: ""
+
+grpc:
+  address: "0.0.0.0:50051"
+  # Only needed for gRPC-Web requests that hit this port directly, cross-origin.
+  # allowedOrigins: ["http://localhost:5173"]
+
+adminGrpc:
+  address: "0.0.0.0:50052"
+
+observability:
+  tracing:
+    enabled: false
+  metrics:
+    enabled: false
+  logging: {}
+  profiling:
+    enabled: false
