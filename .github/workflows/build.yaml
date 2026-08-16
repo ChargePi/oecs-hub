@@ -14,6 +14,11 @@ on:
         description: Path to Dockerfile
         type: string
         required: true
+      context:
+        description: Docker build context
+        type: string
+        required: false
+        default: "."
       repository:
         description: repository name
         type: string
@@ -101,6 +106,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v6
         with:
+          context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
           push: ${{ inputs.push }} # Don't push on PR
           tags: ${{ steps.meta.outputs.tags }}
