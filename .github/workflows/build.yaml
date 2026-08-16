@@ -1,10 +1,5 @@
 on:
   workflow_call:
-    secrets:
-      DOCKER_HUB_USERNAME:
-        required: true
-      DOCKER_HUB_ACCESS_TOKEN:
-        required: true
     inputs:
       service:
         description: The service to build
@@ -19,6 +14,11 @@ on:
         description: Path to Dockerfile
         type: string
         required: true
+      context:
+        description: Docker build context
+        type: string
+        required: false
+        default: "."
       repository:
         description: repository name
         type: string
@@ -54,6 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
 
     steps:
       - name: Checkout
@@ -71,7 +72,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: xblaz3kx/chargex_${{ inputs.repository }}
+          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.repository }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -93,17 +94,19 @@ jobs:
           cache-source: go-build-cache
           cache-map: ''
 
-      - name: Login to Docker Hub
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       - name: Build and push ${{ inputs.service }} image
         id: build-and-push
         uses: docker/build-push-action@v6
         with:
+          context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
           push: ${{ inputs.push }} # Don't push on PR
           tags: ${{ steps.meta.outputs.tags }}

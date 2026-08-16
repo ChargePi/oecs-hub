@@ -28,16 +28,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  # todo rename and add services if needed
-  build-cli:
-    name: "Build and Push service"
+  build-hub:
+    name: "Build and Push oecs-hub"
     uses: ./.github/workflows/build.yaml
     permissions:
       contents: read
       pull-requests: write
+      checks: write
+      packages: write
     with:
-      service: service
+      service: oecs-hub
       push: ${{ github.event_name != 'pull_request' }}
-      repository: service
+      repository: oecs-hub
       dockerfile: "./build/service/Dockerfile"
+    secrets: inherit
+
+  build-web:
+    name: "Build and Push oecs-hub-web"
+    uses: ./.github/workflows/build.yaml
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+      packages: write
+    with:
+      service: oecs-hub-web
+      push: ${{ github.event_name != 'pull_request' }}
+      repository: oecs-hub-web
+      dockerfile: "./web/Dockerfile"
+      context: "./web"
     secrets: inherit
