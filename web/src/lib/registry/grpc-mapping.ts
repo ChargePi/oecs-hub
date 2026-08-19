@@ -1,7 +1,7 @@
 import { RpcError, StatusCode } from 'grpc-web'
 import type { ChargerType, ChargerVariant, Contact, Manufacturer, ModelStatus } from '@/lib/oecs/types'
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
-import type { ManufacturerSummary } from './types'
+import type { ManufacturerSummary, SubmissionStatus } from './types'
 
 const CHARGER_TYPE_FROM_PROTO: Partial<
   Record<registry_v1_registry_pb.ChargerType, ChargerType>
@@ -114,6 +114,21 @@ export function chargerVariantFromProto(v: registry_v1_registry_pb.ChargerVarian
     id: summary.getId(),
     manufacturer: { ...spec.manufacturer, id: summary.getManufacturerId() },
   }
+}
+
+const SUBMISSION_STATUS_FROM_PROTO: Partial<
+  Record<registry_v1_registry_pb.SubmissionStatus, SubmissionStatus>
+> = {
+  [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_UNSPECIFIED]: 'unspecified',
+  [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_SUBMITTED]: 'submitted',
+  [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_VERIFIED]: 'verified',
+  [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_REJECTED]: 'rejected',
+}
+
+export function submissionStatusFromProto(
+  status: registry_v1_registry_pb.SubmissionStatus,
+): SubmissionStatus {
+  return SUBMISSION_STATUS_FROM_PROTO[status] ?? 'unspecified'
 }
 
 export function isNotFound(err: unknown): boolean {

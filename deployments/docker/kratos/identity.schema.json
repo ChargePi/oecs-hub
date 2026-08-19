@@ -1,0 +1,62 @@
+{
+  "$id": "https://oecs.dev/schema/identity/default.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OECS Hub identity",
+  "type": "object",
+  "properties": {
+    "traits": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "title": "Email",
+          "minLength": 3,
+          "ory.sh/kratos": {
+            "credentials": {
+              "password": { "identifier": true },
+              "webauthn": { "identifier": true }
+            },
+            "verification": { "via": "email" },
+            "recovery": { "via": "email" }
+          }
+        },
+        "name": {
+          "type": "string",
+          "title": "Full name"
+        },
+        "userType": {
+          "type": "string",
+          "title": "Account type",
+          "const": "manufacturer",
+          "default": "manufacturer"
+        },
+        "company": {
+          "type": "object",
+          "title": "Company",
+          "properties": {
+            "name": { "type": "string", "title": "Company name" },
+            "country": { "type": "string", "title": "Country" }
+          }
+        }
+      },
+      "required": ["email", "userType"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "userType": { "const": "manufacturer" } }
+          },
+          "then": {
+            "properties": {
+              "company": {
+                "required": ["name"]
+              }
+            },
+            "required": ["company"]
+          }
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

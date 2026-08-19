@@ -143,6 +143,8 @@ message GetManufacturerResponse {
 
 message SubmitChargerSpecRequest {
   bytes spec = 1;
+  // Deprecated: ignored by the server. The submitter is derived from the authenticated
+  // identity forwarded by the Traefik/Oathkeeper edge, not from client-supplied text.
   optional string submitted_by = 2;
 }
 

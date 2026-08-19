@@ -2,6 +2,7 @@ import { NavLink } from 'react-router'
 import { Zap } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { AuthStatus } from '@/features/auth/auth-status'
 import { SearchBar } from '@/features/explorer/search-bar'
 
 const NAV_LINKS = [
@@ -42,6 +43,8 @@ export function Header() {
             </NavLink>
           ))}
         </nav>
+
+        <AuthStatus />
       </div>
     </header>
   )

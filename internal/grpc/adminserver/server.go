@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 
 	adminv1 "github.com/ChargePi/oecs-hub/gen/proto/admin/v1"
+	"github.com/ChargePi/oecs-hub/internal/auth"
 	grpcHandler "github.com/ChargePi/oecs-hub/internal/grpc"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -27,9 +28,11 @@ type Server struct {
 	logger     *zap.Logger
 }
 
-// NewServer builds a gRPC server with tracing, logging, and recovery interceptors,
-// with the health and admin services registered.
-func NewServer(logger *zap.Logger, chargerSvc grpcHandler.AdminChargerService, manufacturerSvc grpcHandler.AdminManufacturerService) *Server {
+// NewServer builds a gRPC server with tracing, logging, recovery, and identity-header
+// interceptors, with the health and admin services registered. Authorization (is this
+// identity an admin) happens at the Traefik/Oathkeeper/Keto edge, not here - gatewaySecret
+// only lets this server trust the X-User-* headers that edge injects, see internal/auth.
+func NewServer(logger *zap.Logger, chargerSvc grpcHandler.AdminChargerService, manufacturerSvc grpcHandler.AdminManufacturerService, gatewaySecret string) *Server {
 	logger = logger.Named("admin-grpc-server")
 
 	recoveryHandler := func(p any) error {
@@ -43,6 +46,7 @@ func NewServer(logger *zap.Logger, chargerSvc grpcHandler.AdminChargerService, m
 		grpc.ChainUnaryInterceptor(
 			grpc_zap.UnaryServerInterceptor(logger),
 			grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
+			auth.UnaryInterceptor(gatewaySecret),
 		),
 		grpc.ChainStreamInterceptor(
 			grpc_zap.StreamServerInterceptor(logger),

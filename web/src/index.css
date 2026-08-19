@@ -34,6 +34,128 @@
   --radius: 0.625rem;
 }
 
+/* @ory/elements-react's default theme ships light-only, scoped entirely under a
+ * `.ory-elements` class (see node_modules/@ory/elements-react/dist/theme/default/index.css)
+ * - every derived token (--interface-*, --button-*, --checkbox-*, ...) is a var()
+ * chain rooted in just two small scales, --ui-* and --brand-*, both literally the
+ * Tailwind slate scale under the hood. Reversing that scale (50<->950, white<->black)
+ * is the same trick as inverting a Tailwind gray scale for dark mode, and lines up
+ * exactly with this app's own slate-based dark palette above - so the auth card ends up
+ * on the same color system as the rest of the site instead of a separate light theme.
+ * --brand-* controls buttons/links specifically (mapped to our red --primary), and is
+ * the only other token actually referenced (var(--brand-*) grep'd against the theme CSS).
+ * Two more mismatches beyond color: the theme's base font-family falls back to
+ * `--default-font-family` (never set by the theme itself, so it silently uses system-ui
+ * instead of our Geist font) rather than the `--font-sans-default: var(--font-sans)`
+ * token some inner elements use - setting --default-font-family directly fixes it for
+ * everything, base included. And --radius-{buttons,forms,general,cards} default to a much
+ * sharper 0.25rem/0.75rem than this app's rounder --radius-lg/--radius-xl (Button/Input
+ * use rounded-lg, Card uses rounded-xl) - matched below.
+ *
+ * Selector is `body .ory-elements`, not just `.ory-elements`, deliberately: the theme's
+ * own stylesheet is imported lazily per auth page (after this global stylesheet already
+ * loaded), so a same-specificity `.ory-elements` rule here would lose the cascade to
+ * theirs on source order alone once it loads. The extra `body` ancestor bumps specificity
+ * so this wins regardless of load order.
+ */
+body .ory-elements {
+  --default-font-family: var(--font-sans);
+  --radius-buttons: var(--radius-lg);
+  --radius-forms: var(--radius-lg);
+  --radius-general: var(--radius-lg);
+  --radius-cards: var(--radius-xl);
+
+  --ui-white: var(--card);
+  --ui-black: var(--foreground);
+  --ui-50: #0f172a;
+  --ui-100: #1e293b;
+  --ui-200: #334155;
+  --ui-300: #475569;
+  --ui-400: #64748b;
+  --ui-500: #64748b;
+  --ui-600: #94a3b8;
+  --ui-700: #cbd5e1;
+  --ui-800: #e2e8f0;
+  --ui-900: var(--foreground);
+  --ui-950: #f8fafc;
+  --ui-transparent: transparent;
+  --ui-danger: var(--destructive);
+  --ui-success: var(--success);
+
+  --brand-50: var(--primary-foreground);
+  --brand-100: #450a0a;
+  --brand-400: #f87171;
+  --brand-500: var(--primary);
+  --brand-950: #7f1d1d;
+}
+
+/* Login/Registration/Settings/Recovery/Verification all share the same OryPage wrapper,
+ * which hardcodes `sm:w-[480px] sm:max-w-[480px]` on its own inner div (a fixed auth-card
+ * width, confirmed in node_modules/@ory/elements-react/dist/theme/default/index.js) - fine
+ * for a login card, but the Profile page (profile-page.tsx) wants its own centered
+ * max-w-xl column to be what determines the width, not a second, slightly-off cap fighting
+ * it (480px vs. the page's 576px). Scoped to `.oecs-settings-wide` (set on profile-page.tsx's
+ * own wrapper only) so Login/Registration keep their narrow card. Two same-specificity
+ * (0,2,*) classes beat the library's single-class `sm:max-w-[480px]`/`sm:w-[480px]` rules
+ * regardless of source order, so no !important needed.
+ */
+.oecs-settings-wide .ory-elements > div {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Beyond the page-wrapper cap above, the theme also caps each individual settings-flow
+ * input/select at a fixed max-w-[488px] - a deliberate "dense fields" choice for the
+ * Settings flow specifically (see the `flowType === FlowType.Settings && "max-w-[488px]"`
+ * conditional in node_modules/@ory/elements-react/dist/theme/default/index.js), not a
+ * layout bug, but it fights the wide layout wanted here. Element-scoped (input/select only,
+ * not button - see below) since buttons carry the *same* class from a different, always-on
+ * rule and should keep their cap. That class is itself already scoped `.ory-elements
+ * .max-w-\[488px\]` in the theme's own CSS (same specificity, (0,2,0)) - since that
+ * stylesheet loads *after* this one (lazily, per auth page), an equal-specificity rule here
+ * would lose on source order alone, so this needs the same extra `body` ancestor used above
+ * for `body .ory-elements` to win outright.
+ */
+body .oecs-settings-wide .ory-elements input.max-w-\[488px\],
+body .oecs-settings-wide .ory-elements select.max-w-\[488px\] {
+  max-width: 100%;
+}
+
+/* Buttons carry their own, unconditional max-w-[488px] (part of buttonStyles' cva base,
+ * not the flowType-gated rule above) - left alone, so Save/Add/Link buttons keep a normal
+ * button-like width instead of stretching to the page's full width. What *does* need
+ * fixing: the flex-column wrappers around them (this file's and OrySettingsFormSection's
+ * own, both `flex flex-col` with the default `align-items: stretch`) stretch the button to
+ * fill that cross-axis up to its 488px cap regardless of its label's actual width, and with
+ * no `justify-content` set, a capped-but-stretched button still sits flush against the left
+ * edge of the now much wider (unconstrained, see above) row. `align-self: center` overrides
+ * the inherited stretch so the button sizes to its own content and centers itself instead.
+ * Matched by tag + the max-w-[488px] class itself (every button carries it), not by
+ * data-testid - the OIDC link/unlink button renders through a different path with testid
+ * "ory/form/node/input/link" despite being a <button> with the exact same buttonStyles
+ * classes, so a testid-based selector silently missed it.
+ */
+body .oecs-settings-wide .ory-elements button.max-w-\[488px\] {
+  align-self: center;
+  min-width: 12rem;
+}
+
+/* OryCard's own chrome (border/background/rounded corners/padding, all on the div
+ * data-testid="ory/card" - see node_modules/@ory/elements-react/dist/theme/default/
+ * index.js's DefaultCard) makes sense for a login card sitting on an otherwise-empty page,
+ * but reads as a floating, disconnected widget on a full page that already has its own
+ * title/subtitle (profile-page.tsx) and sits on the same background. Stripping it lets the
+ * settings form's content sit directly on the page instead of inside a second, redundant
+ * container. data-testid is a stable selector Ory documents/tests against, safer to key off
+ * than the exact utility class list.
+ */
+body .oecs-settings-wide [data-testid='ory/card'] {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
 }

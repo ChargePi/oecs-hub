@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
+	"github.com/ChargePi/oecs-hub/internal/auth"
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
@@ -16,7 +17,7 @@ import (
 
 // ChargerService is the subset of charger.Service the public handler depends on.
 type ChargerService interface {
-	Submit(ctx context.Context, raw []byte, submittedBy string) (*charger.Charger, error)
+	Submit(ctx context.Context, raw []byte, submitterIdentityID uuid.UUID, submittedBy, submitterEmail string) (*charger.Charger, error)
 	Get(ctx context.Context, id uuid.UUID) (*charger.Charger, error)
 	List(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	GetMany(ctx context.Context, ids []uuid.UUID) ([]*charger.Charger, error)
@@ -212,16 +213,21 @@ func (h *Handler) GetManufacturer(ctx context.Context, req *registryv1.GetManufa
 }
 
 func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitChargerSpecRequest) (*registryv1.SubmitChargerSpecResponse, error) {
+	identity, err := auth.RequireIdentity(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(req.GetSpec()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "spec is required")
 	}
 
-	submittedBy := ""
-	if req.SubmittedBy != nil {
-		submittedBy = req.GetSubmittedBy()
+	identityID, err := uuid.Parse(identity.ID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "invalid identity id from proxy")
 	}
 
-	c, err := h.charger.Submit(ctx, req.GetSpec(), submittedBy)
+	c, err := h.charger.Submit(ctx, req.GetSpec(), identityID, identity.CompanyName, identity.Email)
 	if err != nil {
 		if errors.Is(err, charger.ErrInvalidSpec) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

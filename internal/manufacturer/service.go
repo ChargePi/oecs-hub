@@ -112,6 +112,39 @@ func (s *Service) ResolveID(ctx context.Context, name, country string) (uuid.UUI
 	return m.ID, nil
 }
 
+// ResolveIDForIdentity resolves (name, country) to a manufacturer ID owned by
+// ownerIdentityID, creating or claiming the row - in Postgres and in the graph
+// projection - as needed. Used by charger.Service when a spec submitted by an
+// authenticated manufacturer identity is verified. Returns ErrOwnershipConflict if
+// (name, country) is already owned by a different identity.
+func (s *Service) ResolveIDForIdentity(ctx context.Context, ownerIdentityID uuid.UUID, name, country string) (uuid.UUID, error) {
+	ctx, span := tracer.Start(ctx, "manufacturer.ResolveIDForIdentity", trace.WithAttributes(nameAttr(name)))
+	defer span.End()
+
+	m := &Manufacturer{Name: name, Country: country}
+
+	err := s.repo.FindOrCreateForIdentity(ctx, ownerIdentityID, m)
+	if err != nil {
+		if errors.Is(err, ErrOwnershipConflict) {
+			return uuid.Nil, err
+		}
+
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return uuid.Nil, fmt.Errorf("find or create manufacturer for identity: %w", err)
+	}
+
+	if err := s.graph.UpsertManufacturer(ctx, m); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return uuid.Nil, fmt.Errorf("upsert manufacturer graph node: %w", err)
+	}
+
+	return m.ID, nil
+}
+
 func clampPageSize(limit uint32) uint32 {
 	if limit == 0 {
 		return DefaultPageSize
