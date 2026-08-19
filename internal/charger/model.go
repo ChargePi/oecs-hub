@@ -36,10 +36,17 @@ type Charger struct {
 	SchemaVersion string
 	Spec          []byte
 
-	Status      Status
-	SubmittedBy string
-	SubmittedAt time.Time
-	ReviewedAt  *time.Time
+	Status Status
+	// SubmittedByIdentityID is the Kratos identity ID of the manufacturer account that
+	// submitted this spec, forwarded by the Traefik/Oathkeeper edge - see internal/auth.
+	SubmittedByIdentityID uuid.UUID
+	SubmittedBy           string
+	// SubmittedByEmail is the submitting account's login email at submission time (also
+	// forwarded by the edge), kept so an admin reviewing a submission can contact the
+	// manufacturer directly instead of cross-referencing Kratos's admin API by identity ID.
+	SubmittedByEmail string
+	SubmittedAt      time.Time
+	ReviewedAt       *time.Time
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

@@ -8,9 +8,11 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"slices"
+	"strings"
 	"syscall"
 
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
+	"github.com/ChargePi/oecs-hub/internal/auth"
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	grpcHandler "github.com/ChargePi/oecs-hub/internal/grpc"
@@ -141,6 +143,7 @@ var (
 				grpc.ChainUnaryInterceptor(
 					grpc_zap.UnaryServerInterceptor(logger),
 					grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
+					auth.UnaryInterceptor(cfg.Auth.GatewaySecret),
 				),
 				grpc.ChainStreamInterceptor(
 					grpc_zap.StreamServerInterceptor(logger),
@@ -159,15 +162,27 @@ var (
 				}),
 			)
 
+			schemaFS, err := oecsspec.SchemaFS()
+			if err != nil {
+				logger.Fatal("failed to load embedded OECS schema filesystem", zap.Error(err))
+			}
+
+			schemaHandler := http.StripPrefix("/oecs-schema/", http.FileServer(http.FS(schemaFS)))
+
 			httpServer := &http.Server{
 				Addr: cfg.GRPC.Address,
 				Handler: h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if wrappedGrpc.IsGrpcWebRequest(r) || wrappedGrpc.IsAcceptableGrpcCorsRequest(r) {
+					switch {
+					case r.URL.Path == "/healthz":
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write([]byte("ok\n"))
+					case strings.HasPrefix(r.URL.Path, "/oecs-schema/"):
+						schemaHandler.ServeHTTP(w, r)
+					case wrappedGrpc.IsGrpcWebRequest(r) || wrappedGrpc.IsAcceptableGrpcCorsRequest(r):
 						wrappedGrpc.ServeHTTP(w, r)
-						return
+					default:
+						grpcServer.ServeHTTP(w, r)
 					}
-
-					grpcServer.ServeHTTP(w, r)
 				}), &http2.Server{}),
 			}
 
@@ -189,7 +204,7 @@ var (
 
 			// AdminAPI is served on its own gRPC server/port so it can be network-isolated
 			// from the public registry API.
-			adminGrpcServer := adminserver.NewServer(logger, chargerSvc, manufacturerSvc)
+			adminGrpcServer := adminserver.NewServer(logger, chargerSvc, manufacturerSvc, cfg.Auth.GatewaySecret)
 			if err := adminGrpcServer.Start(cfg.AdminGRPC.Address); err != nil {
 				logger.Fatal("failed to start admin gRPC server", zap.Error(err))
 			}
@@ -229,6 +244,7 @@ func setDefaults() {
 	_ = viper.BindEnv("grpc.address", "OECS_HUB_GRPC_ADDRESS")
 	_ = viper.BindEnv("grpc.allowedOrigins", "OECS_HUB_GRPC_ALLOWED_ORIGINS")
 	_ = viper.BindEnv("adminGrpc.address", "OECS_HUB_ADMIN_GRPC_ADDRESS")
+	_ = viper.BindEnv("auth.gatewaySecret", "OECS_HUB_AUTH_GATEWAY_SECRET")
 }
 
 // getConfiguration gets the configuration from cache or file.

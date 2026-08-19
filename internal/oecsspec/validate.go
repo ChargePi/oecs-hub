@@ -5,12 +5,23 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-//go:embed schema/*.schema.json
+//go:embed schema/*.schema.json schema/bundled/*.schema.json
 var schemaFS embed.FS
+
+// SchemaFS returns the embedded OECS JSON Schema files (rooted at "schema/"), served
+// over HTTP at /oecs-schema/ so the frontend's editor can validate against the same
+// schema this Validator compiles - see cmd/app/main.go. This includes both the per-concern
+// source files NewValidator compiles from and schema/bundled/charger.schema.json, a
+// flattened single-file version of the same schema (see schemabundle) that the frontend
+// fetches instead of the individual cross-referencing files.
+func SchemaFS() (fs.FS, error) {
+	return fs.Sub(schemaFS, "schema")
+}
 
 const rootSchemaID = "https://oecs.dev/schema/1.1.0/charger.schema.json"
 
