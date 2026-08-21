@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/ChargePi/oecs-hub/deployments/migrations"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
@@ -22,7 +21,7 @@ func main() {
 	}
 	defer db.Close()
 
-	goose.SetBaseFS(migrations.FS)
+	goose.SetBaseFS(FS)
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		log.Fatalf("failed to set goose dialect: %v", err)
