@@ -54,6 +54,7 @@ WORKDIR /usr/local/oecs-hub
 # Copy the binary and set execute permissions
 COPY --chown=$user:$group --from=build /app/oecs-hub /usr/local/bin/oecs-hub
 COPY --chown=$user:$group --from=build /app/oecs-hub-migrate /usr/local/bin/oecs-hub-migrate
+COPY --chown=$user:$group --from=build /app/src/deployments/migrations ./migrations
 RUN chmod +x /usr/local/bin/oecs-hub /usr/local/bin/oecs-hub-migrate
 
 
