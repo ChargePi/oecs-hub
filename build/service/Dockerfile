@@ -62,4 +62,4 @@ RUN chmod +x /usr/local/bin/oecs-hub /usr/local/bin/oecs-hub-migrate
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
     CMD curl --fail http://localhost:80/healthz || exit 1
 
-CMD ["/usr/local/bin/oecs-hub"]
+ENTRYPOINT ["/usr/local/bin/oecs-hub"]
