@@ -16,6 +16,7 @@ RUN go mod verify
 COPY . .
 
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ../oecs-hub ./cmd/app
+RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ../oecs-hub-migrate ./cmd/migrate
 
 # Debug stage using Delve
 FROM build AS debug
@@ -52,11 +53,13 @@ WORKDIR /usr/local/oecs-hub
 
 # Copy the binary and set execute permissions
 COPY --chown=$user:$group --from=build /app/oecs-hub /usr/local/bin/oecs-hub
-RUN chmod +x /usr/local/bin/oecs-hub
+COPY --chown=$user:$group --from=build /app/oecs-hub-migrate /usr/local/bin/oecs-hub-migrate
+COPY --chown=$user:$group --from=build /app/src/deployments/migrations ./migrations
+RUN chmod +x /usr/local/bin/oecs-hub /usr/local/bin/oecs-hub-migrate
 
 
 # Add a health check
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
     CMD curl --fail http://localhost:80/healthz || exit 1
 
-CMD ["/usr/local/bin/oecs-hub"]
+ENTRYPOINT ["/usr/local/bin/oecs-hub"]
