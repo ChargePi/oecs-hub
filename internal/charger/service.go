@@ -146,6 +146,24 @@ func (s *Service) List(ctx context.Context, filters SearchFilters, limit, offset
 	return chargers, total, nil
 }
 
+// SearchByFields returns chargers matching filters, paginated - see FieldSearchFilters.
+// Used by the MCP search_chargers tool, which needs to filter on arbitrary OECS spec
+// fields rather than the fixed set List's SearchFilters supports.
+func (s *Service) SearchByFields(ctx context.Context, filters FieldSearchFilters, limit, offset uint32) ([]*Charger, int64, error) {
+	ctx, span := tracer.Start(ctx, "charger.SearchByFields")
+	defer span.End()
+
+	chargers, total, err := s.repo.SearchByFields(ctx, filters, clampPageSize(limit), offset)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, 0, fmt.Errorf("search chargers by fields: %w", err)
+	}
+
+	return chargers, total, nil
+}
+
 // GetMany returns the verified chargers among ids, used to hydrate full variant detail
 // for a graph traversal (see internal/graph.GetManufacturerGraph, which only returns
 // IDs). Missing/unverified IDs are silently omitted.

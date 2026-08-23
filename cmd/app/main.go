@@ -16,12 +16,14 @@ import (
 	grpcHandler "github.com/ChargePi/oecs-hub/internal/grpc"
 	"github.com/ChargePi/oecs-hub/internal/grpc/adminserver"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
+	"github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
 	redisStorage "github.com/ChargePi/oecs-hub/internal/storage/redis"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
+	"github.com/mark3labs/mcp-go/server"
 	redisotel "github.com/redis/go-redis/extra/redisotel-native/v9"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
@@ -130,6 +132,10 @@ var (
 			chargerCache := redisStorage.NewChargerCache(redisClient, cfg.Redis.CacheTTL)
 			chargerSvc := charger.NewService(chargerRepo, chargerCache, validator, manufacturerSvc, graphClient)
 
+			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
+			mcp.RegisterTools(mcpSrv, chargerSvc)
+			mcpHandler := server.NewStreamableHTTPServer(mcpSrv)
+
 			recoveryHandler := func(p any) error {
 				logger.Error("recovered from panic", zap.Any("panic", p), zap.String("stack", string(debug.Stack())))
 
@@ -162,7 +168,13 @@ var (
 			httpServer := &http.Server{
 				Addr: cfg.GRPC.Address,
 				Handler: h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if wrappedGrpc.IsGrpcWebRequest(r) || wrappedGrpc.IsAcceptableGrpcCorsRequest(r) {
+					switch {
+					case r.URL.Path == "/healthz":
+						w.WriteHeader(http.StatusOK)
+						_, _ = w.Write([]byte("ok\n"))
+					case r.URL.Path == "/mcp":
+						mcpHandler.ServeHTTP(w, r)
+					case wrappedGrpc.IsGrpcWebRequest(r) || wrappedGrpc.IsAcceptableGrpcCorsRequest(r):
 						wrappedGrpc.ServeHTTP(w, r)
 						return
 					}

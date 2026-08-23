@@ -68,6 +68,24 @@ func (r *ChargerRepository) Create(ctx context.Context, c *charger.Charger) erro
 func (r *ChargerRepository) List(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error) {
 	query := r.applyFilters(r.db.WithContext(ctx).Model(&chargerVariantEntity{}), filters)
 
+	return runSearch(query, limit, offset)
+}
+
+// SearchByFields returns chargers matching filters, paginated. Unlike List, it supports
+// generic filtering over arbitrary OECS spec fields via filters.FieldFilters - see
+// charger.FieldSearchFilters.
+func (r *ChargerRepository) SearchByFields(ctx context.Context, filters charger.FieldSearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error) {
+	query, err := r.applyFieldSearchFilters(r.db.WithContext(ctx).Model(&chargerVariantEntity{}), filters)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return runSearch(query, limit, offset)
+}
+
+// runSearch counts and fetches the given query's matches, applying the shared List/
+// SearchByFields ordering and page bounds.
+func runSearch(query *gorm.DB, limit, offset uint32) ([]*charger.Charger, int64, error) {
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, fmt.Errorf("count chargers: %w", err)
@@ -130,6 +148,43 @@ func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchF
 	}
 
 	return query
+}
+
+// applyFieldSearchFilters is the FieldSearchFilters counterpart to applyFilters, used by
+// SearchByFields.
+func (r *ChargerRepository) applyFieldSearchFilters(query *gorm.DB, filters charger.FieldSearchFilters) (*gorm.DB, error) {
+	if filters.Query != nil && *filters.Query != "" {
+		q := "%" + *filters.Query + "%"
+		query = query.Where("(manufacturer_name ILIKE ? OR model_name ILIKE ? OR series ILIKE ?)", q, q, q)
+	}
+
+	if filters.ManufacturerID != nil {
+		query = query.Where("manufacturer_id = ?", *filters.ManufacturerID)
+	}
+
+	if filters.ChargerType != nil && *filters.ChargerType != "" {
+		query = query.Where("charger_type = ?", *filters.ChargerType)
+	}
+
+	if len(filters.Statuses) > 0 {
+		statuses := make([]string, len(filters.Statuses))
+		for i, s := range filters.Statuses {
+			statuses[i] = string(s)
+		}
+
+		query = query.Where("status IN ?", statuses)
+	}
+
+	for _, f := range filters.FieldFilters {
+		path, vars, err := fieldFilterPredicate(f)
+		if err != nil {
+			return nil, fmt.Errorf("field filter: %w", err)
+		}
+
+		query = query.Where("jsonb_path_exists(spec, ?::jsonpath, ?::jsonb)", path, string(vars))
+	}
+
+	return query, nil
 }
 
 // ListByIDs returns the verified chargers among ids.
