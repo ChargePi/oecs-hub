@@ -5,11 +5,22 @@
 # The service topology here is fixed and known upfront anyway (docker-compose's own DNS
 # already gives every service a stable hostname), so a static file provider is both a
 # working fix and arguably the more appropriate tool for it.
+#
+# Confirmed empirically again on 2026-08-25: switching to labels + a docker.sock mount
+# made Traefik's docker provider fail outright ("Error response from daemon: ", empty
+# body, on every request) even though a plain `docker` CLI container reached the same
+# socket fine seconds earlier. Docker Desktop's socket proxy is blocking the raw Engine
+# API calls Traefik's client makes. Don't retry this without confirming that proxy
+# behavior has changed.
 
 http:
   routers:
+    # Host(`registry.localhost`) is required on every rule below rather than left
+    # wildcarded: *.localhost resolves to 127.0.0.1 in every modern browser without
+    # /etc/hosts changes (RFC 6761), so this is free, and it stops the stack from also
+    # answering on bare "localhost" or a LAN IP with the same routing.
     kratos:
-      rule: "PathPrefix(`/ory`)"
+      rule: "Host(`registry.localhost`) && PathPrefix(`/ory`)"
       entryPoints: ["web"]
       # Kratos serves its routes at bare root (confirmed empirically: /ory/health/ready
       # 404s directly against Kratos, /health/ready doesn't) - base_url only shapes the
@@ -20,7 +31,7 @@ http:
       service: kratos
 
     backend:
-      rule: "PathPrefix(`/api`)"
+      rule: "Host(`registry.localhost`) && PathPrefix(`/api`)"
       entryPoints: ["web"]
       middlewares: ["strip-api", "oathkeeper-forwardauth"]
       service: backend
@@ -32,13 +43,13 @@ http:
       # the wire protocol/generated stubs - there's no room to inject a custom prefix in
       # front of it the way a gRPC-Web browser client's flexible base-URL config allows.
       # So this matches the real service path directly and forwards it unmodified.
-      rule: "PathPrefix(`/admin.v1.AdminService`)"
+      rule: "Host(`registry.localhost`) && PathPrefix(`/admin.v1.AdminService`)"
       entryPoints: ["web"]
       middlewares: ["oathkeeper-forwardauth"]
       service: backend-admin
 
     web:
-      rule: "PathPrefix(`/`)"
+      rule: "Host(`registry.localhost`) && PathPrefix(`/`)"
       entryPoints: ["web"]
       priority: 1
       service: web

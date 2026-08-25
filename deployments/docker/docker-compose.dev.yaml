@@ -5,6 +5,8 @@
 name: oecs-hub
 services:
 
+  # Single shared instance for oecs_hub, kratos and keto - each gets its own database
+  # and role, provisioned on first boot by postgres/init (see that file's header).
   postgres:
     image: postgres:16
     container_name: oecs-hub-postgres
@@ -19,6 +21,7 @@ services:
       - "5434:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:7
@@ -67,28 +70,16 @@ services:
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
 
-  kratos-postgres:
-    image: postgres:16
-    container_name: oecs-hub-kratos-postgres
-    hostname: kratos-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=kratos
-      - POSTGRES_PASSWORD=kratos
-      - POSTGRES_DB=kratos
-    volumes:
-      - kratos-postgres:/var/lib/postgresql/data
-
   kratos-migrate:
     image: oryd/kratos:v1.3.1
     container_name: oecs-hub-kratos-migrate
     command: migrate sql -e --yes
     environment:
-      - DSN=postgres://kratos:kratos@kratos-postgres:5432/kratos?sslmode=disable
+      - DSN=postgres://kratos:kratos@postgres:5432/kratos?sslmode=disable
     volumes:
       - ./kratos:/etc/config/kratos:ro
     depends_on:
-      - kratos-postgres
+      - postgres
 
   kratos:
     image: oryd/kratos:v1.3.1
@@ -122,18 +113,6 @@ services:
       # container-network-only - Kratos is the only sender.
       - "4437:4436"
 
-  keto-postgres:
-    image: postgres:16
-    container_name: oecs-hub-keto-postgres
-    hostname: keto-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=keto
-      - POSTGRES_PASSWORD=keto
-      - POSTGRES_DB=keto
-    volumes:
-      - keto-postgres:/var/lib/postgresql/data
-
   keto-migrate:
     image: oryd/keto:v0.14.0
     container_name: oecs-hub-keto-migrate
@@ -141,7 +120,7 @@ services:
     volumes:
       - ./keto:/etc/config/keto:ro
     depends_on:
-      - keto-postgres
+      - postgres
 
   keto:
     image: oryd/keto:v0.14.0
@@ -213,5 +192,3 @@ volumes:
   postgres:
   redis:
   memgraph:
-  kratos-postgres:
-  keto-postgres:
