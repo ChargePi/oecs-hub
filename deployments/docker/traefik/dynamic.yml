@@ -36,6 +36,18 @@ http:
       middlewares: ["strip-api", "oathkeeper-forwardauth"]
       service: backend
 
+    conversation:
+      # oecs-recommendation-agent's conversation.v1.ConversationService, reached
+      # directly (gRPC-Web) - no oecs-registry backend involved at all, unlike every
+      # other router here. It's the sole entrypoint for the chat feature; it forwards
+      # to agent.v1.RecommendationService (internal-only) itself. Stripped, same as
+      # /api above, since the service's grpc-web handler expects the bare
+      # "/conversation.v1.ConversationService/<Method>" path.
+      rule: "Host(`registry.localhost`) && PathPrefix(`/conversation-api`)"
+      entryPoints: ["web"]
+      middlewares: ["strip-conversation-api", "oathkeeper-forwardauth"]
+      service: conversation
+
     admin:
       # No "/admin-api"-style artificial prefix, unlike /api above: AdminService is
       # plain/native gRPC (not gRPC-Web), and real gRPC clients (grpcurl, a Go grpc
@@ -79,6 +91,15 @@ http:
         servers:
           - url: "http://web:8080"
 
+    conversation:
+      # oecs-recommendation-agent's own docker-compose project/network, not this one -
+      # reachable only via the host, where that stack publishes it on 50051 (see this
+      # repo's docker-compose.dev.yaml comments on the same host.docker.internal
+      # pattern for the backend service). Requires that stack running on this machine.
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:50051"
+
   middlewares:
     strip-ory:
       stripPrefix:
@@ -87,6 +108,10 @@ http:
     strip-api:
       stripPrefix:
         prefixes: ["/api"]
+
+    strip-conversation-api:
+      stripPrefix:
+        prefixes: ["/conversation-api"]
 
     oathkeeper-forwardauth:
       forwardAuth:

@@ -136,6 +136,18 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ory/, ''),
       },
+      // Same-origin passthrough to oecs-recommendation-agent's
+      // conversation.v1.ConversationService (gRPC-Web) - a different repo/service
+      // entirely, not oecs-registry's own backend (hence a separate target from /api,
+      // even though both happen to default to port 50051 - run only one of those two
+      // stacks' bare-metal loops locally at a time, or override one's port). Stripped,
+      // same reason as /api: the service's grpc-web handler expects the bare
+      // "/conversation.v1.ConversationService/<Method>" path.
+      '/conversation-api': {
+        target: 'http://localhost:50051',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/conversation-api/, ''),
+      },
     },
   },
 })

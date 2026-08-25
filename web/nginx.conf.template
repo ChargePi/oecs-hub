@@ -42,6 +42,23 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # Optional: the chat feature's direct line to oecs-recommendation-agent's
+    # conversation.v1.ConversationService (gRPC-Web) - a different repo/service
+    # entirely, not oecs-registry's own backend, hence its own
+    # CONVERSATION_API_URL/$conversation_api rather than sharing $backend. Same
+    # request-time-resolution trick as /api/ above and for the same reason: this is
+    # only reached at all when the chat feature was built in (VITE_FEATURE_CHAT=true),
+    # so it must not stop nginx from starting when unconfigured.
+    location /conversation-api/ {
+        set $conversation_api "${CONVERSATION_API_URL}";
+        proxy_pass $conversation_api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     # Hashed build assets (Vite content-hashes filenames) are safe to cache forever; a new deploy
     # ships new filenames, not new bytes at the old URL.
     location /assets/ {

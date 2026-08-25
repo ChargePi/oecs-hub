@@ -180,6 +180,9 @@ services:
     # Routed by Traefik at /api (RegistryService, gRPC-Web) and /admin.v1.AdminService
     # (AdminService, native gRPC - matched by its real service path, not an artificial
     # prefix, since gRPC clients can't route through one) - see traefik/dynamic.yml.
+    # The chat feature (traefik/dynamic.yml's "conversation" router) talks directly to
+    # oecs-recommendation-agent's conversation.v1.ConversationService - this backend
+    # isn't involved in it at all.
     depends_on:
       - postgres
       - redis
@@ -188,9 +191,22 @@ services:
   web:
     build:
       context: ../../web
+      # Bakes the chat feature into the JS bundle (see web/src/lib/chat/config.ts) -
+      # off by default, and even when on, only works if Traefik's "conversation"
+      # router can actually reach oecs-recommendation-agent's conversation service
+      # (see that router's own comment) - otherwise the UI shows a normal request
+      # error rather than silently pretending to work.
+      args:
+        VITE_FEATURE_CHAT: "true"
     container_name: oecs-hub-web
     hostname: web
     restart: unless-stopped
+    # Suggested-prompt templates (see web/src/features/chat/use-suggested-prompts.ts) are
+    # fetched from here at runtime, not baked into the JS bundle - bind-mounting the
+    # source directory means editing these .txt files takes effect on refresh, no
+    # rebuild needed. Swap in a different host directory to fully customize the wording.
+    volumes:
+      - ../../web/public/chat-prompts:/usr/share/nginx/html/chat-prompts:ro
     # Routed by Traefik at / (lowest priority, catch-all) - see traefik/dynamic.yml.
     depends_on:
       - backend

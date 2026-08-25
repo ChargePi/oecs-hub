@@ -1281,9 +1281,11 @@ func (x *GetManufacturerResponse) GetProducts() []*Product {
 }
 
 type SubmitChargerSpecRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Spec          []byte                 `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
-	SubmittedBy   *string                `protobuf:"bytes,2,opt,name=submitted_by,json=submittedBy,proto3,oneof" json:"submitted_by,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Spec  []byte                 `protobuf:"bytes,1,opt,name=spec,proto3" json:"spec,omitempty"`
+	// Deprecated: ignored by the server. The submitter is derived from the authenticated
+	// identity forwarded by the Traefik/Oathkeeper edge, not from client-supplied text.
+	SubmittedBy   *string `protobuf:"bytes,2,opt,name=submitted_by,json=submittedBy,proto3,oneof" json:"submitted_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

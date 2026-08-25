@@ -11,6 +11,13 @@ WORKDIR /app
 RUN corepack enable
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Chat feature toggle, baked into the built JS bundle (see src/lib/chat/config.ts) -
+# off by default so a plain `docker build` with no --build-arg ships without it. Only
+# controls whether the UI for it exists - whether it actually works depends on
+# CONVERSATION_API_URL below being set to a reachable
+# oecs-recommendation-agent conversation.v1.ConversationService (gRPC-Web) at runtime.
+ARG VITE_FEATURE_CHAT=false
+ENV VITE_FEATURE_CHAT=$VITE_FEATURE_CHAT
 RUN pnpm build
 
 FROM nginx:1.27-alpine AS runtime
@@ -24,6 +31,9 @@ RUN addgroup -S app && adduser -S app -G app \
     && chown app:app /var/run/nginx.pid
 
 ENV BACKEND_URL=http://localhost:9999
+# Placeholder like BACKEND_URL above - only reached if the chat feature was actually
+# built in (VITE_FEATURE_CHAT=true) and someone opens /conversation-api/ directly.
+ENV CONVERSATION_API_URL=http://localhost:9999
 # Docker's embedded DNS — override at runtime (-e RESOLVER=...) for other environments, e.g. a
 # Kubernetes cluster DNS Service IP.
 ENV RESOLVER=127.0.0.11
