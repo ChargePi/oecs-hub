@@ -15,12 +15,21 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { describeValue, fieldDescriptions } from '@/lib/oecs/field-descriptions'
 import { formatPricing, formatQuantity, formatValueRange, humanize } from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { useComparisonStore } from '@/stores/comparison-store'
 import { ManufacturerCard } from './manufacturer-card'
 import { boolBadge } from './spec-badges'
-import { SpecLinkRow, SpecListRow, SpecRow, SpecSection } from './spec-section'
+import { SpecLinkRow, SpecListRow, SpecRow, SpecSection, ValueTooltip } from './spec-section'
+
+const describeConnectorType = describeValue('connectorType')
+const describeProtocolName = describeValue('protocolName')
+const describeChargerType = describeValue('chargerType')
+const describeAuthenticationMethod = describeValue('authenticationMethod')
+const describePaymentMethod = describeValue('paymentMethod')
+const describeSmartChargingFeature = describeValue('smartChargingFeature')
+const describeConnectivityInterface = describeValue('connectivityInterface')
 
 export function ProductDetail({ variant }: { variant: ChargerVariant }) {
   const { model, manufacturer, hardware, software, payment, pricing, metadata } = variant
@@ -62,7 +71,12 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
         <ManufacturerCard manufacturer={manufacturer} />
 
         <SpecSection title="Charger type" icon={Tag}>
-          <SpecRow label="Type" value={model.type} />
+          <SpecRow
+            label="Type"
+            value={model.type}
+            description={fieldDescriptions['model.type']}
+            valueDescription={describeChargerType(model.type)}
+          />
           <SpecRow label="Level" value={model.level} />
           <SpecRow label="Status" value={model.status && humanize(model.status)} />
           <SpecRow label="Part number" value={model.partNumber} />
@@ -106,8 +120,11 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
               >
                 <span className="flex items-center gap-2 text-muted-foreground">
                   <ConnectorIcon className="size-3.5 shrink-0 text-primary" />
-                  {connector.label ?? `Connector ${i + 1}`} · {humanize(connector.type)} (
-                  {connector.currentType})
+                  {connector.label ?? `Connector ${i + 1}`} ·{' '}
+                  <ValueTooltip description={describeConnectorType(connector.type)}>
+                    {humanize(connector.type)}
+                  </ValueTooltip>{' '}
+                  ({connector.currentType})
                 </span>
                 <span className="shrink-0 text-right font-medium">
                   {formatQuantity(connector.maxPower) ?? '—'}
@@ -126,7 +143,11 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
           />
           <SpecListRow
             label="Authentication"
-            items={hardware.userInterface?.authenticationMethods?.map(humanize)}
+            description={fieldDescriptions['hardware.userInterface.authenticationMethods']}
+            items={hardware.userInterface?.authenticationMethods?.map((method) => ({
+              text: humanize(method),
+              description: describeAuthenticationMethod(method),
+            }))}
           />
         </SpecSection>
 
@@ -139,13 +160,17 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
           />
           <SpecListRow
             label="Supported payment options"
-            items={payment?.acceptedMethods?.map(humanize)}
+            description={fieldDescriptions['payment.acceptedMethods']}
+            items={payment?.acceptedMethods?.map((method) => ({
+              text: humanize(method),
+              description: describePaymentMethod(method),
+            }))}
           />
         </SpecSection>
 
         {pricing && (
           <SpecSection title="Pricing" icon={Banknote}>
-            <SpecListRow label="MSRP" items={formatPricing(pricing)} />
+            <SpecListRow label="MSRP" items={formatPricing(pricing)?.map((text) => ({ text }))} />
             <SpecRow label="Notes" value={pricing.notes} />
           </SpecSection>
         )}
@@ -159,15 +184,27 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
           />
           <SpecListRow
             label="Protocols"
-            items={software.protocols.map((p) => `${p.name} ${p.version}`)}
+            description={fieldDescriptions['software.protocols[]']}
+            items={software.protocols.map((p) => ({
+              text: `${p.name} ${p.version}`,
+              description: describeProtocolName(p.name),
+            }))}
           />
           <SpecListRow
             label="Smart charging"
-            items={software.smartCharging?.features?.map(humanize)}
+            description={fieldDescriptions['software.smartCharging.features']}
+            items={software.smartCharging?.features?.map((feature) => ({
+              text: humanize(feature),
+              description: describeSmartChargingFeature(feature),
+            }))}
           />
           <SpecListRow
             label="Connectivity"
-            items={hardware.connectivity?.interfaces?.map(humanize)}
+            description={fieldDescriptions['hardware.connectivity.interfaces']}
+            items={hardware.connectivity?.interfaces?.map((iface) => ({
+              text: humanize(iface),
+              description: describeConnectivityInterface(iface),
+            }))}
           />
         </SpecSection>
 

@@ -88,13 +88,16 @@ export function ComparisonGroupCell({
         {group.rows.map((row) => {
           if (row.items) {
             const items = row.items(variant) ?? []
-            const referenceItems = new Set(row.items(baseline) ?? [])
-            const commonItems = new Set(items.filter((item) => referenceItems.has(item)))
+            const referenceTexts = new Set((row.items(baseline) ?? []).map((item) => item.text))
+            const commonTexts = new Set(
+              items.filter((item) => referenceTexts.has(item.text)).map((item) => item.text),
+            )
             return (
               <SpecRow
                 key={row.label}
                 label={row.label}
-                value={diffBadgeGroup(items, commonItems, row.humanizeItems)}
+                value={diffBadgeGroup(items, commonTexts)}
+                description={row.description}
                 wide
               />
             )
@@ -136,6 +139,7 @@ export function ComparisonGroupCell({
                     )}
                   </span>
                 }
+                description={row.description}
                 inline={row.inline}
               />
             )
@@ -156,6 +160,7 @@ export function ComparisonGroupCell({
                   {row.render?.(variant)}
                 </span>
               }
+              description={row.description}
               inline={row.inline}
             />
           )

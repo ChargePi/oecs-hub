@@ -1,7 +1,49 @@
 import type { ComponentType, ReactNode } from 'react'
-import { FileText } from 'lucide-react'
+import { FileText, Info } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+
+/** Wraps a row label with an info-icon tooltip explaining what the field means. Renders the
+ *  label plain when no description is given, so this stays a no-op for unwired rows. */
+function FieldLabel({ label, description }: { label: string; description?: string }) {
+  if (!description) return <>{label}</>
+  return (
+    <span className="inline-flex items-center gap-1">
+      {label}
+      <Tooltip>
+        <TooltipTrigger className="cursor-help text-muted-foreground/70 hover:text-foreground">
+          <Info className="size-3" />
+        </TooltipTrigger>
+        <TooltipContent>{description}</TooltipContent>
+      </Tooltip>
+    </span>
+  )
+}
+
+/** Wraps a rendered *value* (a badge, a piece of text) with a tooltip explaining what that
+ *  specific value means — e.g. what "CCS2_Combo2" or "OCPP" is. Renders `children` plain when no
+ *  description is given. Uses a dotted-underline affordance rather than FieldLabel's icon, since
+ *  this wraps dense, often-repeated badge rows where an icon per item would be noisy. */
+export function ValueTooltip({
+  description,
+  children,
+}: {
+  description?: string
+  children: ReactNode
+}) {
+  if (!description) return <>{children}</>
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="cursor-help underline decoration-dotted decoration-muted-foreground/50 underline-offset-2">
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{description}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 export function SpecSection({
   title,
@@ -36,6 +78,8 @@ export function SpecRow({
   value,
   wide = false,
   inline = false,
+  description,
+  valueDescription,
 }: {
   label: string
   value?: ReactNode
@@ -44,13 +88,20 @@ export function SpecRow({
   wide?: boolean
   /** Label and value share a line instead of stacking — for short values like Yes/No. */
   inline?: boolean
+  /** Tooltip explaining what this field means, shown as an info icon next to the label. */
+  description?: string
+  /** Tooltip explaining what this specific value means, e.g. an enum value like "DC". */
+  valueDescription?: string
 }) {
   if (value == null || value === '') return null
+  const valueNode = <ValueTooltip description={valueDescription}>{value}</ValueTooltip>
   if (inline && wide) {
     return (
       <div className="col-span-full grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-baseline gap-3 border-b border-border/60 py-1.5 text-sm">
-        <span className="text-muted-foreground break-words">{label}</span>
-        <span className="font-medium break-words">{value}</span>
+        <span className="text-muted-foreground break-words">
+          <FieldLabel label={label} description={description} />
+        </span>
+        <span className="font-medium break-words">{valueNode}</span>
       </div>
     )
   }
@@ -60,8 +111,10 @@ export function SpecRow({
     // the default row below.
     return (
       <div className="flex flex-col gap-0.5 border-b border-border/60 py-1.5 text-sm">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-medium break-words">{value}</span>
+        <span className="text-muted-foreground">
+          <FieldLabel label={label} description={description} />
+        </span>
+        <span className="font-medium break-words">{valueNode}</span>
       </div>
     )
   }
@@ -69,23 +122,41 @@ export function SpecRow({
     <div
       className={`flex flex-col gap-0.5 border-b border-border/60 py-1.5 text-sm ${wide ? 'col-span-full' : ''}`}
     >
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium break-words">{value}</span>
+      <span className="text-muted-foreground">
+        <FieldLabel label={label} description={description} />
+      </span>
+      <span className="font-medium break-words">{valueNode}</span>
     </div>
   )
 }
 
+export interface SpecListItem {
+  text: string
+  /** Tooltip explaining what this specific item value means, e.g. an enum value like "OCPP". */
+  description?: string
+}
+
 /** Like SpecRow, but for array-valued specs — each item renders as its own badge, not CSV text. */
-export function SpecListRow({ label, items }: { label: string; items?: string[] }) {
+export function SpecListRow({
+  label,
+  items,
+  description,
+}: {
+  label: string
+  items?: SpecListItem[]
+  description?: string
+}) {
   if (!items || items.length === 0) return null
   return (
     <div className="col-span-full flex flex-col gap-1.5 border-b border-border/60 py-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground">
+        <FieldLabel label={label} description={description} />
+      </span>
       <div className="flex flex-wrap gap-1.5">
         {items.map((item) => (
-          <Badge key={item} variant="secondary">
-            {item}
-          </Badge>
+          <ValueTooltip key={item.text} description={item.description}>
+            <Badge variant="secondary">{item.text}</Badge>
+          </ValueTooltip>
         ))}
       </div>
     </div>
@@ -98,11 +169,21 @@ export interface LinkBadgeItem {
 }
 
 /** A row of badges, each optionally linking out (e.g. certifications, source documents). */
-export function SpecLinkRow({ label, items }: { label: string; items?: LinkBadgeItem[] }) {
+export function SpecLinkRow({
+  label,
+  items,
+  description,
+}: {
+  label: string
+  items?: LinkBadgeItem[]
+  description?: string
+}) {
   if (!items || items.length === 0) return null
   return (
     <div className="col-span-full flex flex-col gap-1.5 border-b border-border/60 py-1.5 text-sm">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground">
+        <FieldLabel label={label} description={description} />
+      </span>
       <div className="flex flex-wrap gap-1.5">
         {items.map((item, i) =>
           item.url ? (

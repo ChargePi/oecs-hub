@@ -1,12 +1,24 @@
 import type { ComponentType, ReactNode } from 'react'
 import { CreditCard, MonitorSmartphone, Plug, ShieldCheck, Tag, Wifi, Zap } from 'lucide-react'
 
+import { describeValue, fieldDescriptions } from '@/lib/oecs/field-descriptions'
 import { formatQuantity, formatValueRange, humanize } from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { badgeGroup, boolBadge } from '@/features/product/spec-badges'
+import { ValueTooltip, type SpecListItem } from '@/features/product/spec-section'
+
+const describeConnectorType = describeValue('connectorType')
+const describeProtocolName = describeValue('protocolName')
+const describeChargerType = describeValue('chargerType')
+const describeAuthenticationMethod = describeValue('authenticationMethod')
+const describePaymentMethod = describeValue('paymentMethod')
+const describeSmartChargingFeature = describeValue('smartChargingFeature')
+const describeConnectivityInterface = describeValue('connectivityInterface')
 
 export interface ComparisonRow {
   label: string
+  /** Tooltip explaining what this field means, shown as an info icon next to the label. */
+  description?: string
   render?: (variant: ChargerVariant) => ReactNode
   /** Marks the row as numeric, driving delta/percent-change annotations against the first
    *  compared variant, colored by whether that change is favorable. */
@@ -18,10 +30,9 @@ export interface ComparisonRow {
   /** Comparable scalar used to flag when a non-numeric row differs across compared variants
    *  (e.g. charger type) — highlighted, but without a "better/worse" judgment. */
   diffKey?: (variant: ChargerVariant) => string | number | undefined
-  /** Raw (pre-humanize) item list for CSV-style rows — items not shared by every compared
-   *  variant are called out as a differing pill. */
-  items?: (variant: ChargerVariant) => string[] | undefined
-  humanizeItems?: boolean
+  /** CSV-style row items — items not shared by every compared variant are called out as a
+   *  differing pill. */
+  items?: (variant: ChargerVariant) => SpecListItem[] | undefined
   /** Label and value share a line instead of stacking — for short values like Yes/No. */
   inline?: boolean
 }
@@ -32,8 +43,18 @@ export interface ComparisonGroup {
   rows: ComparisonRow[]
 }
 
-function humanizedBadges(values?: string[]): ReactNode {
-  return badgeGroup(values && values.length > 0 ? values.map(humanize) : undefined)
+/** Builds CSV-style row items from raw (pre-humanize) enum values, looking up each item's
+ *  tooltip description via `describe` before humanizing it for display. */
+function enumItems(
+  values: string[] | undefined,
+  describe: (value: string) => string | undefined,
+): SpecListItem[] | undefined {
+  if (!values || values.length === 0) return undefined
+  return values.map((value) => ({ text: humanize(value), description: describe(value) }))
+}
+
+function humanizedBadges(values?: string[], describe?: (item: string) => string | undefined): ReactNode {
+  return badgeGroup(values, true, describe)
 }
 
 /**
@@ -47,7 +68,12 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       { label: 'Manufacturer', render: (v) => v.manufacturer.name },
       { label: 'Product line', render: (v) => v.model.series ?? '—' },
-      { label: 'Type', render: (v) => v.model.type, diffKey: (v) => v.model.type },
+      {
+        label: 'Type',
+        render: (v) => <ValueTooltip description={describeChargerType(v.model.type)}>{v.model.type}</ValueTooltip>,
+        diffKey: (v) => v.model.type,
+        description: fieldDescriptions['model.type'],
+      },
       { label: 'Level', render: (v) => v.model.level ?? '—' },
       { label: 'Status', render: (v) => (v.model.status ? humanize(v.model.status) : '—') },
       { label: 'Release date', render: (v) => v.model.releaseDate ?? '—' },
@@ -105,7 +131,8 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       {
         label: 'Connector types',
-        render: (v) => humanizedBadges(v.hardware.connectors.map((c) => c.type)),
+        render: (v) => humanizedBadges(v.hardware.connectors.map((c) => c.type), describeConnectorType),
+        description: fieldDescriptions['hardware.connectors[].type'],
       },
       {
         label: 'Fastest connector',
@@ -136,8 +163,8 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Authentication methods',
-        items: (v) => v.hardware.userInterface?.authenticationMethods,
-        humanizeItems: true,
+        items: (v) => enumItems(v.hardware.userInterface?.authenticationMethods, describeAuthenticationMethod),
+        description: fieldDescriptions['hardware.userInterface.authenticationMethods'],
       },
     ],
   },
@@ -147,8 +174,8 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       {
         label: 'Supported payment options',
-        items: (v) => v.payment?.acceptedMethods,
-        humanizeItems: true,
+        items: (v) => enumItems(v.payment?.acceptedMethods, describePaymentMethod),
+        description: fieldDescriptions['payment.acceptedMethods'],
       },
       {
         label: 'Ad-hoc payment',
@@ -163,11 +190,17 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       {
         label: 'Protocols',
-        items: (v) => v.software.protocols.map((p) => `${p.name} ${p.version}`),
+        items: (v) =>
+          v.software.protocols.map((p) => ({
+            text: `${p.name} ${p.version}`,
+            description: describeProtocolName(p.name),
+          })),
+        description: fieldDescriptions['software.protocols[]'],
       },
       {
         label: 'Smart charging features',
-        render: (v) => humanizedBadges(v.software.smartCharging?.features),
+        render: (v) => humanizedBadges(v.software.smartCharging?.features, describeSmartChargingFeature),
+        description: fieldDescriptions['software.smartCharging.features'],
       },
       {
         label: 'Offline charging',
@@ -176,8 +209,8 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Connectivity',
-        items: (v) => v.hardware.connectivity?.interfaces,
-        humanizeItems: true,
+        items: (v) => enumItems(v.hardware.connectivity?.interfaces, describeConnectivityInterface),
+        description: fieldDescriptions['hardware.connectivity.interfaces'],
       },
     ],
   },
@@ -187,7 +220,7 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       {
         label: 'Certifications',
-        items: (v) => v.hardware.certifications?.map((c) => c.standard),
+        items: (v) => v.hardware.certifications?.map((c) => ({ text: c.standard })),
       },
     ],
   },
