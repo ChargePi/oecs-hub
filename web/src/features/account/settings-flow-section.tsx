@@ -11,7 +11,7 @@ import {
   useOryFlow,
 } from '@ory/elements-react'
 
-import { hideUserTypeNode } from '@/lib/kratos-ui-nodes'
+import { currentAccountType, filterAccountTypeNodes, hideUserTypeNode } from '@/lib/kratos-ui-nodes'
 import type { AccountSection } from './settings-node-groups'
 
 // Kratos bundles profile/password/totp/webauthn/oidc into one settings flow, but the
@@ -61,6 +61,10 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
 
   const allNodes = flowContainer.flow.ui.nodes
   const defaultNodes = allNodes.filter((node) => node.group === UiNodeGroupEnum.Default)
+  // Read before hiding: this identity's existing account type, so the group that
+  // doesn't apply to it (company.* for an individual, billingAddress.* for a
+  // manufacturer) stays hidden here too - see kratos-ui-nodes.ts.
+  const accountType = currentAccountType(allNodes)
 
   const presentSections = sections
     .map((section) => ({
@@ -85,10 +89,10 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
                   {section.title}
                 </h2>
                 {section.groups.map((group, i) => {
-                  const nodes: UiNode[] = [
-                    ...defaultNodes,
-                    ...allNodes.filter((node) => node.group === group),
-                  ].map(hideUserTypeNode)
+                  const nodes: UiNode[] = filterAccountTypeNodes(
+                    [...defaultNodes, ...allNodes.filter((node) => node.group === group)],
+                    accountType,
+                  ).map((node) => hideUserTypeNode(node, accountType))
                   return (
                     // Fragment, not a wrapping div: the divider must be a direct flex child
                     // of the gap-8 container, a sibling of the section rather than nested

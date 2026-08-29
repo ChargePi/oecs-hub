@@ -1,33 +1,56 @@
 import { Building2, User } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import type { AccountType } from '@/lib/kratos-ui-nodes'
 
-// Purely presentational - the registration form below only ever submits a manufacturer
-// account (userType is a schema-level const in deployments/docker/kratos/identity.schema.json),
-// so "Individual" can't actually be selected yet. Enforcing this at the schema layer,
-// not just here, is deliberate: see the auth plan's §3.7.
-export function AccountTypeSelector() {
+interface AccountTypeOption {
+  value: AccountType
+  label: string
+  icon: typeof Building2
+}
+
+const OPTIONS: readonly AccountTypeOption[] = [
+  { value: 'manufacturer', label: 'Manufacturer', icon: Building2 },
+  { value: 'individual', label: 'Individual', icon: User },
+]
+
+interface AccountTypeSelectorProps {
+  value: AccountType
+  onChange: (value: AccountType) => void
+}
+
+// Drives register-page.tsx's hidden traits.userType node - see that file and
+// kratos-ui-nodes.ts's hideUserTypeNode/filterAccountTypeNodes for why the actual Kratos
+// node stays hidden rather than being rendered directly.
+export function AccountTypeSelector({ value, onChange }: AccountTypeSelectorProps) {
   return (
     <div className="grid grid-cols-2 gap-2" role="group" aria-label="Account type">
-      <div
-        className="flex flex-col items-center gap-1.5 rounded-lg border border-primary bg-primary/5 px-3 py-3 text-center"
-        aria-current="true"
-      >
-        <Building2 className="size-5 text-primary" aria-hidden="true" />
-        <span className="text-sm font-medium">Manufacturer</span>
-      </div>
-
-      <div
-        className={cn(
-          'flex flex-col items-center gap-1.5 rounded-lg border border-border/60 px-3 py-3 text-center opacity-60',
-        )}
-        aria-disabled="true"
-      >
-        <User className="size-5 text-muted-foreground" aria-hidden="true" />
-        <span className="text-sm font-medium text-muted-foreground">Individual</span>
-        <Badge variant="secondary">Coming soon</Badge>
-      </div>
+      {OPTIONS.map((option) => {
+        const selected = option.value === value
+        const Icon = option.icon
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              'flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-center transition-colors',
+              selected
+                ? 'border-primary bg-primary/5'
+                : 'border-border/60 hover:border-border hover:bg-muted/40',
+            )}
+          >
+            <Icon
+              className={cn('size-5', selected ? 'text-primary' : 'text-muted-foreground')}
+              aria-hidden="true"
+            />
+            <span className={cn('text-sm font-medium', !selected && 'text-muted-foreground')}>
+              {option.label}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

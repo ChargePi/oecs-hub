@@ -28,7 +28,7 @@
         "userType": {
           "type": "string",
           "title": "Account type",
-          "const": "manufacturer",
+          "enum": ["manufacturer", "individual"],
           "default": "manufacturer"
         },
         "company": {
@@ -36,6 +36,15 @@
           "title": "Company",
           "properties": {
             "name": { "type": "string", "title": "Company name" },
+            "country": { "type": "string", "title": "Country" }
+          }
+        },
+        "billingAddress": {
+          "type": "object",
+          "title": "Billing address",
+          "properties": {
+            "streetAddress": { "type": "string", "title": "Street address" },
+            "postalCode": { "type": "string", "title": "Postal code" },
             "country": { "type": "string", "title": "Country" }
           }
         }
@@ -53,6 +62,19 @@
               }
             },
             "required": ["company"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "userType": { "const": "individual" } }
+          },
+          "then": {
+            "properties": {
+              "billingAddress": {
+                "required": ["streetAddress", "postalCode", "country"]
+              }
+            },
+            "required": ["billingAddress"]
           }
         }
       ],
