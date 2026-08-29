@@ -34,8 +34,11 @@ Unlike search_chargers, this is not a text/filter search - every id must already
 (e.g. from a prior search_chargers call). A missing or unverified id is silently omitted
 from the result rather than failing the whole call.`
 
-// RegisterTools adds every MCP tool the registry exposes to s.
-func RegisterTools(s *server.MCPServer, chargers ChargerService) {
+// RegisterTools adds every MCP tool the registry exposes to s. manufacturers is a
+// separate parameter from chargers since they're backed by distinct services
+// (manufacturer.Service, not charger.Service) - mirroring how cmd/app/main.go already
+// keeps chargerSvc/manufacturerSvc as separate instances.
+func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers ManufacturerLister) {
 	searchTool := mcp.NewTool("search_chargers",
 		mcp.WithDescription(searchChargersDescription),
 		mcp.WithInputSchema[SearchChargersInput](),
@@ -49,4 +52,11 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService) {
 		mcp.WithOutputSchema[GetChargersOutput](),
 	)
 	s.AddTool(getTool, newGetChargersHandler(chargers).Handle)
+
+	listManufacturersTool := mcp.NewTool("list_manufacturers",
+		mcp.WithDescription(listManufacturersDescription),
+		mcp.WithInputSchema[ListManufacturersInput](),
+		mcp.WithOutputSchema[ListManufacturersOutput](),
+	)
+	s.AddTool(listManufacturersTool, newListManufacturersHandler(manufacturers).Handle)
 }
