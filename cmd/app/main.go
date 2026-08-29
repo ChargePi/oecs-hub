@@ -133,7 +133,7 @@ var (
 			chargerSvc := charger.NewService(chargerRepo, chargerCache, validator, manufacturerSvc, graphClient)
 
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
-			mcp.RegisterTools(mcpSrv, chargerSvc, chargerSvc)
+			mcp.RegisterTools(mcpSrv, chargerSvc)
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv)
 
 			recoveryHandler := func(p any) error {

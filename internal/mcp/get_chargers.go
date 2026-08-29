@@ -18,10 +18,10 @@ type GetChargersOutput struct {
 }
 
 type getChargersHandler struct {
-	chargers ChargerGetter
+	chargers ChargerService
 }
 
-func newGetChargersHandler(chargers ChargerGetter) *getChargersHandler {
+func newGetChargersHandler(chargers ChargerService) *getChargersHandler {
 	return &getChargersHandler{chargers: chargers}
 }
 

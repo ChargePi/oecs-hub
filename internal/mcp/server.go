@@ -11,13 +11,10 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// ChargerSearcher is the subset of charger.Service the search_chargers tool depends on.
-type ChargerSearcher interface {
+// ChargerService is the subset of charger.Service the tools in this package
+// depend on.
+type ChargerService interface {
 	SearchByFields(ctx context.Context, filters charger.FieldSearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
-}
-
-// ChargerGetter is the subset of charger.Service the get_chargers tool depends on.
-type ChargerGetter interface {
 	GetMany(ctx context.Context, ids []uuid.UUID) ([]*charger.Charger, error)
 }
 
@@ -38,7 +35,7 @@ Unlike search_chargers, this is not a text/filter search - every id must already
 from the result rather than failing the whole call.`
 
 // RegisterTools adds every MCP tool the registry exposes to s.
-func RegisterTools(s *server.MCPServer, chargers ChargerSearcher, getter ChargerGetter) {
+func RegisterTools(s *server.MCPServer, chargers ChargerService) {
 	searchTool := mcp.NewTool("search_chargers",
 		mcp.WithDescription(searchChargersDescription),
 		mcp.WithInputSchema[SearchChargersInput](),
@@ -51,5 +48,5 @@ func RegisterTools(s *server.MCPServer, chargers ChargerSearcher, getter Charger
 		mcp.WithInputSchema[GetChargersInput](),
 		mcp.WithOutputSchema[GetChargersOutput](),
 	)
-	s.AddTool(getTool, newGetChargersHandler(getter).Handle)
+	s.AddTool(getTool, newGetChargersHandler(chargers).Handle)
 }
