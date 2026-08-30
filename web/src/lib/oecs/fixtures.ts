@@ -56,6 +56,12 @@ export const chargerVariants: ChargerVariant[] = [
   // --- Ionwave Charging Systems (NL) — "Rapid" DC series ---
   {
     id: 'ionwave-rapid-75',
+    ratings: [
+      { categoryName: 'reliability', average: 4.5, count: 22 },
+      { categoryName: 'support', average: 4.1, count: 18 },
+      { categoryName: 'design', average: 4.7, count: 20 },
+      { categoryName: 'ease_of_use', average: 4.3, count: 19 },
+    ],
     manufacturer: MANUFACTURERS.ionwave,
     model: {
       name: 'IW-Rapid75',
@@ -121,6 +127,10 @@ export const chargerVariants: ChargerVariant[] = [
   },
   {
     id: 'ionwave-rapid-150',
+    ratings: [
+      { categoryName: 'reliability', average: 3.9, count: 7 },
+      { categoryName: 'ease_of_use', average: 4.2, count: 6 },
+    ],
     manufacturer: MANUFACTURERS.ionwave,
     model: {
       name: 'IW-Rapid150',
@@ -280,6 +290,7 @@ export const chargerVariants: ChargerVariant[] = [
   },
   {
     id: 'ionwave-rapid-350',
+    ratings: [],
     manufacturer: MANUFACTURERS.ionwave,
     model: {
       name: 'IW-Rapid350',
@@ -359,6 +370,12 @@ export const chargerVariants: ChargerVariant[] = [
   // --- VoltGrid GmbH (DE) — "Home" AC series ---
   {
     id: 'voltgrid-home-11',
+    ratings: [
+      { categoryName: 'reliability', average: 4.0, count: 31 },
+      { categoryName: 'support', average: 3.4, count: 27 },
+      { categoryName: 'design', average: 4.4, count: 29 },
+      { categoryName: 'ease_of_use', average: 4.6, count: 30 },
+    ],
     manufacturer: MANUFACTURERS.voltgrid,
     model: {
       name: 'VG-Home11',
@@ -428,6 +445,7 @@ export const chargerVariants: ChargerVariant[] = [
   },
   {
     id: 'voltgrid-home-22',
+    ratings: [],
     manufacturer: MANUFACTURERS.voltgrid,
     model: {
       name: 'VG-Home22',
@@ -568,6 +586,12 @@ export const chargerVariants: ChargerVariant[] = [
   // --- VoltGrid GmbH (DE) — "Pro" commercial AC series ---
   {
     id: 'voltgrid-pro-22-dual',
+    ratings: [
+      { categoryName: 'reliability', average: 4.8, count: 14 },
+      { categoryName: 'support', average: 4.6, count: 12 },
+      { categoryName: 'design', average: 4.9, count: 13 },
+      { categoryName: 'ease_of_use', average: 4.7, count: 13 },
+    ],
     manufacturer: MANUFACTURERS.voltgrid,
     model: {
       name: 'VG-Pro22-Dual',
@@ -646,6 +670,7 @@ export const chargerVariants: ChargerVariant[] = [
   // --- Nordvolt Charging AB (SE) — "Nova" DC ultra-fast series ---
   {
     id: 'nordvolt-nova-200',
+    ratings: [],
     manufacturer: MANUFACTURERS.nordvolt,
     model: {
       name: 'NV-Nova200',
@@ -723,6 +748,11 @@ export const chargerVariants: ChargerVariant[] = [
   },
   {
     id: 'nordvolt-nova-400',
+    ratings: [
+      { categoryName: 'reliability', average: 4.2, count: 9 },
+      { categoryName: 'design', average: 4.0, count: 8 },
+      { categoryName: 'ease_of_use', average: 3.8, count: 8 },
+    ],
     manufacturer: MANUFACTURERS.nordvolt,
     model: {
       name: 'NV-Nova400',
@@ -802,6 +832,7 @@ export const chargerVariants: ChargerVariant[] = [
   // --- Ampera Systems (US) — "Flex" portable/compact series ---
   {
     id: 'ampera-flex-7',
+    ratings: [],
     manufacturer: MANUFACTURERS.ampera,
     model: {
       name: 'AM-Flex7',
@@ -855,6 +886,12 @@ export const chargerVariants: ChargerVariant[] = [
   },
   {
     id: 'ampera-flex-50',
+    ratings: [
+      { categoryName: 'reliability', average: 3.1, count: 5 },
+      { categoryName: 'support', average: 2.8, count: 5 },
+      { categoryName: 'design', average: 3.6, count: 4 },
+      { categoryName: 'ease_of_use', average: 3.3, count: 4 },
+    ],
     manufacturer: MANUFACTURERS.ampera,
     model: {
       name: 'AM-Flex50',

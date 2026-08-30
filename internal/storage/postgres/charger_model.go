@@ -29,6 +29,7 @@ type chargerVariantEntity struct {
 
 	SchemaVersion string          `gorm:"column:schema_version;not null"`
 	Spec          json.RawMessage `gorm:"column:spec;type:jsonb;not null"`
+	Ratings       json.RawMessage `gorm:"column:ratings;type:jsonb;not null"`
 
 	Status      string     `gorm:"column:status;not null;default:submitted;index"`
 	SubmittedBy *string    `gorm:"column:submitted_by"`
@@ -41,6 +42,16 @@ type chargerVariantEntity struct {
 
 func (chargerVariantEntity) TableName() string {
 	return "charger_variants"
+}
+
+// ratingsOrEmpty defaults an unset Ratings field to "{}" - the column is NOT NULL and a
+// nil json.RawMessage would otherwise round-trip as SQL NULL.
+func ratingsOrEmpty(ratings []byte) json.RawMessage {
+	if len(ratings) == 0 {
+		return json.RawMessage("{}")
+	}
+
+	return json.RawMessage(ratings)
 }
 
 func chargerToEntity(c *charger.Charger) *chargerVariantEntity {
@@ -61,6 +72,7 @@ func chargerToEntity(c *charger.Charger) *chargerVariantEntity {
 		ProductImageURL:     strPtrOrNil(c.ProductImageURL),
 		SchemaVersion:       c.SchemaVersion,
 		Spec:                json.RawMessage(c.Spec),
+		Ratings:             ratingsOrEmpty(c.Ratings),
 		Status:              string(c.Status),
 		SubmittedBy:         strPtrOrNil(c.SubmittedBy),
 		SubmittedAt:         c.SubmittedAt,
@@ -88,6 +100,7 @@ func chargerToDomain(e *chargerVariantEntity) *charger.Charger {
 		ProductImageURL:     strOrEmpty(e.ProductImageURL),
 		SchemaVersion:       e.SchemaVersion,
 		Spec:                []byte(e.Spec),
+		Ratings:             []byte(e.Ratings),
 		Status:              charger.Status(e.Status),
 		SubmittedBy:         strOrEmpty(e.SubmittedBy),
 		SubmittedAt:         e.SubmittedAt,

@@ -12,6 +12,7 @@ import type { ChargerVariant } from '@/lib/oecs/types'
 import { cn } from '@/lib/utils'
 import { diffBadgeGroup } from '@/features/product/spec-badges'
 import { SpecRow, SpecSection } from '@/features/product/spec-section'
+import { RatingsSection } from '@/features/product/ratings-section'
 import type { ComparisonGroup } from './comparison-rows'
 
 /**
@@ -184,8 +185,8 @@ export function ComparisonPricingCell({
   return (
     <div
       className={cn(
-        'flex flex-col gap-2 rounded-b-xl border border-t-2 bg-primary/10 px-4 py-4',
-        isBaseline ? 'border-2 border-t-2 border-primary' : 'border-border border-t-primary',
+        'flex flex-col gap-2 border-x border-t-2 bg-primary/10 px-4 py-4',
+        isBaseline ? 'border-x-2 border-t-2 border-primary' : 'border-border border-t-primary',
       )}
     >
       <div className="flex items-center gap-1.5 text-sm font-medium text-primary">
@@ -231,6 +232,29 @@ export function ComparisonPricingCell({
       {variant.pricing?.notes && (
         <p className="text-xs text-muted-foreground">{variant.pricing.notes}</p>
       )}
+    </div>
+  )
+}
+
+/** Individual-submitted ratings, rendered as the final row of the comparison table — always
+ *  last, after pricing. See RatingsSection for the shared display logic with ProductDetail. */
+export function ComparisonRatingsCell({
+  variant,
+  baseline,
+}: {
+  variant: ChargerVariant
+  baseline: ChargerVariant
+}) {
+  const isBaseline = variant.id === baseline.id
+
+  return (
+    <div
+      className={cn(
+        'rounded-b-xl border-x border-b px-4 py-3',
+        isBaseline ? 'border-primary' : 'border-border',
+      )}
+    >
+      <RatingsSection ratings={variant.ratings} />
     </div>
   )
 }

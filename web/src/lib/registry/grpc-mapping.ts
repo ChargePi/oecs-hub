@@ -1,5 +1,12 @@
 import { RpcError, StatusCode } from 'grpc-web'
-import type { ChargerType, ChargerVariant, Contact, Manufacturer, ModelStatus } from '@/lib/oecs/types'
+import type {
+  CategoryRating,
+  ChargerType,
+  ChargerVariant,
+  Contact,
+  Manufacturer,
+  ModelStatus,
+} from '@/lib/oecs/types'
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
 import type { ManufacturerSummary } from './types'
 
@@ -49,6 +56,14 @@ export function manufacturerFromProto(m: registry_v1_registry_pb.Manufacturer): 
   }
 }
 
+export function categoryRatingFromProto(r: registry_v1_registry_pb.CategoryRating): CategoryRating {
+  return {
+    categoryName: r.getCategoryName(),
+    average: r.getAverage(),
+    count: r.getCount(),
+  }
+}
+
 export function manufacturerSummaryFromProto(
   ms: registry_v1_registry_pb.ManufacturerSummary,
 ): ManufacturerSummary {
@@ -91,6 +106,7 @@ export function chargerVariantFromSummary(
         : undefined,
     },
     software: { protocols: [] },
+    ratings: summary.getRatingsList().map(categoryRatingFromProto),
   }
 }
 
@@ -106,13 +122,14 @@ export function chargerVariantFromProto(v: registry_v1_registry_pb.ChargerVarian
 
   const spec = JSON.parse(new TextDecoder().decode(v.getSpec_asU8())) as Omit<
     ChargerVariant,
-    'id' | 'manufacturer'
+    'id' | 'manufacturer' | 'ratings'
   > & { manufacturer: Omit<Manufacturer, 'id'> }
 
   return {
     ...spec,
     id: summary.getId(),
     manufacturer: { ...spec.manufacturer, id: summary.getManufacturerId() },
+    ratings: summary.getRatingsList().map(categoryRatingFromProto),
   }
 }
 

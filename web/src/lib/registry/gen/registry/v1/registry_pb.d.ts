@@ -128,6 +128,32 @@ export namespace ManufacturerSummary {
   };
 }
 
+export class CategoryRating extends jspb.Message {
+  getCategoryName(): string;
+  setCategoryName(value: string): CategoryRating;
+
+  getAverage(): number;
+  setAverage(value: number): CategoryRating;
+
+  getCount(): number;
+  setCount(value: number): CategoryRating;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CategoryRating.AsObject;
+  static toObject(includeInstance: boolean, msg: CategoryRating): CategoryRating.AsObject;
+  static serializeBinaryToWriter(message: CategoryRating, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CategoryRating;
+  static deserializeBinaryFromReader(message: CategoryRating, reader: jspb.BinaryReader): CategoryRating;
+}
+
+export namespace CategoryRating {
+  export type AsObject = {
+    categoryName: string;
+    average: number;
+    count: number;
+  };
+}
+
 export class ChargerVariantSummary extends jspb.Message {
   getId(): string;
   setId(value: string): ChargerVariantSummary;
@@ -170,6 +196,11 @@ export class ChargerVariantSummary extends jspb.Message {
   getStatus(): SubmissionStatus;
   setStatus(value: SubmissionStatus): ChargerVariantSummary;
 
+  getRatingsList(): Array<CategoryRating>;
+  setRatingsList(value: Array<CategoryRating>): ChargerVariantSummary;
+  clearRatingsList(): ChargerVariantSummary;
+  addRatings(value?: CategoryRating, index?: number): CategoryRating;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ChargerVariantSummary.AsObject;
   static toObject(includeInstance: boolean, msg: ChargerVariantSummary): ChargerVariantSummary.AsObject;
@@ -191,6 +222,7 @@ export namespace ChargerVariantSummary {
     maxPowerKw?: number;
     productImageUrl?: string;
     status: SubmissionStatus;
+    ratingsList: Array<CategoryRating.AsObject>;
   };
 
   export enum SeriesCase {

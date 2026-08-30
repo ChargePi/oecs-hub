@@ -1,6 +1,9 @@
 package grpc
 
 import (
+	"encoding/json"
+	"sort"
+
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
@@ -129,6 +132,38 @@ func submissionStatusToDomain(s registryv1.SubmissionStatus) charger.Status {
 	}
 }
 
+// ratingsToProto decodes a Charger's denormalized ratings JSON into the proto list,
+// sorted by category name for a stable response order.
+func ratingsToProto(raw []byte) []*registryv1.CategoryRating {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	var summary charger.RatingsSummary
+	if err := json.Unmarshal(raw, &summary); err != nil || len(summary) == 0 {
+		return nil
+	}
+
+	names := make([]string, 0, len(summary))
+	for name := range summary {
+		names = append(names, name)
+	}
+
+	sort.Strings(names)
+
+	out := make([]*registryv1.CategoryRating, 0, len(names))
+	for _, name := range names {
+		score := summary[name]
+		out = append(out, &registryv1.CategoryRating{
+			CategoryName: name,
+			Average:      score.Average,
+			Count:        score.Count,
+		})
+	}
+
+	return out
+}
+
 func chargerToProtoSummary(c *charger.Charger) *registryv1.ChargerVariantSummary {
 	summary := &registryv1.ChargerVariantSummary{
 		Id:               c.ID.String(),
@@ -138,6 +173,7 @@ func chargerToProtoSummary(c *charger.Charger) *registryv1.ChargerVariantSummary
 		ChargerType:      chargerTypeToProto(c.ChargerType),
 		ConnectorTypes:   connectorTypesToProto(c.ConnectorTypes),
 		Status:           submissionStatusToProto(c.Status),
+		Ratings:          ratingsToProto(c.Ratings),
 	}
 	if c.ManufacturerID != nil {
 		summary.ManufacturerId = c.ManufacturerID.String()

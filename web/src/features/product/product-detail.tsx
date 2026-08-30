@@ -20,6 +20,7 @@ import { formatPricing, formatQuantity, formatValueRange, humanize } from '@/lib
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { useComparisonStore } from '@/stores/comparison-store'
 import { ManufacturerCard } from './manufacturer-card'
+import { RatingsSection } from './ratings-section'
 import { boolBadge } from './spec-badges'
 import { SpecLinkRow, SpecListRow, SpecRow, SpecSection, ValueTooltip } from './spec-section'
 
@@ -231,6 +232,8 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
             />
           </SpecSection>
         )}
+
+        <RatingsSection ratings={variant.ratings} />
       </div>
     </div>
   )
