@@ -64,6 +64,14 @@ message ManufacturerSummary {
   int64 variant_count = 3;
 }
 
+// CategoryRating is one rating_categories entry's aggregated score for a charger, e.g.
+// {category_name: "reliability", average: 4.2, count: 13}.
+message CategoryRating {
+  string category_name = 1;
+  double average = 2;
+  int64 count = 3;
+}
+
 message ChargerVariantSummary {
   string id = 1;
   string manufacturer_id = 2;
@@ -76,6 +84,7 @@ message ChargerVariantSummary {
   optional double max_power_kw = 9;
   optional string product_image_url = 10;
   SubmissionStatus status = 11;
+  repeated CategoryRating ratings = 12;
 }
 
 message ChargerVariant {

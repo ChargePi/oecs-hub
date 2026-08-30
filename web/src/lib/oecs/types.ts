@@ -308,6 +308,16 @@ export interface Metadata {
 }
 
 /**
+ * One rating_categories entry's aggregated score for a charger (e.g. "reliability": 4.2
+ * average over 13 ratings). Platform-native — not part of the OECS schema.
+ */
+export interface CategoryRating {
+  categoryName: string
+  average: number
+  count: number
+}
+
+/**
  * A single OECS charger record — one manufacturer, one model. This is the "variant" leaf in
  * the explorer graph: multiple variants sharing the same manufacturer + model.series form a
  * product line.
@@ -321,6 +331,7 @@ export interface ChargerVariant {
   payment?: Payment
   pricing?: Pricing
   metadata?: Metadata
+  ratings: CategoryRating[]
 }
 
 /** Client-side grouping — not a schema entity. A "product" is manufacturer + series. */

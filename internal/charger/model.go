@@ -41,6 +41,21 @@ type Charger struct {
 	SubmittedAt time.Time
 	ReviewedAt  *time.Time
 
+	// Ratings is the denormalized per-category rating aggregate, stored as JSON matching
+	// RatingsSummary - keyed by rating_categories.name (e.g. "reliability"), each value a
+	// CategoryScore. Empty ("{}") until individual ratings are submitted.
+	Ratings []byte
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+// CategoryScore is one category's aggregated rating, as stored in Charger.Ratings.
+type CategoryScore struct {
+	Average float64 `json:"average"`
+	Count   int64   `json:"count"`
+}
+
+// RatingsSummary is the decoded shape of Charger.Ratings - one CategoryScore per
+// rating_categories.name.
+type RatingsSummary map[string]CategoryScore

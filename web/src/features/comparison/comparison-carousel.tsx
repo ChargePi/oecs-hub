@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { MAX_COMPARISON_ITEMS, useComparisonStore } from '@/stores/comparison-store'
 import { AddChargerControl } from './add-charger-control'
-import { ComparisonGroupCell, ComparisonHeaderCell, ComparisonPricingCell } from './comparison-card'
+import {
+  ComparisonGroupCell,
+  ComparisonHeaderCell,
+  ComparisonPricingCell,
+  ComparisonRatingsCell,
+} from './comparison-card'
 import { comparisonGroups } from './comparison-rows'
 
 function ComparisonLegend() {
@@ -70,6 +75,10 @@ export function ComparisonCarousel({ variants }: { variants: ChargerVariant[] })
 
             {variants.map((variant) => (
               <ComparisonPricingCell key={variant.id} variant={variant} baseline={baseline} />
+            ))}
+
+            {variants.map((variant) => (
+              <ComparisonRatingsCell key={variant.id} variant={variant} baseline={baseline} />
             ))}
           </div>
 
