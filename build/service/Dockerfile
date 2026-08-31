@@ -58,8 +58,9 @@ COPY --chown=$user:$group --from=build /app/src/deployments/migrations ./migrati
 RUN chmod +x /usr/local/bin/oecs-hub /usr/local/bin/oecs-hub-migrate
 
 
-# Add a health check
+# Add a health check. Port matches grpc.address's default (0.0.0.0:50051) - the same
+# HTTP server that dispatches between native gRPC and gRPC-Web serves /healthz too.
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
-    CMD curl --fail http://localhost:80/healthz || exit 1
+    CMD curl --fail http://localhost:50051/healthz || exit 1
 
 ENTRYPOINT ["/usr/local/bin/oecs-hub"]

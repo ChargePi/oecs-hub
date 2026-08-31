@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
+	"github.com/ChargePi/oecs-hub/internal/auth"
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	grpcHandler "github.com/ChargePi/oecs-hub/internal/grpc"
@@ -147,6 +148,7 @@ var (
 				grpc.ChainUnaryInterceptor(
 					grpc_zap.UnaryServerInterceptor(logger),
 					grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandler(recoveryHandler)),
+					auth.UnaryInterceptor(cfg.Auth.GatewaySecret),
 				),
 				grpc.ChainStreamInterceptor(
 					grpc_zap.StreamServerInterceptor(logger),
@@ -201,7 +203,7 @@ var (
 
 			// AdminAPI is served on its own gRPC server/port so it can be network-isolated
 			// from the public registry API.
-			adminGrpcServer := adminserver.NewServer(logger, chargerSvc, manufacturerSvc)
+			adminGrpcServer := adminserver.NewServer(logger, chargerSvc, manufacturerSvc, cfg.Auth.GatewaySecret)
 			if err := adminGrpcServer.Start(cfg.AdminGRPC.Address); err != nil {
 				logger.Fatal("failed to start admin gRPC server", zap.Error(err))
 			}
@@ -241,6 +243,7 @@ func setDefaults() {
 	_ = viper.BindEnv("grpc.address", "OECS_HUB_GRPC_ADDRESS")
 	_ = viper.BindEnv("grpc.allowedOrigins", "OECS_HUB_GRPC_ALLOWED_ORIGINS")
 	_ = viper.BindEnv("adminGrpc.address", "OECS_HUB_ADMIN_GRPC_ADDRESS")
+	_ = viper.BindEnv("auth.gatewaySecret", "OECS_HUB_AUTH_GATEWAY_SECRET")
 }
 
 // getConfiguration gets the configuration from cache or file.

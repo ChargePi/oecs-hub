@@ -1,0 +1,89 @@
+# Per-RPC access rules. When called via Traefik's forwardAuth middleware (not
+# Oathkeeper's own reverse-proxy mode - the "upstream" field below is unused in this
+# setup), Oathkeeper reconstructs the request URL it matches against from the
+# X-Forwarded-Host/-Uri headers Traefik sends: the *public-facing* host
+# (e.g. localhost:8000), plus the path *after* the router's strip-prefix middleware has
+# already run (confirmed empirically) - e.g. "/registry.v1.RegistryService/SearchChargers",
+# not the internal backend:50051 address. The host is wildcarded below since it varies
+# by how the stack is reached (localhost, a LAN IP, a different port).
+
+- id: oecs-schema
+  upstream:
+    url: http://backend:50051
+  match:
+    # Plain REST paths (see cmd/app/main.go's HTTP dispatch, §4 of the auth plan), not
+    # gRPC - these never matched either of the two gRPC-shaped rules below, so every
+    # request 404'd with "no matching rule" before reaching the backend at all (caught by
+    # the Submit Charger page failing to load the schema for Monaco's diagnostics).
+    url: "http://<.*>/oecs-schema/<.*>"
+    methods: ["GET"]
+  # Static schema files - no session needed, same as most RegistryService RPCs.
+  authenticators:
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+
+- id: registry-service-default
+  upstream:
+    url: http://backend:50051
+  match:
+    # Oathkeeper requires exactly one matching rule per request (no first-match/priority
+    # semantics like Traefik, and RE2 - which its glob matcher embeds - has no negative
+    # lookahead to write "anything except SubmitChargerSpec") - so the public RPCs are
+    # enumerated explicitly here rather than wildcarded, which also means a newly added
+    # RPC defaults to *no* matching rule (an error, not silently public) until someone
+    # decides which bucket it belongs in.
+    url: "http://<.*>/registry.v1.RegistryService/<SearchChargers|GetManufacturers|GetCharger|GetManufacturer>"
+    methods: ["POST"]
+  # Public by default - session forwarded as identity headers when present, anonymous
+  # otherwise. These RPCs don't require a session at all.
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: registry-service-submit-charger-spec
+  upstream:
+    url: http://backend:50051
+  match:
+    url: "http://<.*>/registry.v1.RegistryService/SubmitChargerSpec"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required. A manufacturer-specific check isn't
+  # needed yet: userType is a schema-level const("manufacturer") today (see
+  # identity.schema.json), so any authenticated identity is a manufacturer by
+  # construction. Revisit with a Keto relation once normal-user registration launches.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: admin-service
+  upstream:
+    url: http://backend:50052
+  match:
+    url: "http://<.*>/admin.v1.AdminService/<.*>"
+    methods: ["POST"]
+  # Operators/tooling, not a browser - bearer token from Kratos's API-flow login, not a
+  # cookie. Authorization is a Keto admin-relation check, not "allow" - see
+  # oathkeeper.yml's remote_json authorizer and its verify-at-implementation-time note.
+  authenticators:
+    - handler: bearer_token
+  authorizer:
+    handler: remote_json
+    config:
+      payload: |
+        {
+          "namespace": "Role",
+          "object": "admin",
+          "relation": "members",
+          "subject_id": "{{ print .Subject }}"
+        }
+  mutators:
+    - handler: header

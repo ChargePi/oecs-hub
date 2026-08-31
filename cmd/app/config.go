@@ -38,6 +38,14 @@ type AdminGRPCConfiguration struct {
 	Address string `json:"address" mapstructure:"address" validate:"required" yaml:"address"`
 }
 
+// AuthConfiguration configures how the backend trusts identity headers injected by the
+// Traefik/Oathkeeper edge - see internal/auth. The backend never talks to Kratos/Oathkeeper
+// itself; GatewaySecret just proves a request was routed (and authenticated/authorized)
+// through that edge rather than hitting a gRPC port directly.
+type AuthConfiguration struct {
+	GatewaySecret string `json:"gatewaySecret" mapstructure:"gatewaySecret" validate:"required" yaml:"gatewaySecret"`
+}
+
 type Configuration struct {
 	Database      DatabaseConfiguration  `json:"database"      mapstructure:"database"      validate:"required" yaml:"database"`
 	Redis         RedisConfiguration     `json:"redis"         mapstructure:"redis"         validate:"required" yaml:"redis"`
@@ -45,4 +53,5 @@ type Configuration struct {
 	Observability observability.Config   `json:"observability" mapstructure:"observability" validate:"required" yaml:"observability"`
 	GRPC          GRPCConfiguration      `json:"grpc"          mapstructure:"grpc"          validate:"required" yaml:"grpc"`
 	AdminGRPC     AdminGRPCConfiguration `json:"adminGrpc"     mapstructure:"adminGrpc"     validate:"required" yaml:"adminGrpc"`
+	Auth          AuthConfiguration      `json:"auth"          mapstructure:"auth"          validate:"required" yaml:"auth"`
 }

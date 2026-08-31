@@ -1,15 +1,32 @@
 import { lazy } from 'react'
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Navigate } from 'react-router'
 
 import { AppShell } from '@/components/layout/app-shell'
 import { ExplorerLayout } from '@/components/layout/explorer-layout'
 import { ExplorerPage } from '@/features/explorer/explorer-page'
+import { RequireAuth } from './require-auth'
 
 const GraphPage = lazy(() =>
   import('@/features/graph/graph-page').then((m) => ({ default: m.GraphPage })),
 )
 const ComparePage = lazy(() =>
   import('@/features/comparison/compare-page').then((m) => ({ default: m.ComparePage })),
+)
+
+const LoginPage = lazy(() =>
+  import('@/features/auth/login-page').then((m) => ({ default: m.LoginPage })),
+)
+const RegisterPage = lazy(() =>
+  import('@/features/auth/register-page').then((m) => ({ default: m.RegisterPage })),
+)
+const RecoveryPage = lazy(() =>
+  import('@/features/auth/recovery-page').then((m) => ({ default: m.RecoveryPage })),
+)
+const VerificationPage = lazy(() =>
+  import('@/features/auth/verification-page').then((m) => ({ default: m.VerificationPage })),
+)
+const ProfilePage = lazy(() =>
+  import('@/features/account/profile-page').then((m) => ({ default: m.ProfilePage })),
 )
 
 export const router = createBrowserRouter([
@@ -22,6 +39,19 @@ export const router = createBrowserRouter([
         children: [{ path: 'explore/:manufacturerId', element: <GraphPage /> }],
       },
       { path: 'compare', element: <ComparePage /> },
+      { path: 'auth', element: <Navigate to="/auth/login" replace /> },
+      { path: 'auth/login', element: <LoginPage /> },
+      { path: 'auth/register', element: <RegisterPage /> },
+      { path: 'auth/recovery', element: <RecoveryPage /> },
+      { path: 'auth/verification', element: <VerificationPage /> },
+      {
+        path: 'profile',
+        element: (
+          <RequireAuth>
+            <ProfilePage />
+          </RequireAuth>
+        ),
+      },
     ],
   },
 ])

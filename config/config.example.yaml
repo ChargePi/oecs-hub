@@ -22,6 +22,13 @@ grpc:
 adminGrpc:
   address: "0.0.0.0:50052"
 
+# gatewaySecret must match the value Oathkeeper's header mutator injects as
+# X-Gateway-Secret (deployments/docker/oathkeeper/access-rules.yml) - it's how this
+# service trusts the X-User-* identity headers Traefik/Oathkeeper forward, without
+# talking to Kratos itself. See internal/auth.
+auth:
+  gatewaySecret: "changeme-dev-only"
+
 observability:
   tracing:
     enabled: false
