@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { FlowType, UiNodeGroupEnum } from '@ory/client-fetch'
 import type { UiNode } from '@ory/client-fetch'
+import { Building2, User } from 'lucide-react'
 import {
   Node,
   OryCard,
@@ -11,8 +12,28 @@ import {
   useOryFlow,
 } from '@ory/elements-react'
 
-import { currentAccountType, filterAccountTypeNodes, hideUserTypeNode } from '@/lib/kratos-ui-nodes'
+import {
+  type AccountType,
+  currentAccountType,
+  filterAccountTypeNodes,
+  hideUserTypeNode,
+} from '@/lib/kratos-ui-nodes'
 import type { AccountSection } from './settings-node-groups'
+
+// userType has no self-service change flow (see identity.schema.json) and is rendered
+// as a hidden node (hideUserTypeNode) - without this, nothing on the Profile page ever
+// visibly states which account type you're looking at, even though the fields below it
+// (Company vs. Billing address) already differ by type.
+function AccountTypeIndicator({ accountType }: { accountType: AccountType }) {
+  const Icon = accountType === 'manufacturer' ? Building2 : User
+  const label = accountType === 'manufacturer' ? 'Manufacturer account' : 'Individual account'
+  return (
+    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+      <Icon className="size-4" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  )
+}
 
 // Kratos bundles profile/password/totp/webauthn/oidc into one settings flow, but the
 // header dropdown wants two separate entries (Settings, Security). Rendering the same
@@ -85,9 +106,17 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
             <Fragment key={section.title}>
               {si > 0 && <OryFormGroupDivider />}
               <div className="flex flex-col gap-8">
-                <h2 className="font-heading text-lg font-semibold text-foreground">
-                  {section.title}
-                </h2>
+                {/* No heading for Profile: profile-page.tsx's own <h1>Profile</h1> right
+                    above this card already says it - a second "Profile" heading here
+                    read as a duplicate title. Security has no such page-level heading,
+                    so it keeps its own. */}
+                {section.title === 'Profile' ? (
+                  <AccountTypeIndicator accountType={accountType} />
+                ) : (
+                  <h2 className="font-heading text-lg font-semibold text-foreground">
+                    {section.title}
+                  </h2>
+                )}
                 {section.groups.map((group, i) => {
                   const nodes: UiNode[] = filterAccountTypeNodes(
                     [...defaultNodes, ...allNodes.filter((node) => node.group === group)],

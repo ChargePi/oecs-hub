@@ -29,7 +29,10 @@ services:
     hostname: redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      # Host port 6380, not 6379: already taken by an unrelated project's redis on this
+      # host. Container-to-container traffic uses the "redis" hostname/6379 internally,
+      # unaffected by this remap.
+      - "6380:6379"
     volumes:
       - redis:/data
 
@@ -66,7 +69,8 @@ services:
     ports:
       - "8000:80"
       # Traefik's own dashboard - dev convenience only, not for production use.
-      - "8081:8080"
+      # Host port 8091, not 8081: already taken by an unrelated project on this host.
+      - "8091:8080"
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
 
