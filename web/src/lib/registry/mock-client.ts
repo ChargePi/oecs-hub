@@ -1,6 +1,12 @@
 import { chargerVariants } from '@/lib/oecs/fixtures'
 import type { ChargerVariant, Manufacturer, Product } from '@/lib/oecs/types'
-import type { ManufacturerGraph, ManufacturerSummary, RegistryClient, SearchResult } from './types'
+import type {
+  ManufacturerGraph,
+  ManufacturerSummary,
+  RegistryClient,
+  SearchResult,
+  SubmitChargerSpecResult,
+} from './types'
 
 const SIMULATED_LATENCY_MS = 220
 
@@ -111,5 +117,9 @@ export class MockRegistryClient implements RegistryClient {
 
   async listVariants(): Promise<ChargerVariant[]> {
     return delay(chargerVariants)
+  }
+
+  async submitChargerSpec(): Promise<SubmitChargerSpecResult> {
+    return delay({ id: crypto.randomUUID(), status: 'submitted' })
   }
 }

@@ -9,8 +9,15 @@ import {
   manufacturerFromProto,
   manufacturerSummaryFromProto,
   mapGrpcError,
+  submissionStatusFromProto,
 } from './grpc-mapping'
-import type { ManufacturerGraph, ManufacturerSummary, RegistryClient, SearchResult } from './types'
+import type {
+  ManufacturerGraph,
+  ManufacturerSummary,
+  RegistryClient,
+  SearchResult,
+  SubmitChargerSpecResult,
+} from './types'
 
 const BASE_URL = '/api'
 const MAX_PAGE_SIZE = 200
@@ -149,6 +156,18 @@ export class GrpcRegistryClient implements RegistryClient {
       return items.map(chargerVariantFromSummary)
     } catch (err) {
       mapGrpcError(err, 'listVariants')
+    }
+  }
+
+  async submitChargerSpec(spec: Uint8Array): Promise<SubmitChargerSpecResult> {
+    const req = new registry_v1_registry_pb.SubmitChargerSpecRequest()
+    req.setSpec(spec)
+
+    try {
+      const resp = await this.client.submitChargerSpec(req, {})
+      return { id: resp.getId(), status: submissionStatusFromProto(resp.getStatus()) }
+    } catch (err) {
+      mapGrpcError(err, 'submitChargerSpec')
     }
   }
 }

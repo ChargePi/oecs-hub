@@ -14,10 +14,11 @@ import (
 
 var tracer = otel.Tracer("charger.service")
 
-// ManufacturerResolver resolves a manufacturer name/country to an ID, creating the
-// manufacturer if it doesn't already exist. Implemented by manufacturer.Service.
+// ManufacturerResolver resolves a manufacturer name/country to an ID, creating or
+// claiming the manufacturer - owned by ownerIdentityID - if needed. Implemented by
+// manufacturer.Service.
 type ManufacturerResolver interface {
-	ResolveID(ctx context.Context, name, country string) (uuid.UUID, error)
+	ResolveIDForIdentity(ctx context.Context, ownerIdentityID uuid.UUID, name, country string) (uuid.UUID, error)
 }
 
 // GraphProjector upserts/removes the read-side Memgraph projection. Implemented by
@@ -40,9 +41,12 @@ func NewService(repo Repository, cache Cache, validator *oecsspec.Validator, man
 }
 
 // Submit validates raw against the OECS schema, extracts search fields, and inserts it
-// with status StatusSubmitted. Returns an error wrapping ErrInvalidSpec if validation
-// fails.
-func (s *Service) Submit(ctx context.Context, raw []byte, submittedBy string) (*Charger, error) {
+// with status StatusSubmitted. submitterIdentityID is the Kratos identity ID of the
+// authenticated manufacturer submitting the spec (see internal/auth); submittedBy is a
+// display-name snapshot (e.g. company name) and submitterEmail the account's login email,
+// both recorded alongside it so a reviewer can identify/contact the submitter without a
+// separate Kratos lookup. Returns an error wrapping ErrInvalidSpec if validation fails.
+func (s *Service) Submit(ctx context.Context, raw []byte, submitterIdentityID uuid.UUID, submittedBy, submitterEmail string) (*Charger, error) {
 	ctx, span := tracer.Start(ctx, "charger.Submit")
 	defer span.End()
 
@@ -56,22 +60,24 @@ func (s *Service) Submit(ctx context.Context, raw []byte, submittedBy string) (*
 
 	fields := extract(spec)
 	c := &Charger{
-		ManufacturerName:    spec.Manufacturer.Name,
-		ManufacturerCountry: spec.Manufacturer.Country,
-		Series:              spec.Model.Series,
-		ModelName:           spec.Model.Name,
-		PartNumber:          spec.Model.PartNumber,
-		ChargerType:         spec.Model.Type,
-		ModelStatus:         spec.Model.Status,
-		ConnectorTypes:      fields.connectorTypes,
-		Protocols:           fields.protocols,
-		MinPowerWatts:       fields.minPowerWatts,
-		MaxPowerWatts:       fields.maxPowerWatts,
-		ProductImageURL:     spec.Model.ProductImageURL,
-		SchemaVersion:       spec.Version,
-		Spec:                raw,
-		Status:              StatusSubmitted,
-		SubmittedBy:         submittedBy,
+		ManufacturerName:      spec.Manufacturer.Name,
+		ManufacturerCountry:   spec.Manufacturer.Country,
+		Series:                spec.Model.Series,
+		ModelName:             spec.Model.Name,
+		PartNumber:            spec.Model.PartNumber,
+		ChargerType:           spec.Model.Type,
+		ModelStatus:           spec.Model.Status,
+		ConnectorTypes:        fields.connectorTypes,
+		Protocols:             fields.protocols,
+		MinPowerWatts:         fields.minPowerWatts,
+		MaxPowerWatts:         fields.maxPowerWatts,
+		ProductImageURL:       spec.Model.ProductImageURL,
+		SchemaVersion:         spec.Version,
+		Spec:                  raw,
+		Status:                StatusSubmitted,
+		SubmittedByIdentityID: submitterIdentityID,
+		SubmittedBy:           submittedBy,
+		SubmittedByEmail:      submitterEmail,
 	}
 
 	if err := s.repo.Create(ctx, c); err != nil {
@@ -201,7 +207,7 @@ func (s *Service) ChangeStatus(ctx context.Context, id uuid.UUID, status Status)
 	var manufacturerID *uuid.UUID
 
 	if status == StatusVerified {
-		mID, err := s.manufacturer.ResolveID(ctx, existing.ManufacturerName, existing.ManufacturerCountry)
+		mID, err := s.manufacturer.ResolveIDForIdentity(ctx, existing.SubmittedByIdentityID, existing.ManufacturerName, existing.ManufacturerCountry)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())

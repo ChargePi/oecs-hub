@@ -8,15 +8,16 @@ import (
 )
 
 type manufacturerEntity struct {
-	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Name           string    `gorm:"column:name;not null"`
-	Country        *string   `gorm:"column:country"`
-	ContactName    *string   `gorm:"column:contact_name"`
-	ContactEmail   *string   `gorm:"column:contact_email"`
-	ContactPhone   *string   `gorm:"column:contact_phone"`
-	ContactWebsite *string   `gorm:"column:contact_website"`
-	CreatedAt      time.Time `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt      time.Time `gorm:"column:updated_at;autoUpdateTime"`
+	ID              uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	OwnerIdentityID *uuid.UUID `gorm:"column:owner_identity_id"`
+	Name            string     `gorm:"column:name;not null"`
+	Country         *string    `gorm:"column:country"`
+	ContactName     *string    `gorm:"column:contact_name"`
+	ContactEmail    *string    `gorm:"column:contact_email"`
+	ContactPhone    *string    `gorm:"column:contact_phone"`
+	ContactWebsite  *string    `gorm:"column:contact_website"`
+	CreatedAt       time.Time  `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt       time.Time  `gorm:"column:updated_at;autoUpdateTime"`
 }
 
 func (manufacturerEntity) TableName() string {
@@ -25,23 +26,25 @@ func (manufacturerEntity) TableName() string {
 
 func manufacturerToEntity(m *manufacturer.Manufacturer) *manufacturerEntity {
 	return &manufacturerEntity{
-		ID:             m.ID,
-		Name:           m.Name,
-		Country:        strPtrOrNil(m.Country),
-		ContactName:    strPtrOrNil(m.Contact.Name),
-		ContactEmail:   strPtrOrNil(m.Contact.Email),
-		ContactPhone:   strPtrOrNil(m.Contact.Phone),
-		ContactWebsite: strPtrOrNil(m.Contact.Website),
-		CreatedAt:      m.CreatedAt,
-		UpdatedAt:      m.UpdatedAt,
+		ID:              m.ID,
+		OwnerIdentityID: m.OwnerIdentityID,
+		Name:            m.Name,
+		Country:         strPtrOrNil(m.Country),
+		ContactName:     strPtrOrNil(m.Contact.Name),
+		ContactEmail:    strPtrOrNil(m.Contact.Email),
+		ContactPhone:    strPtrOrNil(m.Contact.Phone),
+		ContactWebsite:  strPtrOrNil(m.Contact.Website),
+		CreatedAt:       m.CreatedAt,
+		UpdatedAt:       m.UpdatedAt,
 	}
 }
 
 func manufacturerToDomain(e *manufacturerEntity) *manufacturer.Manufacturer {
 	return &manufacturer.Manufacturer{
-		ID:      e.ID,
-		Name:    e.Name,
-		Country: strOrEmpty(e.Country),
+		ID:              e.ID,
+		OwnerIdentityID: e.OwnerIdentityID,
+		Name:            e.Name,
+		Country:         strOrEmpty(e.Country),
 		Contact: manufacturer.Contact{
 			Name:    strOrEmpty(e.ContactName),
 			Email:   strOrEmpty(e.ContactEmail),
@@ -67,4 +70,22 @@ func strOrEmpty(s *string) string {
 	}
 
 	return *s
+}
+
+// uuidPtrOrNil returns nil for uuid.Nil, matching strPtrOrNil's "empty means absent"
+// convention for nullable columns.
+func uuidPtrOrNil(id uuid.UUID) *uuid.UUID {
+	if id == uuid.Nil {
+		return nil
+	}
+
+	return &id
+}
+
+func uuidOrNil(id *uuid.UUID) uuid.UUID {
+	if id == nil {
+		return uuid.Nil
+	}
+
+	return *id
 }
