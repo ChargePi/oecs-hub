@@ -31,10 +31,12 @@ type chargerVariantEntity struct {
 	Spec          json.RawMessage `gorm:"column:spec;type:jsonb;not null"`
 	Ratings       json.RawMessage `gorm:"column:ratings;type:jsonb;not null"`
 
-	Status      string     `gorm:"column:status;not null;default:submitted;index"`
-	SubmittedBy *string    `gorm:"column:submitted_by"`
-	SubmittedAt time.Time  `gorm:"column:submitted_at;autoCreateTime"`
-	ReviewedAt  *time.Time `gorm:"column:reviewed_at"`
+	Status                string     `gorm:"column:status;not null;default:submitted;index"`
+	SubmittedByIdentityID *uuid.UUID `gorm:"column:submitted_by_identity_id"`
+	SubmittedBy           *string    `gorm:"column:submitted_by"`
+	SubmittedByEmail      *string    `gorm:"column:submitted_by_email"`
+	SubmittedAt           time.Time  `gorm:"column:submitted_at;autoCreateTime"`
+	ReviewedAt            *time.Time `gorm:"column:reviewed_at"`
 
 	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
@@ -56,57 +58,61 @@ func ratingsOrEmpty(ratings []byte) json.RawMessage {
 
 func chargerToEntity(c *charger.Charger) *chargerVariantEntity {
 	return &chargerVariantEntity{
-		ID:                  c.ID,
-		ManufacturerID:      c.ManufacturerID,
-		ManufacturerName:    c.ManufacturerName,
-		ManufacturerCountry: strPtrOrNil(c.ManufacturerCountry),
-		Series:              strPtrOrNil(c.Series),
-		ModelName:           c.ModelName,
-		PartNumber:          strPtrOrNil(c.PartNumber),
-		ChargerType:         c.ChargerType,
-		ModelStatus:         strPtrOrNil(c.ModelStatus),
-		ConnectorTypes:      pq.StringArray(c.ConnectorTypes),
-		Protocols:           pq.StringArray(c.Protocols),
-		MinPowerWatts:       c.MinPowerWatts,
-		MaxPowerWatts:       c.MaxPowerWatts,
-		ProductImageURL:     strPtrOrNil(c.ProductImageURL),
-		SchemaVersion:       c.SchemaVersion,
-		Spec:                json.RawMessage(c.Spec),
-		Ratings:             ratingsOrEmpty(c.Ratings),
-		Status:              string(c.Status),
-		SubmittedBy:         strPtrOrNil(c.SubmittedBy),
-		SubmittedAt:         c.SubmittedAt,
-		ReviewedAt:          c.ReviewedAt,
-		CreatedAt:           c.CreatedAt,
-		UpdatedAt:           c.UpdatedAt,
+		ID:                    c.ID,
+		ManufacturerID:        c.ManufacturerID,
+		ManufacturerName:      c.ManufacturerName,
+		ManufacturerCountry:   strPtrOrNil(c.ManufacturerCountry),
+		Series:                strPtrOrNil(c.Series),
+		ModelName:             c.ModelName,
+		PartNumber:            strPtrOrNil(c.PartNumber),
+		ChargerType:           c.ChargerType,
+		ModelStatus:           strPtrOrNil(c.ModelStatus),
+		ConnectorTypes:        pq.StringArray(c.ConnectorTypes),
+		Protocols:             pq.StringArray(c.Protocols),
+		MinPowerWatts:         c.MinPowerWatts,
+		MaxPowerWatts:         c.MaxPowerWatts,
+		ProductImageURL:       strPtrOrNil(c.ProductImageURL),
+		SchemaVersion:         c.SchemaVersion,
+		Spec:                  json.RawMessage(c.Spec),
+		Ratings:               ratingsOrEmpty(c.Ratings),
+		Status:                string(c.Status),
+		SubmittedByIdentityID: uuidPtrOrNil(c.SubmittedByIdentityID),
+		SubmittedBy:           strPtrOrNil(c.SubmittedBy),
+		SubmittedByEmail:      strPtrOrNil(c.SubmittedByEmail),
+		SubmittedAt:           c.SubmittedAt,
+		ReviewedAt:            c.ReviewedAt,
+		CreatedAt:             c.CreatedAt,
+		UpdatedAt:             c.UpdatedAt,
 	}
 }
 
 func chargerToDomain(e *chargerVariantEntity) *charger.Charger {
 	return &charger.Charger{
-		ID:                  e.ID,
-		ManufacturerID:      e.ManufacturerID,
-		ManufacturerName:    e.ManufacturerName,
-		ManufacturerCountry: strOrEmpty(e.ManufacturerCountry),
-		Series:              strOrEmpty(e.Series),
-		ModelName:           e.ModelName,
-		PartNumber:          strOrEmpty(e.PartNumber),
-		ChargerType:         e.ChargerType,
-		ModelStatus:         strOrEmpty(e.ModelStatus),
-		ConnectorTypes:      []string(e.ConnectorTypes),
-		Protocols:           []string(e.Protocols),
-		MinPowerWatts:       e.MinPowerWatts,
-		MaxPowerWatts:       e.MaxPowerWatts,
-		ProductImageURL:     strOrEmpty(e.ProductImageURL),
-		SchemaVersion:       e.SchemaVersion,
-		Spec:                []byte(e.Spec),
-		Ratings:             []byte(e.Ratings),
-		Status:              charger.Status(e.Status),
-		SubmittedBy:         strOrEmpty(e.SubmittedBy),
-		SubmittedAt:         e.SubmittedAt,
-		ReviewedAt:          e.ReviewedAt,
-		CreatedAt:           e.CreatedAt,
-		UpdatedAt:           e.UpdatedAt,
+		ID:                    e.ID,
+		ManufacturerID:        e.ManufacturerID,
+		ManufacturerName:      e.ManufacturerName,
+		ManufacturerCountry:   strOrEmpty(e.ManufacturerCountry),
+		Series:                strOrEmpty(e.Series),
+		ModelName:             e.ModelName,
+		PartNumber:            strOrEmpty(e.PartNumber),
+		ChargerType:           e.ChargerType,
+		ModelStatus:           strOrEmpty(e.ModelStatus),
+		ConnectorTypes:        []string(e.ConnectorTypes),
+		Protocols:             []string(e.Protocols),
+		MinPowerWatts:         e.MinPowerWatts,
+		MaxPowerWatts:         e.MaxPowerWatts,
+		ProductImageURL:       strOrEmpty(e.ProductImageURL),
+		SchemaVersion:         e.SchemaVersion,
+		Spec:                  []byte(e.Spec),
+		Ratings:               []byte(e.Ratings),
+		Status:                charger.Status(e.Status),
+		SubmittedByIdentityID: uuidOrNil(e.SubmittedByIdentityID),
+		SubmittedBy:           strOrEmpty(e.SubmittedBy),
+		SubmittedByEmail:      strOrEmpty(e.SubmittedByEmail),
+		SubmittedAt:           e.SubmittedAt,
+		ReviewedAt:            e.ReviewedAt,
+		CreatedAt:             e.CreatedAt,
+		UpdatedAt:             e.UpdatedAt,
 	}
 }
 

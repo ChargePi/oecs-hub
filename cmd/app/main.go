@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"slices"
+	"strings"
 	"syscall"
 
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
@@ -167,6 +168,13 @@ var (
 				}),
 			)
 
+			schemaFS, err := oecsspec.SchemaFS()
+			if err != nil {
+				logger.Fatal("failed to load embedded OECS schema filesystem", zap.Error(err))
+			}
+
+			schemaHandler := http.StripPrefix("/oecs-schema/", http.FileServer(http.FS(schemaFS)))
+
 			httpServer := &http.Server{
 				Addr: cfg.GRPC.Address,
 				Handler: h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -176,12 +184,13 @@ var (
 						_, _ = w.Write([]byte("ok\n"))
 					case r.URL.Path == "/mcp":
 						mcpHandler.ServeHTTP(w, r)
+					case strings.HasPrefix(r.URL.Path, "/oecs-schema/"):
+						schemaHandler.ServeHTTP(w, r)
 					case wrappedGrpc.IsGrpcWebRequest(r) || wrappedGrpc.IsAcceptableGrpcCorsRequest(r):
 						wrappedGrpc.ServeHTTP(w, r)
-						return
+					default:
+						grpcServer.ServeHTTP(w, r)
 					}
-
-					grpcServer.ServeHTTP(w, r)
 				}), &http2.Server{}),
 			}
 

@@ -118,6 +118,10 @@ func (h *AdminHandler) UpdateSchemaStatus(ctx context.Context, req *adminv1.Upda
 			return nil, status.Error(codes.NotFound, "charger not found")
 		}
 
+		if errors.Is(err, manufacturer.ErrOwnershipConflict) {
+			return nil, status.Error(codes.FailedPrecondition, "manufacturer name/country is already owned by a different account; resolve manually before verifying")
+		}
+
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

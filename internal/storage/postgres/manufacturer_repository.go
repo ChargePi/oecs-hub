@@ -49,6 +49,57 @@ func (r *ManufacturerRepository) FindOrCreate(ctx context.Context, m *manufactur
 	return nil
 }
 
+// FindOrCreateForIdentity resolves (name, country) to a manufacturer row owned by
+// ownerIdentityID. See manufacturer.Repository for the exact claim/conflict semantics.
+// Runs in a transaction since it reads then conditionally writes.
+func (r *ManufacturerRepository) FindOrCreateForIdentity(ctx context.Context, ownerIdentityID uuid.UUID, m *manufacturer.Manufacturer) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var owned manufacturerEntity
+
+		err := tx.Where("owner_identity_id = ?", ownerIdentityID).First(&owned).Error
+		switch {
+		case err == nil:
+			*m = *manufacturerToDomain(&owned)
+			return nil
+		case !errors.Is(err, gorm.ErrRecordNotFound):
+			return fmt.Errorf("find manufacturer owned by identity: %w", err)
+		}
+
+		var existing manufacturerEntity
+
+		err = tx.Where("name = ? AND country IS NOT DISTINCT FROM ?", m.Name, strPtrOrNil(m.Country)).
+			First(&existing).Error
+		switch {
+		case err == nil:
+			if existing.OwnerIdentityID != nil && *existing.OwnerIdentityID != ownerIdentityID {
+				return manufacturer.ErrOwnershipConflict
+			}
+
+			if err := tx.Model(&existing).Update("owner_identity_id", ownerIdentityID).Error; err != nil {
+				return fmt.Errorf("claim manufacturer: %w", err)
+			}
+
+			existing.OwnerIdentityID = &ownerIdentityID
+			*m = *manufacturerToDomain(&existing)
+
+			return nil
+		case !errors.Is(err, gorm.ErrRecordNotFound):
+			return fmt.Errorf("find manufacturer by name/country: %w", err)
+		}
+
+		entity := manufacturerToEntity(m)
+		entity.OwnerIdentityID = &ownerIdentityID
+
+		if err := tx.Create(entity).Error; err != nil {
+			return fmt.Errorf("create manufacturer: %w", err)
+		}
+
+		*m = *manufacturerToDomain(entity)
+
+		return nil
+	})
+}
+
 // manufacturerListRow is deliberately a flat struct (not an embedded manufacturerEntity)
 // - gorm does not reliably scan into an embedded struct's promoted fields when the
 // query is built from a different .Model() type than the destination slice's element

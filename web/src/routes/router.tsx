@@ -4,7 +4,7 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { AppShell } from '@/components/layout/app-shell'
 import { ExplorerLayout } from '@/components/layout/explorer-layout'
 import { ExplorerPage } from '@/features/explorer/explorer-page'
-import { RequireAuth } from './require-auth'
+import { RequireAuth, RequireManufacturer } from './require-auth'
 
 const GraphPage = lazy(() =>
   import('@/features/graph/graph-page').then((m) => ({ default: m.GraphPage })),
@@ -28,6 +28,11 @@ const VerificationPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('@/features/account/profile-page').then((m) => ({ default: m.ProfilePage })),
 )
+const SubmitChargerPage = lazy(() =>
+  import('@/features/submit-charger/submit-charger-page').then((m) => ({
+    default: m.SubmitChargerPage,
+  })),
+)
 
 export const router = createBrowserRouter([
   {
@@ -50,6 +55,14 @@ export const router = createBrowserRouter([
           <RequireAuth>
             <ProfilePage />
           </RequireAuth>
+        ),
+      },
+      {
+        path: 'submit-charger',
+        element: (
+          <RequireManufacturer>
+            <SubmitChargerPage />
+          </RequireManufacturer>
         ),
       },
     ],

@@ -19,6 +19,13 @@ export interface ManufacturerGraph {
   products: Product[]
 }
 
+export type SubmissionStatus = 'unspecified' | 'submitted' | 'verified' | 'rejected'
+
+export interface SubmitChargerSpecResult {
+  id: string
+  status: SubmissionStatus
+}
+
 /**
  * Everything the UI needs to read OECS registry data through. Backed today by
  * MockRegistryClient (in-memory fixtures); a real HTTP/gRPC implementation of this same
@@ -30,4 +37,10 @@ export interface RegistryClient {
   searchCatalog(query: string): Promise<SearchResult[]>
   getVariant(variantId: string): Promise<ChargerVariant | null>
   listVariants(): Promise<ChargerVariant[]>
+  /**
+   * Submits a raw OECS charger spec for review. The server derives the submitter from
+   * the authenticated session (via the Traefik/Oathkeeper edge) - callers don't (and
+   * can't) pass an identity here.
+   */
+  submitChargerSpec(spec: Uint8Array): Promise<SubmitChargerSpecResult>
 }
