@@ -43,10 +43,10 @@ type SearchChargersOutput struct {
 }
 
 type searchChargersHandler struct {
-	chargers ChargerSearcher
+	chargers ChargerService
 }
 
-func newSearchChargersHandler(chargers ChargerSearcher) *searchChargersHandler {
+func newSearchChargersHandler(chargers ChargerService) *searchChargersHandler {
 	return &searchChargersHandler{chargers: chargers}
 }
 
