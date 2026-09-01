@@ -31,10 +31,10 @@ import type {
 
 // ConversationServiceClientPb's generated types don't include user_id/gateway-secret
 // handling - identity comes from Traefik/Oathkeeper's forwardAuth headers, injected
-// onto the request before it reaches ConversationService (see that service's
-// internal/pkg/auth), the same way RegistryService's own /api calls never carry a
-// user_id from this app either. Request-level user_id fields below are left unset;
-// the server only falls back to trusting them for its own internal (non-edge) caller.
+// onto the request before it reaches ConversationService, the same way RegistryService's
+// own /api calls never carry a user_id from this app either. Request-level user_id
+// fields below are left unset; the server only falls back to trusting them for its own
+// internal (non-edge) caller.
 const client = new ConversationServiceClient(CONVERSATION_API_BASE, null, null)
 
 const MESSAGE_ROLE_FROM_PROTO: Record<ProtoMessageRole, MessageRole> = {
@@ -84,9 +84,8 @@ function candidatesFromMetadata(metadata?: Record<string, unknown>): ChargePoint
   }))
 }
 
-/** Extracts ClarifyIntent's structured question/choices data from a message's
- *  metadata (see oecs-recommendation-agent's activities.PersistResultInput) - present
- *  only when metadata.needs_clarification is true. */
+/** Extracts the structured question/choices data the agent's clarify step attaches to
+ *  a message's metadata - present only when metadata.needs_clarification is true. */
 export function clarifyingQuestionsFromMetadata(
   metadata?: Record<string, unknown>,
 ): ClarifyingQuestion[] {
@@ -103,9 +102,9 @@ export function clarifyingQuestionsFromMetadata(
 }
 
 /** Extracts the choices the user picked in reply to a ClarifyingQuestion prompt from
- *  that reply message's own metadata (key "selected_choices" - see
- *  oecs-recommendation-agent's activities.SelectedChoice) - used to render an earlier,
- *  already-answered clarification prompt read-only with those choices checked. */
+ *  that reply message's own metadata (key "selected_choices") - used to render an
+ *  earlier, already-answered clarification prompt read-only with those choices
+ *  checked. */
 export function selectedChoicesFromMetadata(metadata?: Record<string, unknown>): SelectedChoice[] {
   return asRecordArray(metadata?.selected_choices).map((c) => ({
     attribute: String(c.attribute ?? ''),
@@ -114,11 +113,10 @@ export function selectedChoicesFromMetadata(metadata?: Record<string, unknown>):
   }))
 }
 
-/** Extracts ComposeComparison's deterministic side-by-side attribute table from a
- *  message's metadata (see oecs-recommendation-agent's activities.ComparisonTable) -
- *  present only on a compare answer. Returns undefined if absent, rather than an
- *  empty table, so callers can tell "not a compare answer" apart from "compared
- *  nothing". */
+/** Extracts the deterministic side-by-side attribute table the agent's compare step
+ *  attaches to a message's metadata - present only on a compare answer. Returns
+ *  undefined if absent, rather than an empty table, so callers can tell "not a compare
+ *  answer" apart from "compared nothing". */
 export function comparisonTableFromMetadata(
   metadata?: Record<string, unknown>,
 ): ComparisonTable | undefined {
@@ -268,8 +266,7 @@ export function streamChat(
     message: string
     /** Choices the user picked in reply to a prior ClarifyingQuestion - attached to
      *  the outgoing message's metadata so the agent uses their fixed weights directly
-     *  instead of re-deriving them (see oecs-recommendation-agent's
-     *  activities.SelectedChoice). */
+     *  instead of re-deriving them. */
     selectedChoices?: SelectedChoice[]
   },
   handlers: StreamHandlers,

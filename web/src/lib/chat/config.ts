@@ -1,10 +1,9 @@
-// The chat feature calls oecs-recommendation-agent's conversation.v1.ConversationService
-// directly (gRPC-Web) - no oecs-registry backend involved. That service forwards to
-// agent.v1.RecommendationService (internal-only) itself. This flag only controls
-// whether the UI for it exists in the build at all (baked in via Vite's
-// `import.meta.env` - see web/.env.example and the Dockerfile's VITE_FEATURE_CHAT
-// build arg); whether it actually works depends on Traefik/that service being
-// reachable, surfaced as a normal request error if not.
+// The chat feature calls oecs-recommendation-agent's ConversationService directly
+// (gRPC-Web) - no oecs-registry backend involved. This flag only controls whether the
+// UI for it exists in the build at all (baked in via Vite's `import.meta.env` - see
+// web/.env.example and the Dockerfile's VITE_FEATURE_CHAT build arg); whether it
+// actually works depends on Traefik/that service being reachable, surfaced as a normal
+// request error if not.
 export const CHAT_ENABLED = import.meta.env.VITE_FEATURE_CHAT === 'true'
 
 /**

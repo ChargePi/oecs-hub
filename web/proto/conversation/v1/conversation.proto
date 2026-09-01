@@ -1,8 +1,7 @@
 syntax = "proto3";
 
-// Mirrors oecs-recommendation-agent's proto/conversation/v1/conversation.proto -
-// copied rather than depended on as a Go module since that repo isn't in a
-// consumable committed state. Keep in sync by hand if that service's contract changes.
+// Mirrors oecs-recommendation-agent's ConversationService contract. Copied rather than
+// imported as a shared module - keep the two in sync by hand.
 package conversation.v1;
 
 import "google/protobuf/struct.proto";
@@ -30,10 +29,9 @@ service ConversationService {
   rpc DeleteConversations(DeleteConversationsRequest) returns (DeleteConversationsResponse);
 
   // GetConversationStatus reports the progress of the conversation's most
-  // recently requested recommendation. agent.v1.RecommendationService is
-  // internal-only - UpsertConversation forwards a user message to it itself
-  // (see its own doc comment), and this is how a caller polls the result
-  // instead of talking to that service directly.
+  // recently requested recommendation. The recommendation service itself is
+  // internal-only, so this is how a caller polls the result of the request
+  // UpsertConversation forwards to it.
   rpc GetConversationStatus(GetConversationStatusRequest) returns (GetConversationStatusResponse);
 }
 
@@ -100,10 +98,8 @@ message UpsertConversationRequest {
   string conversation_id = 1;
   string user_id = 2;
   // Appending a MESSAGE_ROLE_USER message forwards a recommendation request
-  // for it to agent.v1.RecommendationService internally - poll
-  // GetConversationStatus for the result. Any other role (the agent worker's
-  // own write-back of its reply) does not - see internal/conversation's
-  // UpsertConversation doc comment.
+  // internally - poll GetConversationStatus for the result. Any other role
+  // (the agent worker's own write-back of its reply) does not.
   Message message = 3;
   // Deduplicates retried writes (e.g. from a Temporal activity retry) against
   // the same (conversation_id, idempotency_key) pair.

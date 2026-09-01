@@ -154,10 +154,10 @@ export function describeValue(enumKey: string): (value: string) => string | unde
 
 /**
  * Maps a clarifying question's `attribute` (the agent's dotted OECS schema path, e.g.
- * `connector.connectorType` - see oecs-recommendation-agent's internal/agent/eino/oecsschema) to
- * this file's shorter enumKey naming, so a clarify choice's value can reuse the same
- * `valueDescriptions` this page already maintains instead of a separate copy. Only covers enums
- * that already have entries above; an attribute not listed here has no known tooltip yet.
+ * `connector.connectorType`) to this file's shorter enumKey naming, so a clarify
+ * choice's value can reuse the same `valueDescriptions` this page already maintains
+ * instead of a separate copy. Only covers enums that already have entries above; an
+ * attribute not listed here has no known tooltip yet.
  */
 const attributeToEnumKey: Record<string, string> = {
   'connector.connectorType': 'connectorType',

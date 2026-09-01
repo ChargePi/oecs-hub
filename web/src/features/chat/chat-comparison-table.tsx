@@ -16,9 +16,8 @@ function humanizeAttribute(attribute: string): string {
 }
 
 /**
- * Renders ComposeComparison's deterministic side-by-side attribute table (see
- * oecs-recommendation-agent's activities.ComparisonTable) as an actual table - one
- * column per charger, one row per attribute. Purely informational (unlike
+ * Renders the agent's deterministic side-by-side attribute table as an actual table -
+ * one column per charger, one row per attribute. Purely informational (unlike
  * ChatClarifyForm, nothing here is submitted back), so it renders the same whether
  * it's the latest message or an earlier one in history.
  */

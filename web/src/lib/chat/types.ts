@@ -1,6 +1,5 @@
-// Mirrors oecs-recommendation-agent's conversation.v1.ConversationService, called
-// directly (gRPC-Web, see lib/chat/client.ts) - it's the sole entrypoint for chat,
-// forwarding to agent.v1.RecommendationService (internal-only) itself.
+// Mirrors oecs-recommendation-agent's ConversationService types (see conversation.proto
+// and lib/chat/client.ts).
 
 export type MessageRole =
   | 'MESSAGE_ROLE_UNSPECIFIED'
@@ -27,10 +26,9 @@ export interface ChatMessage {
 }
 
 /** One selectable answer to a ClarifyingQuestion. Value/weight are fixed by the agent
- *  when the question was generated (see oecs-recommendation-agent's
- *  eino.ClarifyingChoice) - picking a choice and sending it back as a SelectedChoice
- *  uses that weight directly, without the agent re-deriving it through another LLM
- *  call. */
+ *  when the question was generated - picking a choice and sending it back as a
+ *  SelectedChoice uses that weight directly, without the agent re-deriving it through
+ *  another LLM call. */
 export interface ClarifyingChoice {
   label: string
   value: string
@@ -38,8 +36,7 @@ export interface ClarifyingChoice {
 }
 
 /** One follow-up question the agent asks when a request is too broad to narrow down
- *  among 10,000+ chargers - always multiple-choice, never open-ended (see
- *  oecs-recommendation-agent's eino.ClarifyingQuestion). */
+ *  among 10,000+ chargers - always multiple-choice, never open-ended. */
 export interface ClarifyingQuestion {
   question: string
   attribute: string
@@ -48,8 +45,7 @@ export interface ClarifyingQuestion {
 }
 
 /** A ClarifyingChoice the user picked, sent back on the next message's metadata (key
- *  "selected_choices") so the agent can use it directly as a search attribute - see
- *  oecs-recommendation-agent's activities.SelectedChoice. */
+ *  "selected_choices") so the agent can use it directly as a search attribute. */
 export interface SelectedChoice {
   attribute: string
   value: string
@@ -57,8 +53,7 @@ export interface SelectedChoice {
 }
 
 /** One charger in a ComparisonTable's chargers list - the columns, in the same order
- *  as each ComparisonRow's values (see oecs-recommendation-agent's
- *  activities.ComparedCharger). */
+ *  as each ComparisonRow's values. */
 export interface ComparedCharger {
   id: string
   manufacturerName: string
@@ -66,16 +61,14 @@ export interface ComparedCharger {
 }
 
 /** One attribute's value across every compared charger, in the same order as
- *  ComparisonTable.chargers (see oecs-recommendation-agent's
- *  activities.ComparisonRow). */
+ *  ComparisonTable.chargers. */
 export interface ComparisonRow {
   attribute: string
   values: string[]
 }
 
 /** The side-by-side attribute comparison for a compare_chargers answer, built
- *  deterministically by the agent (never by the LLM) - see
- *  oecs-recommendation-agent's activities.ComparisonTable. */
+ *  deterministically by the agent (never by the LLM). */
 export interface ComparisonTable {
   chargers: ComparedCharger[]
   rows: ComparisonRow[]

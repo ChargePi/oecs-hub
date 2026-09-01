@@ -13,9 +13,9 @@ import { ChatComparisonTable } from './chat-comparison-table'
 const CLARIFY_INTRO =
   'To find the best match among thousands of chargers, please answer a few quick questions:'
 
-// Sparse on purpose - the agent's replies use headings/bold/lists/links (see
-// oecs-recommendation-agent's prompts), not the full CommonMark surface, and this
-// stays a chat bubble rather than growing a typography plugin's worth of styling.
+// Sparse on purpose - the agent's replies use headings/bold/lists/links, not the full
+// CommonMark surface, and this stays a chat bubble rather than growing a typography
+// plugin's worth of styling.
 const MARKDOWN_COMPONENTS: Components = {
   p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
   h1: ({ children }) => <h3 className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</h3>,
@@ -88,13 +88,13 @@ export function ChatMessageBubble({
   const isSystemLike =
     message.role === 'MESSAGE_ROLE_SYSTEM' || message.role === 'MESSAGE_ROLE_TOOL'
   // Set by the agent workflow when a pipeline step irrecoverably fails and it persists
-  // a generic apology in place of a real answer (see oecs-recommendation-agent's
-  // workflow.failureOutput) - flags it instead of presenting it like a normal reply.
+  // a generic apology in place of a real answer - flags it instead of presenting it
+  // like a normal reply.
   const failed = message.metadata?.failed === true
-  // Set when the request was too broad to narrow down among 10,000+ chargers (see
-  // oecs-recommendation-agent's activities.ClarifyIntent) - clarifying_questions is
-  // always multiple-choice, so this renders as a checkbox form rather than the
-  // message's own Markdown content, which would otherwise duplicate it as prose.
+  // Set when the request was too broad to narrow down among 10,000+ chargers -
+  // clarifying_questions is always multiple-choice, so this renders as a checkbox form
+  // rather than the message's own Markdown content, which would otherwise duplicate it
+  // as prose.
   const needsClarification = message.metadata?.needs_clarification === true
   const clarifyingQuestions = needsClarification
     ? clarifyingQuestionsFromMetadata(message.metadata)
@@ -102,8 +102,7 @@ export function ChatMessageBubble({
   const showLiveClarifyForm = isLast && clarifyingQuestions.length > 0 && onSubmitClarification
   const showClarifyHistory = !isLast && clarifyingQuestions.length > 0
   const showClarifyForm = showLiveClarifyForm || showClarifyHistory
-  // Set for a compare_chargers answer (see oecs-recommendation-agent's
-  // activities.ComposeComparison) - purely informational, so (unlike the clarify
+  // Set for a compare_chargers answer - purely informational, so (unlike the clarify
   // form) it renders the same regardless of isLast.
   const comparisonTable = comparisonTableFromMetadata(message.metadata)
   const showComparisonTable = !isUser && comparisonTable !== undefined
