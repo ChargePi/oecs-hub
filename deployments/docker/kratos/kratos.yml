@@ -106,7 +106,16 @@ log:
   format: json
 
 identity:
-  default_schema_id: default
+  # manufacturer and individual identities are maintained independently (see each
+  # schema's own required traits). The registration flow is schema-scoped - RegisterPage
+  # passes identitySchema, chosen via AccountTypeSelector, when creating the flow.
+  default_schema_id: manufacturer
   schemas:
-    - id: default
-      url: file:///etc/config/kratos/identity.schema.json
+    - id: manufacturer
+      url: file:///etc/config/kratos/identity.manufacturer.schema.json
+      selfservice_selectable: true
+    - id: individual
+      url: file:///etc/config/kratos/identity.individual.schema.json
+      # Required for a non-default schema to be requestable via the identity_schema
+      # query parameter on a self-service registration flow.
+      selfservice_selectable: true

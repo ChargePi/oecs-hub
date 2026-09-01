@@ -56,8 +56,14 @@ server {
     }
 
     # Client-side routing (react-router): let unknown paths fall through to index.html instead
-    # of a raw 404 from nginx.
+    # of a raw 404 from nginx. This is where most navigations actually land (e.g.
+    # /auth/register) - the `location = /index.html` block above only matches a request
+    # addressed AT that exact path, which client-side routes never are, so its no-cache
+    # header alone doesn't cover the served-via-try_files case. Without repeating it here,
+    # a browser can heuristically cache the SPA shell at these paths and keep serving an
+    # index.html that points at old, no-longer-existing hashed asset filenames.
     location / {
+        add_header Cache-Control "no-cache";
         try_files $uri $uri/ /index.html;
     }
 }

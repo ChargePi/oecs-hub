@@ -1,7 +1,7 @@
 import { Building2, User } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
-import type { AccountType } from '@/lib/kratos-ui-nodes'
+import type { AccountType } from '@/lib/auth/types'
 
 interface AccountTypeOption {
   value: AccountType
@@ -19,9 +19,9 @@ interface AccountTypeSelectorProps {
   onChange: (value: AccountType) => void
 }
 
-// Drives register-page.tsx's hidden traits.userType node - see that file and
-// kratos-ui-nodes.ts's hideUserTypeNode/filterAccountTypeNodes for why the actual Kratos
-// node stays hidden rather than being rendered directly.
+// Drives which Kratos identity schema register-page.tsx creates the flow against
+// (identitySchema) - manufacturer and individual are separate schemas, not a trait, so
+// picking a value here means fetching a whole new flow, not just filtering nodes.
 export function AccountTypeSelector({ value, onChange }: AccountTypeSelectorProps) {
   return (
     <div className="grid grid-cols-2 gap-2" role="group" aria-label="Account type">

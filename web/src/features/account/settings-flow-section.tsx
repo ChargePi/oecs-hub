@@ -12,18 +12,14 @@ import {
   useOryFlow,
 } from '@ory/elements-react'
 
-import {
-  type AccountType,
-  currentAccountType,
-  filterAccountTypeNodes,
-  hideUserTypeNode,
-} from '@/lib/kratos-ui-nodes'
+import type { AccountType } from '@/lib/auth/types'
 import type { AccountSection } from './settings-node-groups'
 
-// userType has no self-service change flow (see identity.schema.json) and is rendered
-// as a hidden node (hideUserTypeNode) - without this, nothing on the Profile page ever
-// visibly states which account type you're looking at, even though the fields below it
-// (Company vs. Billing address) already differ by type.
+// Account type has no self-service change flow - manufacturer and individual are
+// separate Kratos schemas (identity.manufacturer.schema.json / identity.individual
+// .schema.json), fixed at registration, not a trait an identity can edit. Without this,
+// nothing on the Profile page ever visibly states which account type you're looking at,
+// even though the fields below it (Company vs. Billing address) already differ by type.
 function AccountTypeIndicator({ accountType }: { accountType: AccountType }) {
   const Icon = accountType === 'manufacturer' ? Building2 : User
   const label = accountType === 'manufacturer' ? 'Manufacturer account' : 'Individual account'
@@ -82,10 +78,10 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
 
   const allNodes = flowContainer.flow.ui.nodes
   const defaultNodes = allNodes.filter((node) => node.group === UiNodeGroupEnum.Default)
-  // Read before hiding: this identity's existing account type, so the group that
-  // doesn't apply to it (company.* for an individual, billingAddress.* for a
-  // manufacturer) stays hidden here too - see kratos-ui-nodes.ts.
-  const accountType = currentAccountType(allNodes)
+  // schema_id, not a node to hunt for in the flow - the settings flow already only
+  // contains this identity's own schema's fields (company.* for manufacturer,
+  // billingAddress.* for individual).
+  const accountType = flowContainer.flow.identity.schema_id as AccountType
 
   const presentSections = sections
     .map((section) => ({
@@ -118,10 +114,10 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
                   </h2>
                 )}
                 {section.groups.map((group, i) => {
-                  const nodes: UiNode[] = filterAccountTypeNodes(
-                    [...defaultNodes, ...allNodes.filter((node) => node.group === group)],
-                    accountType,
-                  ).map((node) => hideUserTypeNode(node, accountType))
+                  const nodes: UiNode[] = [
+                    ...defaultNodes,
+                    ...allNodes.filter((node) => node.group === group),
+                  ]
                   return (
                     // Fragment, not a wrapping div: the divider must be a direct flex child
                     // of the gap-8 container, a sibling of the section rather than nested

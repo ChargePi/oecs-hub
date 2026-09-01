@@ -31,7 +31,11 @@ authenticators:
     config:
       check_session_url: http://kratos:4433/sessions/whoami
       preserve_path: true
-      extra_from: identity.traits
+      # identity (not identity.traits): the header mutator below needs schema_id
+      # alongside traits - manufacturer/individual are separate Kratos schemas, not a
+      # traits.userType field. See identity.manufacturer.schema.json /
+      # identity.individual.schema.json.
+      extra_from: identity
       subject_from: identity.id
       only:
         - ory_kratos_session
@@ -41,7 +45,11 @@ authenticators:
     config:
       check_session_url: http://kratos:4433/sessions/whoami
       preserve_path: true
-      extra_from: identity.traits
+      # identity (not identity.traits): the header mutator below needs schema_id
+      # alongside traits - manufacturer/individual are separate Kratos schemas, not a
+      # traits.userType field. See identity.manufacturer.schema.json /
+      # identity.individual.schema.json.
+      extra_from: identity
       subject_from: identity.id
       # No token_from override: bearer_token's default already reads the token from a
       # plain `Authorization: Bearer <token>` header, which is what we want.
@@ -78,13 +86,16 @@ mutators:
     config:
       headers:
         X-User-Id: "{{ print .Subject }}"
-        # `with` (not a direct `.Extra.company.name` chain) because the anonymous
+        # `with` (not a direct `.Extra.traits.company.name` chain) because the anonymous
         # authenticator leaves .Extra empty - a nested field access two levels deep on a
         # missing key is a nil-pointer template error, not just an empty string, in Go's
         # text/template. `with` skips the body instead of erroring when its value is nil.
-        X-User-Email: "{{ with .Extra }}{{ .email }}{{ end }}"
-        X-User-Type: "{{ with .Extra }}{{ .userType }}{{ end }}"
-        X-Company-Name: "{{ with .Extra.company }}{{ .name }}{{ end }}"
+        X-User-Email: "{{ with .Extra }}{{ .traits.email }}{{ end }}"
+        # schema_id ("manufacturer"/"individual"), not a traits field - the account type
+        # is which Kratos identity schema this identity was created under, not a value
+        # inside traits. See identity.manufacturer.schema.json / identity.individual.schema.json.
+        X-User-Type: "{{ with .Extra }}{{ .schema_id }}{{ end }}"
+        X-Company-Name: "{{ with .Extra.traits.company }}{{ .name }}{{ end }}"
         X-Gateway-Secret: "{{ env \"OECS_HUB_GATEWAY_SECRET\" }}"
 
 errors:

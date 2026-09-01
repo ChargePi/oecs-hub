@@ -53,10 +53,10 @@
   match:
     url: "http://<.*>/registry.v1.RegistryService/SubmitChargerSpec"
     methods: ["POST"]
-  # No anonymous fallback - a session is required. A manufacturer-specific check isn't
-  # needed yet: userType is a schema-level const("manufacturer") today (see
-  # identity.schema.json), so any authenticated identity is a manufacturer by
-  # construction. Revisit with a Keto relation once normal-user registration launches.
+  # No anonymous fallback - a session is required. No manufacturer-specific check here
+  # yet, though: individual identities (identity.individual.schema.json) can reach this
+  # rule with a valid session same as manufacturer ones - schema_id/X-User-Type isn't
+  # consulted by any authorizer below. Revisit with a Keto relation.
   authenticators:
     - handler: cookie_session
   authorizer:

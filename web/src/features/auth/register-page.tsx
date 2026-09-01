@@ -1,38 +1,47 @@
 import { useState } from 'react'
-import type { RegistrationFlow } from '@ory/client-fetch'
 import { Registration } from '@ory/elements-react/theme'
 import '@ory/elements-react/theme/styles.css'
 
 import { frontendApi, oryClientConfiguration } from '@/lib/auth/client'
-import { filterAccountTypeNodes, hideUserTypeNode, type AccountType } from '@/lib/kratos-ui-nodes'
+import type { AccountType } from '@/lib/auth/types'
 import { AccountTypeSelector } from './account-type-selector'
 import { AuthFlowError } from './auth-flow-error'
 import { useAuthSuccess } from './use-auth-success'
 import { useFlow } from './use-flow'
 
-// AccountTypeSelector above the form drives userType instead of the raw Kratos node:
-// hides the account-type field itself and whichever of company.*/billingAddress.*
-// doesn't apply to the selected type (both are always present in the raw flow - see
-// kratos-ui-nodes.ts).
-function prepareRegistrationFlow(flow: RegistrationFlow, accountType: AccountType): RegistrationFlow {
-  return {
-    ...flow,
-    ui: {
-      ...flow.ui,
-      nodes: filterAccountTypeNodes(flow.ui.nodes, accountType).map((node) =>
-        hideUserTypeNode(node, accountType),
-      ),
-    },
-  }
-}
-
 export function RegisterPage() {
-  const { flow, error } = useFlow(
-    () => frontendApi.createBrowserRegistrationFlow(),
-    (id) => frontendApi.getRegistrationFlow({ id }),
-  )
   const onSuccess = useAuthSuccess()
   const [accountType, setAccountType] = useState<AccountType>('manufacturer')
+
+  // identitySchema picks which of the two Kratos schemas
+  // (identity.manufacturer.schema.json / identity.individual.schema.json) this flow's
+  // fields come from - each already contains only its own type's fields. recreateOn:
+  // [accountType] so switching the selector starts a fresh flow against the new schema
+  // rather than re-rendering fields that don't apply to it - see use-flow.ts's own
+  // comment on recreateOn.
+  const { flow, error } = useFlow(
+    () => frontendApi.createBrowserRegistrationFlow({ identitySchema: accountType }),
+    (id) => frontendApi.getRegistrationFlow({ id }),
+    [accountType],
+  )
+
+  // Sync once per new flow, not on every mismatch: after the user switches accountType,
+  // `flow` briefly still holds the previous schema's flow until the refetch (triggered by
+  // useFlow's recreateOn) resolves - during that gap flow.identity_schema legitimately
+  // differs from accountType, and correcting accountType back to match flow every render
+  // would fight the user's click and make the selector look unresponsive. Keying off
+  // flow.id (React's "adjusting state based on a prop" pattern) instead of a plain
+  // mismatch check means this only fires when a genuinely new flow object arrives - most
+  // importantly when resuming via `?flow=` (e.g. back from Google OIDC needing missing
+  // traits), where that flow was already created against a specific schema, possibly not
+  // today's default 'manufacturer'.
+  const [syncedFlowId, setSyncedFlowId] = useState<string | null>(null)
+  if (flow && flow.id !== syncedFlowId) {
+    setSyncedFlowId(flow.id)
+    if (flow.identity_schema && flow.identity_schema !== accountType) {
+      setAccountType(flow.identity_schema as AccountType)
+    }
+  }
 
   if (error) return <AuthFlowError />
   if (!flow) return null
@@ -40,18 +49,13 @@ export function RegisterPage() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 py-16">
       <AccountTypeSelector value={accountType} onChange={setAccountType} />
-      {/* key={accountType}: Registration is a stateful all-in-one form component that
-          captures its node list on mount - it has no reason to re-derive rendered fields
-          just because the flow *prop* object changes reference (same flow.id) on every
-          render. A remount forces it to re-initialize from the freshly filtered nodes,
-          which is the only way switching account type actually swaps the visible
-          company/billing-address fields. */}
-      <Registration
-        key={accountType}
-        flow={prepareRegistrationFlow(flow, accountType)}
-        config={oryClientConfiguration}
-        onSuccess={onSuccess}
-      />
+      {/* key={flow.id}, not key={accountType}: Registration is a stateful all-in-one
+          form component that captures its node list on mount and ignores later prop
+          changes, so it must only remount once a flow scoped to the new schema has
+          actually arrived - keying on accountType instead would remount one render too
+          early (accountType updates before the refetch resolves), permanently baking in
+          the previous schema's fields under the newly-selected type's label. */}
+      <Registration key={flow.id} flow={flow} config={oryClientConfiguration} onSuccess={onSuccess} />
     </div>
   )
 }
