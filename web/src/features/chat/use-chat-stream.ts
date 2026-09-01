@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   ConversationDetail,
   EvidenceItem,
+  SelectedChoice,
   TurnStatus,
 } from '@/lib/chat/types'
 import { useChatActivityStore } from '@/stores/chat-activity-store'
@@ -78,7 +79,7 @@ export function useChatStream(userId: string) {
   }, [])
 
   const send = useCallback(
-    (text: string) => {
+    (text: string, selectedChoices?: SelectedChoice[]) => {
       closeStreamRef.current?.()
 
       const conversationId = state.conversationId
@@ -86,7 +87,7 @@ export function useChatStream(userId: string) {
       setState((s) => ({ ...s, phase: 'streaming', error: null }))
 
       closeStreamRef.current = streamChat(
-        { conversationId: conversationId ?? '', userId, message: text },
+        { conversationId: conversationId ?? '', userId, message: text, selectedChoices },
         {
           onMessages: (messages) => setState((s) => ({ ...s, messages })),
           onStatus: (status) => setState((s) => ({ ...s, status })),

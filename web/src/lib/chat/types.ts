@@ -26,6 +26,61 @@ export interface ChatMessage {
   createdAt: string
 }
 
+/** One selectable answer to a ClarifyingQuestion. Value/weight are fixed by the agent
+ *  when the question was generated (see oecs-recommendation-agent's
+ *  eino.ClarifyingChoice) - picking a choice and sending it back as a SelectedChoice
+ *  uses that weight directly, without the agent re-deriving it through another LLM
+ *  call. */
+export interface ClarifyingChoice {
+  label: string
+  value: string
+  weight: number
+}
+
+/** One follow-up question the agent asks when a request is too broad to narrow down
+ *  among 10,000+ chargers - always multiple-choice, never open-ended (see
+ *  oecs-recommendation-agent's eino.ClarifyingQuestion). */
+export interface ClarifyingQuestion {
+  question: string
+  attribute: string
+  importance: number
+  choices: ClarifyingChoice[]
+}
+
+/** A ClarifyingChoice the user picked, sent back on the next message's metadata (key
+ *  "selected_choices") so the agent can use it directly as a search attribute - see
+ *  oecs-recommendation-agent's activities.SelectedChoice. */
+export interface SelectedChoice {
+  attribute: string
+  value: string
+  weight: number
+}
+
+/** One charger in a ComparisonTable's chargers list - the columns, in the same order
+ *  as each ComparisonRow's values (see oecs-recommendation-agent's
+ *  activities.ComparedCharger). */
+export interface ComparedCharger {
+  id: string
+  manufacturerName: string
+  modelName: string
+}
+
+/** One attribute's value across every compared charger, in the same order as
+ *  ComparisonTable.chargers (see oecs-recommendation-agent's
+ *  activities.ComparisonRow). */
+export interface ComparisonRow {
+  attribute: string
+  values: string[]
+}
+
+/** The side-by-side attribute comparison for a compare_chargers answer, built
+ *  deterministically by the agent (never by the LLM) - see
+ *  oecs-recommendation-agent's activities.ComparisonTable. */
+export interface ComparisonTable {
+  chargers: ComparedCharger[]
+  rows: ComparisonRow[]
+}
+
 export interface ChargePointCandidate {
   id: string
   manufacturerName: string

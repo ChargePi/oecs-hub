@@ -1,6 +1,7 @@
-import { Zap } from 'lucide-react'
+import { PanelRightClose, Zap } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import type { ChargePointCandidate, EvidenceItem } from '@/lib/chat/types'
@@ -53,14 +54,24 @@ function EvidenceRow({ evidence }: { evidence: EvidenceItem }) {
 export function RecommendationsPanel({
   candidates,
   evidence,
+  onCollapse,
 }: {
   candidates: ChargePointCandidate[]
   evidence: EvidenceItem[]
+  onCollapse: () => void
 }) {
   return (
     <aside className="sticky top-14 flex h-[calc(100svh-3.5rem)] w-80 shrink-0 flex-col border-l border-border bg-card/50">
-      <div className="p-4">
-        <h2 className="text-sm font-medium">Recommendations</h2>
+      <div className="flex items-center gap-2 p-4">
+        <h2 className="min-w-0 flex-1 text-sm font-medium">Recommendations</h2>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          onClick={onCollapse}
+          aria-label="Hide recommendations"
+        >
+          <PanelRightClose />
+        </Button>
       </div>
 
       <Separator />

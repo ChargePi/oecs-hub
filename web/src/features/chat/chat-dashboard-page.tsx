@@ -1,12 +1,14 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, PanelRightOpen } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useIdentity } from '@/lib/auth/use-identity'
 import { getConversation } from '@/lib/chat/client'
+import { useRecommendationsSidebarStore } from '@/stores/recommendations-sidebar-store'
 import { ChatComposer } from './chat-composer'
 import { ChatEmptyState } from './chat-empty-state'
 import { ChatErrorPopup } from './chat-error-popup'
@@ -18,6 +20,12 @@ export function ChatDashboardPage() {
   const { conversationId: routeId } = useParams<{ conversationId?: string }>()
   const { identity } = useIdentity()
   const stream = useChatStream(identity?.id ?? '')
+  const recommendationsCollapsed = useRecommendationsSidebarStore((s) => s.collapsed)
+  const toggleRecommendations = useRecommendationsSidebarStore((s) => s.toggle)
+  // "Resend" on a failed message loads its text into the composer instead of firing
+  // the request again itself - token is bumped on every click (even resending the
+  // same text twice in a row) so ChatComposer's prefill effect re-applies it.
+  const [resendDraft, setResendDraft] = useState<{ text: string; token: number }>()
 
   const {
     data: detail,
@@ -71,7 +79,9 @@ export function ChatDashboardPage() {
         <Alert variant="destructive">
           <AlertCircle />
           <AlertTitle>Couldn't load this conversation</AlertTitle>
-          <AlertDescription>It may have been removed, or you don't have access to it.</AlertDescription>
+          <AlertDescription>
+            It may have been removed, or you don't have access to it.
+          </AlertDescription>
         </Alert>
       </div>
     )
@@ -91,7 +101,12 @@ export function ChatDashboardPage() {
           <ChatEmptyState onSend={stream.send} disabled={isStreaming} />
         ) : (
           <>
-            <ChatMessageList messages={stream.messages} isStreaming={isStreaming} />
+            <ChatMessageList
+              messages={stream.messages}
+              isStreaming={isStreaming}
+              onSubmitClarification={stream.send}
+              onResend={(text) => setResendDraft({ text, token: Date.now() })}
+            />
             <div className="border-t border-border p-3">
               <div className="mx-auto w-full max-w-2xl">
                 {stream.error && (
@@ -101,16 +116,34 @@ export function ChatDashboardPage() {
                     onDismiss={stream.clearError}
                   />
                 )}
-                <ChatComposer onSend={stream.send} disabled={isStreaming} />
+                <ChatComposer onSend={stream.send} disabled={isStreaming} prefill={resendDraft} />
               </div>
             </div>
           </>
         )}
       </div>
 
-      {hasActiveConversation && (
-        <RecommendationsPanel candidates={stream.candidates} evidence={stream.evidence} />
-      )}
+      {hasActiveConversation &&
+        (recommendationsCollapsed ? (
+          // The panel's own collapse button goes away with it, so this is the only way
+          // back - sticky at the same top offset the panel's header row sits at.
+          <div className="sticky top-14 flex h-[calc(100svh-3.5rem)] shrink-0 items-start p-3">
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              onClick={toggleRecommendations}
+              aria-label="Show recommendations"
+            >
+              <PanelRightOpen />
+            </Button>
+          </div>
+        ) : (
+          <RecommendationsPanel
+            candidates={stream.candidates}
+            evidence={stream.evidence}
+            onCollapse={toggleRecommendations}
+          />
+        ))}
     </div>
   )
 }

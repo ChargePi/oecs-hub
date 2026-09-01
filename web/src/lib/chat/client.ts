@@ -1,4 +1,5 @@
 import { RpcError } from 'grpc-web'
+import { Struct } from 'google-protobuf/google/protobuf/struct_pb'
 
 import { ConversationServiceClient } from '@/lib/registry/gen/conversation/v1/ConversationServiceClientPb'
 import {
@@ -17,10 +18,13 @@ import { CONVERSATION_API_BASE } from './config'
 import type {
   ChargePointCandidate,
   ChatMessage,
+  ClarifyingQuestion,
+  ComparisonTable,
   ConversationDetail,
   ConversationSummary,
   EvidenceItem,
   MessageRole,
+  SelectedChoice,
   StreamDonePayload,
   TurnStatus,
 } from './types'
@@ -78,6 +82,61 @@ function candidatesFromMetadata(metadata?: Record<string, unknown>): ChargePoint
     score: Number(c.score ?? 0),
     reasoning: String(c.reasoning ?? ''),
   }))
+}
+
+/** Extracts ClarifyIntent's structured question/choices data from a message's
+ *  metadata (see oecs-recommendation-agent's activities.PersistResultInput) - present
+ *  only when metadata.needs_clarification is true. */
+export function clarifyingQuestionsFromMetadata(
+  metadata?: Record<string, unknown>,
+): ClarifyingQuestion[] {
+  return asRecordArray(metadata?.clarifying_questions).map((q) => ({
+    question: String(q.question ?? ''),
+    attribute: String(q.attribute ?? ''),
+    importance: Number(q.importance ?? 0),
+    choices: asRecordArray(q.choices).map((c) => ({
+      label: String(c.label ?? ''),
+      value: String(c.value ?? ''),
+      weight: Number(c.weight ?? 0),
+    })),
+  }))
+}
+
+/** Extracts the choices the user picked in reply to a ClarifyingQuestion prompt from
+ *  that reply message's own metadata (key "selected_choices" - see
+ *  oecs-recommendation-agent's activities.SelectedChoice) - used to render an earlier,
+ *  already-answered clarification prompt read-only with those choices checked. */
+export function selectedChoicesFromMetadata(metadata?: Record<string, unknown>): SelectedChoice[] {
+  return asRecordArray(metadata?.selected_choices).map((c) => ({
+    attribute: String(c.attribute ?? ''),
+    value: String(c.value ?? ''),
+    weight: Number(c.weight ?? 0),
+  }))
+}
+
+/** Extracts ComposeComparison's deterministic side-by-side attribute table from a
+ *  message's metadata (see oecs-recommendation-agent's activities.ComparisonTable) -
+ *  present only on a compare answer. Returns undefined if absent, rather than an
+ *  empty table, so callers can tell "not a compare answer" apart from "compared
+ *  nothing". */
+export function comparisonTableFromMetadata(
+  metadata?: Record<string, unknown>,
+): ComparisonTable | undefined {
+  const raw = metadata?.comparison_table
+  if (!raw || typeof raw !== 'object') return undefined
+  const table = raw as Record<string, unknown>
+
+  return {
+    chargers: asRecordArray(table.chargers).map((c) => ({
+      id: String(c.id ?? ''),
+      manufacturerName: String(c.manufacturer_name ?? ''),
+      modelName: String(c.model_name ?? ''),
+    })),
+    rows: asRecordArray(table.rows).map((r) => ({
+      attribute: String(r.attribute ?? ''),
+      values: Array.isArray(r.values) ? r.values.map(String) : [],
+    })),
+  }
 }
 
 function evidenceFromMetadata(metadata?: Record<string, unknown>): EvidenceItem[] {
@@ -203,7 +262,16 @@ const TERMINAL_STATUSES: ReadonlySet<TurnStatus> = new Set([
  * unmount/conversation switch.
  */
 export function streamChat(
-  params: { conversationId: string; userId: string; message: string },
+  params: {
+    conversationId: string
+    userId: string
+    message: string
+    /** Choices the user picked in reply to a prior ClarifyingQuestion - attached to
+     *  the outgoing message's metadata so the agent uses their fixed weights directly
+     *  instead of re-deriving them (see oecs-recommendation-agent's
+     *  activities.SelectedChoice). */
+    selectedChoices?: SelectedChoice[]
+  },
   handlers: StreamHandlers,
 ): () => void {
   let cancelled = false
@@ -221,6 +289,9 @@ export function streamChat(
       const message = new ProtoMessage()
       message.setRole(ProtoMessageRole.MESSAGE_ROLE_USER)
       message.setContent(params.message)
+      if (params.selectedChoices && params.selectedChoices.length > 0) {
+        message.setMetadata(Struct.fromJavaScript({ selected_choices: params.selectedChoices }))
+      }
       upsertReq.setMessage(message)
 
       const upsertResp = await client.upsertConversation(upsertReq, {})
