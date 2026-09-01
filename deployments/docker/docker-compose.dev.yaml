@@ -5,6 +5,8 @@
 name: oecs-hub
 services:
 
+  # Single shared instance for oecs_hub, kratos and keto - each gets its own database
+  # and role, provisioned on first boot by postgres/init (see that file's header).
   postgres:
     image: postgres:16
     container_name: oecs-hub-postgres
@@ -19,6 +21,7 @@ services:
       - "5434:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: redis:7
@@ -26,7 +29,10 @@ services:
     hostname: redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      # Host port 6380, not 6379: already taken by an unrelated project's redis on this
+      # host. Container-to-container traffic uses the "redis" hostname/6379 internally,
+      # unaffected by this remap.
+      - "6380:6379"
     volumes:
       - redis:/data
 
@@ -40,6 +46,154 @@ services:
       - "7444:7444"
     volumes:
       - memgraph:/var/lib/memgraph
+
+  # --- Auth edge: Traefik (public entrypoint) -> Oathkeeper (decision point) ->
+  # Kratos (identity) + Keto (admin-role check). See ../../.claude/plans (auth plan) for
+  # the full design. Self-contained: no external Traefik instance assumed.
+
+  traefik:
+    image: traefik:v3.3
+    container_name: oecs-hub-traefik
+    hostname: traefik
+    restart: unless-stopped
+    # Static file provider, not the Docker provider: this environment's Docker Desktop
+    # (WSL2 backend) doesn't reliably expose a bind-mountable /var/run/docker.sock to
+    # containers - the socket a container sees isn't the one docker-compose itself talks
+    # to, so label-based discovery silently finds nothing. The routing topology here is
+    # fixed anyway (docker-compose's own DNS gives every service a stable hostname), so
+    # deployments/docker/traefik/dynamic.yml just declares it statically instead.
+    command:
+      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --entrypoints.web.address=:80
+      - --api.insecure=true
+    ports:
+      - "8000:80"
+      # Traefik's own dashboard - dev convenience only, not for production use.
+      # Host port 8091, not 8081: already taken by an unrelated project on this host.
+      - "8091:8080"
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+
+  kratos-migrate:
+    # v25.4.0: the earliest release supporting the identity_schema query parameter that
+    # selects which identity schema a self-service registration flow uses - see
+    # identity.manufacturer.schema.json / identity.individual.schema.json.
+    image: oryd/kratos:v25.4.0
+    container_name: oecs-hub-kratos-migrate
+    command: migrate sql -e --yes
+    environment:
+      - DSN=postgres://kratos:kratos@postgres:5432/kratos?sslmode=disable
+    volumes:
+      - ./kratos:/etc/config/kratos:ro
+    depends_on:
+      - postgres
+
+  kratos:
+    image: oryd/kratos:v25.4.0
+    container_name: oecs-hub-kratos
+    hostname: kratos
+    restart: unless-stopped
+    command: serve --dev --config /etc/config/kratos/kratos.yml
+    environment:
+      - OECS_HUB_KRATOS_GOOGLE_CLIENT_ID=${OECS_HUB_KRATOS_GOOGLE_CLIENT_ID:-}
+      - OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET=${OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - ./kratos:/etc/config/kratos:ro
+    # Public API (4433) is Traefik-routed at /ory (see traefik/dynamic.yml) since the
+    # frontend talks to Kratos directly for self-service flows. Admin API (4434) is
+    # deliberately not routed there - never reachable publicly, only container-to-container.
+    #
+    # 4433 is also published to the host for the bare `pnpm dev` + `go run` fast-iteration
+    # loop's /ory proxy (see web/vite.config.ts) - that mode has no Traefik in front.
+    ports:
+      - "4433:4433"
+    depends_on:
+      - kratos-migrate
+
+  mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    container_name: oecs-hub-mailslurper
+    hostname: mailslurper
+    restart: unless-stopped
+    ports:
+      # Web UI only, for reading dev verification/recovery emails. SMTP (1025/1026) stays
+      # container-network-only - Kratos is the only sender.
+      - "4437:4436"
+
+  keto-migrate:
+    image: oryd/keto:v0.14.0
+    container_name: oecs-hub-keto-migrate
+    command: migrate up -y --config /etc/config/keto/keto.yml
+    volumes:
+      - ./keto:/etc/config/keto:ro
+    depends_on:
+      - postgres
+
+  keto:
+    image: oryd/keto:v0.14.0
+    container_name: oecs-hub-keto
+    hostname: keto
+    restart: unless-stopped
+    command: serve --config /etc/config/keto/keto.yml
+    volumes:
+      - ./keto:/etc/config/keto:ro
+    # Never Traefik-routed - read API (4466) reached only by Oathkeeper, write API
+    # (4467) reached only via the admin-bootstrap runbook (docker compose exec).
+    depends_on:
+      - keto-migrate
+
+  oathkeeper:
+    image: oryd/oathkeeper:v0.40.7
+    container_name: oecs-hub-oathkeeper
+    hostname: oathkeeper
+    restart: unless-stopped
+    command: serve --config /etc/config/oathkeeper/oathkeeper.yml
+    environment:
+      - OECS_HUB_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
+    volumes:
+      - ./oathkeeper:/etc/config/oathkeeper:ro
+    # No router of its own - never reachable through Traefik's public entrypoint, only
+    # container-to-container via the forwardAuth middleware declared in traefik/dynamic.yml.
+    depends_on:
+      - kratos
+      - keto
+
+  # --- App services, containerized so the full Traefik->Oathkeeper->Kratos flow is
+  # testable via `docker compose up`. `go run ./cmd/app` / `pnpm --dir web dev` remain
+  # available as a separate, faster loop for everything except auth-gated flows (see the
+  # auth plan's Context section for why that tradeoff is deliberate).
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: build/service/Dockerfile
+    container_name: oecs-hub-backend
+    hostname: backend
+    restart: unless-stopped
+    environment:
+      - OECS_HUB_DATABASE_DSN=postgres://oecs:oecs@postgres:5432/oecs_hub?sslmode=disable
+      - OECS_HUB_REDIS_ADDRESS=redis:6379
+      - OECS_HUB_MEMGRAPH_ADDRESS=bolt://memgraph:7687
+      - OECS_HUB_GRPC_ADDRESS=0.0.0.0:50051
+      - OECS_HUB_ADMIN_GRPC_ADDRESS=0.0.0.0:50052
+      - OECS_HUB_AUTH_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
+    # Routed by Traefik at /api (RegistryService, gRPC-Web) and /admin.v1.AdminService
+    # (AdminService, native gRPC - matched by its real service path, not an artificial
+    # prefix, since gRPC clients can't route through one) - see traefik/dynamic.yml.
+    depends_on:
+      - postgres
+      - redis
+      - memgraph
+
+  web:
+    build:
+      context: ../../web
+    container_name: oecs-hub-web
+    hostname: web
+    restart: unless-stopped
+    # Routed by Traefik at / (lowest priority, catch-all) - see traefik/dynamic.yml.
+    depends_on:
+      - backend
 
 volumes:
   postgres:

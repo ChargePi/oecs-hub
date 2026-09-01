@@ -1,0 +1,109 @@
+# Dev config for Oathkeeper, the decision point Traefik's forwardAuth middleware calls
+# before proxying to the backend. Oathkeeper never receives traffic directly from
+# Traefik's public entrypoint - only container-to-container, at the "api" port below.
+#
+# NOTE: the bearer_token authenticator's exact header contract against Kratos (does it
+# forward as `Authorization: Bearer <token>` or does it need remapping to Kratos's
+# `X-Session-Token` header for non-cookie session lookups?) and the authorizer step for
+# the admin rule (remote_json vs. a Keto-specific authorizer, and Keto's check endpoint's
+# exact status-code/body contract) are both flagged in the plan doc as
+# verify-at-implementation-time items against the pinned Kratos/Oathkeeper/Keto versions
+# - don't treat the values below as final without testing them end-to-end first (M0).
+
+serve:
+  proxy:
+    port: 4455
+  api:
+    port: 4456
+
+access_rules:
+  repositories:
+    - file:///etc/config/oathkeeper/access-rules.yml
+
+authenticators:
+  anonymous:
+    enabled: true
+    config:
+      subject: anonymous
+
+  cookie_session:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      # identity (not identity.traits): the header mutator below needs schema_id
+      # alongside traits - manufacturer/individual are separate Kratos schemas, not a
+      # traits.userType field. See identity.manufacturer.schema.json /
+      # identity.individual.schema.json.
+      extra_from: identity
+      subject_from: identity.id
+      only:
+        - ory_kratos_session
+
+  bearer_token:
+    enabled: true
+    config:
+      check_session_url: http://kratos:4433/sessions/whoami
+      preserve_path: true
+      # identity (not identity.traits): the header mutator below needs schema_id
+      # alongside traits - manufacturer/individual are separate Kratos schemas, not a
+      # traits.userType field. See identity.manufacturer.schema.json /
+      # identity.individual.schema.json.
+      extra_from: identity
+      subject_from: identity.id
+      # No token_from override: bearer_token's default already reads the token from a
+      # plain `Authorization: Bearer <token>` header, which is what we want.
+
+authorizers:
+  allow:
+    enabled: true
+
+  deny:
+    enabled: true
+
+  # TODO(verify, see header comment): confirm remote_json against Keto's relation-tuple
+  # check endpoint actually denies on a false/non-2xx result rather than always allowing
+  # once the identity exists. May need a different authorizer type depending on the
+  # pinned Keto version's exact API contract.
+  remote_json:
+    enabled: true
+    config:
+      remote: http://keto:4466/relation-tuples/check
+      payload: |
+        {
+          "namespace": "Role",
+          "object": "admin",
+          "relation": "members",
+          "subject_id": "{{ print .Subject }}"
+        }
+
+mutators:
+  noop:
+    enabled: true
+
+  header:
+    enabled: true
+    config:
+      headers:
+        X-User-Id: "{{ print .Subject }}"
+        # `with` (not a direct `.Extra.traits.company.name` chain) because the anonymous
+        # authenticator leaves .Extra empty - a nested field access two levels deep on a
+        # missing key is a nil-pointer template error, not just an empty string, in Go's
+        # text/template. `with` skips the body instead of erroring when its value is nil.
+        X-User-Email: "{{ with .Extra }}{{ .traits.email }}{{ end }}"
+        # schema_id ("manufacturer"/"individual"), not a traits field - the account type
+        # is which Kratos identity schema this identity was created under, not a value
+        # inside traits. See identity.manufacturer.schema.json / identity.individual.schema.json.
+        X-User-Type: "{{ with .Extra }}{{ .schema_id }}{{ end }}"
+        X-Company-Name: "{{ with .Extra.traits.company }}{{ .name }}{{ end }}"
+        X-Gateway-Secret: "{{ env \"OECS_HUB_GATEWAY_SECRET\" }}"
+
+errors:
+  fallback:
+    - json
+
+  handlers:
+    json:
+      enabled: true
+      config:
+        verbose: true

@@ -1,0 +1,99 @@
+# Static routing for the auth edge, in place of Traefik's Docker-provider label
+# discovery: this environment's Docker Desktop (WSL2 backend) doesn't reliably expose a
+# bind-mountable /var/run/docker.sock to containers - the socket a container sees isn't
+# the same one docker-compose talks to, so label-based discovery silently sees nothing.
+# The service topology here is fixed and known upfront anyway (docker-compose's own DNS
+# already gives every service a stable hostname), so a static file provider is both a
+# working fix and arguably the more appropriate tool for it.
+#
+# Confirmed empirically again on 2026-08-25: switching to labels + a docker.sock mount
+# made Traefik's docker provider fail outright ("Error response from daemon: ", empty
+# body, on every request) even though a plain `docker` CLI container reached the same
+# socket fine seconds earlier. Docker Desktop's socket proxy is blocking the raw Engine
+# API calls Traefik's client makes. Don't retry this without confirming that proxy
+# behavior has changed.
+
+http:
+  routers:
+    # Host(`registry.localhost`) is required on every rule below rather than left
+    # wildcarded: *.localhost resolves to 127.0.0.1 in every modern browser without
+    # /etc/hosts changes (RFC 6761), so this is free, and it stops the stack from also
+    # answering on bare "localhost" or a LAN IP with the same routing.
+    kratos:
+      rule: "Host(`registry.localhost`) && PathPrefix(`/ory`)"
+      entryPoints: ["web"]
+      # Kratos serves its routes at bare root (confirmed empirically: /ory/health/ready
+      # 404s directly against Kratos, /health/ready doesn't) - base_url only shapes the
+      # links it *generates* (e.g. the registration flow's ui.action), it doesn't expect
+      # requests to arrive with that prefix already on them. So /ory IS stripped here,
+      # same as /api and /admin-api below.
+      middlewares: ["strip-ory"]
+      service: kratos
+
+    backend:
+      rule: "Host(`registry.localhost`) && PathPrefix(`/api`)"
+      entryPoints: ["web"]
+      middlewares: ["strip-api", "oathkeeper-forwardauth"]
+      service: backend
+
+    admin:
+      # No "/admin-api"-style artificial prefix, unlike /api above: AdminService is
+      # plain/native gRPC (not gRPC-Web), and real gRPC clients (grpcurl, a Go grpc
+      # client) always call the literal "/<package>.<Service>/<Method>" path baked into
+      # the wire protocol/generated stubs - there's no room to inject a custom prefix in
+      # front of it the way a gRPC-Web browser client's flexible base-URL config allows.
+      # So this matches the real service path directly and forwards it unmodified.
+      rule: "Host(`registry.localhost`) && PathPrefix(`/admin.v1.AdminService`)"
+      entryPoints: ["web"]
+      middlewares: ["oathkeeper-forwardauth"]
+      service: backend-admin
+
+    web:
+      rule: "Host(`registry.localhost`) && PathPrefix(`/`)"
+      entryPoints: ["web"]
+      priority: 1
+      service: web
+
+  services:
+    kratos:
+      loadBalancer:
+        servers:
+          - url: "http://kratos:4433"
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://backend:50051"
+
+    backend-admin:
+      # h2c, not http: AdminService's gRPC server (internal/grpc/adminserver) is a bare
+      # grpc.Server on a raw TCP listener, not wrapped in an h2c.NewHandler like the
+      # public server is - it only understands HTTP/2 framing, so Traefik must speak
+      # HTTP/2-cleartext to it rather than defaulting to HTTP/1.1.
+      loadBalancer:
+        servers:
+          - url: "h2c://backend:50052"
+
+    web:
+      loadBalancer:
+        servers:
+          - url: "http://web:8080"
+
+  middlewares:
+    strip-ory:
+      stripPrefix:
+        prefixes: ["/ory"]
+
+    strip-api:
+      stripPrefix:
+        prefixes: ["/api"]
+
+    oathkeeper-forwardauth:
+      forwardAuth:
+        address: "http://oathkeeper:4456/decisions"
+        authResponseHeaders:
+          - "X-User-Id"
+          - "X-User-Email"
+          - "X-User-Type"
+          - "X-Company-Name"
+          - "X-Gateway-Secret"

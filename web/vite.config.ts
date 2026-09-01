@@ -92,10 +92,7 @@ function protoGenCjsInterop(): Plugin {
       let body = code
       specifiers.forEach((spec, i) => {
         const escaped = spec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        body = body.replace(
-          new RegExp(`require\\((['"])${escaped}\\1\\)`, 'g'),
-          importNames[i],
-        )
+        body = body.replace(new RegExp(`require\\((['"])${escaped}\\1\\)`, 'g'), importNames[i])
       })
 
       const exportedKeys = Object.keys(ensureCjsCompiled(id).exports as object)
@@ -128,6 +125,16 @@ export default defineConfig({
         target: 'http://localhost:50051',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+      // Same-origin passthrough to the local Kratos public API, for the fast
+      // `pnpm dev` + `go run` loop (see the auth plan's Context section on why this
+      // mode can't exercise auth-gated backend RPCs, only the Kratos-facing UI).
+      // Kratos serves its own routes at bare root - base_url only shapes the links it
+      // *generates*, so /ory is stripped here too, same as /api above.
+      '/ory': {
+        target: 'http://localhost:4433',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/ory/, ''),
       },
     },
   },
