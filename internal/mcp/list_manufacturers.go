@@ -5,19 +5,21 @@ import (
 	"fmt"
 
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
+	"github.com/ChargePi/oecs-hub/internal/pagination"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// ManufacturerLister is the subset of manufacturer.Service the
+// ManufacturerService is the subset of manufacturer.Service the
 // list_manufacturers tool depends on.
-type ManufacturerLister interface {
+type ManufacturerService interface {
 	List(ctx context.Context, query, country *string, limit, offset uint32) ([]*manufacturer.Summary, int64, error)
 }
 
 type ListManufacturersInput struct {
-	Query    string `json:"query,omitempty" jsonschema:"optional free-text filter on manufacturer name"`
-	Country  string `json:"country,omitempty" jsonschema:"optional ISO 3166-1 alpha-2 country code filter"`
-	PageSize int    `json:"pageSize,omitempty" jsonschema:"max results to return (default 50, max 200)"`
+	Query     string `json:"query,omitempty" jsonschema:"optional free-text filter on manufacturer name"`
+	Country   string `json:"country,omitempty" jsonschema:"optional ISO 3166-1 alpha-2 country code filter"`
+	PageSize  int    `json:"pageSize,omitempty" jsonschema:"max results to return (default 50, max 200)"`
+	PageToken string `json:"pageToken,omitempty" jsonschema:"opaque pagination cursor from a previous response's nextPageToken"`
 }
 
 type ManufacturerSummaryOutput struct {
@@ -29,6 +31,7 @@ type ManufacturerSummaryOutput struct {
 type ListManufacturersOutput struct {
 	Manufacturers []ManufacturerSummaryOutput `json:"manufacturers"`
 	TotalSize     int64                       `json:"totalSize"`
+	NextPageToken string                      `json:"nextPageToken,omitempty"`
 }
 
 // listManufacturersDescription documents this tool's purpose for the calling model: a
@@ -41,10 +44,10 @@ or invent a manufacturer name from general knowledge, since only manufacturers r
 here actually have chargers in this registry.`
 
 type listManufacturersHandler struct {
-	manufacturers ManufacturerLister
+	manufacturers ManufacturerService
 }
 
-func newListManufacturersHandler(manufacturers ManufacturerLister) *listManufacturersHandler {
+func newListManufacturersHandler(manufacturers ManufacturerService) *listManufacturersHandler {
 	return &listManufacturersHandler{manufacturers: manufacturers}
 }
 
@@ -62,7 +65,14 @@ func (h *listManufacturersHandler) Handle(ctx context.Context, req mcp.CallToolR
 		country = &in.Country
 	}
 
-	results, total, err := h.manufacturers.List(ctx, query, country, uint32(in.PageSize), 0)
+	offset, err := pagination.DecodeOffset(in.PageToken)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("invalid pageToken: %v", err)), nil
+	}
+
+	limit := pagination.ClampPageSize(in.PageSize, manufacturer.DefaultPageSize, manufacturer.MaxPageSize)
+
+	results, total, err := h.manufacturers.List(ctx, query, country, limit, offset)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -70,6 +80,7 @@ func (h *listManufacturersHandler) Handle(ctx context.Context, req mcp.CallToolR
 	out := ListManufacturersOutput{
 		Manufacturers: make([]ManufacturerSummaryOutput, 0, len(results)),
 		TotalSize:     total,
+		NextPageToken: pagination.NextToken(offset, len(results), total),
 	}
 	for _, s := range results {
 		out.Manufacturers = append(out.Manufacturers, ManufacturerSummaryOutput{

@@ -38,7 +38,7 @@ from the result rather than failing the whole call.`
 // separate parameter from chargers since they're backed by distinct services
 // (manufacturer.Service, not charger.Service) - mirroring how cmd/app/main.go already
 // keeps chargerSvc/manufacturerSvc as separate instances.
-func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers ManufacturerLister) {
+func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers ManufacturerService) {
 	searchTool := mcp.NewTool("search_chargers",
 		mcp.WithDescription(searchChargersDescription),
 		mcp.WithInputSchema[SearchChargersInput](),
