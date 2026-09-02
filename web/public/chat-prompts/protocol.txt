@@ -1,0 +1,5 @@
+# Suggested-prompt template for the chat empty state's protocol example chip.
+# One template per line; a random line is picked each time. Blank lines and lines
+# starting with # are ignored. {protocol} is replaced with a real protocol + version a
+# charger in the catalog actually supports (e.g. "OCPP 1.6").
+What is {protocol}?

@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate } from 'react-router'
 import { AppShell } from '@/components/layout/app-shell'
 import { ExplorerLayout } from '@/components/layout/explorer-layout'
 import { ExplorerPage } from '@/features/explorer/explorer-page'
+import { CHAT_ENABLED } from '@/lib/chat/config'
 import { RequireAuth, RequireManufacturer } from './require-auth'
 
 const GraphPage = lazy(() =>
@@ -11,6 +12,12 @@ const GraphPage = lazy(() =>
 )
 const ComparePage = lazy(() =>
   import('@/features/comparison/compare-page').then((m) => ({ default: m.ComparePage })),
+)
+const ChatLayout = lazy(() =>
+  import('@/features/chat/chat-layout').then((m) => ({ default: m.ChatLayout })),
+)
+const ChatDashboardPage = lazy(() =>
+  import('@/features/chat/chat-dashboard-page').then((m) => ({ default: m.ChatDashboardPage })),
 )
 
 const LoginPage = lazy(() =>
@@ -44,6 +51,22 @@ export const router = createBrowserRouter([
         children: [{ path: 'explore/:manufacturerId', element: <GraphPage /> }],
       },
       { path: 'compare', element: <ComparePage /> },
+      ...(CHAT_ENABLED
+        ? [
+            {
+              path: 'chat',
+              element: (
+                <RequireAuth>
+                  <ChatLayout />
+                </RequireAuth>
+              ),
+              children: [
+                { index: true, element: <ChatDashboardPage /> },
+                { path: ':conversationId', element: <ChatDashboardPage /> },
+              ],
+            },
+          ]
+        : []),
       { path: 'auth', element: <Navigate to="/auth/login" replace /> },
       { path: 'auth/login', element: <LoginPage /> },
       { path: 'auth/register', element: <RegisterPage /> },

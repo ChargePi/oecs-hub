@@ -1,0 +1,6 @@
+# Suggested-prompt template for the chat empty state's comparison example chip. Only
+# shown when the catalog has 2+ chargers to compare. One template per line; a random
+# line is picked each time. Blank lines and lines starting with # are ignored.
+# {chargerA} and {chargerB} are replaced with two real, distinct catalog entries
+# (manufacturer + model name).
+Which one is better: the {chargerA} or the {chargerB}?

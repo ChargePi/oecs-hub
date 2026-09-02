@@ -4,10 +4,12 @@ import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AuthStatus } from '@/features/auth/auth-status'
 import { SearchBar } from '@/features/explorer/search-bar'
+import { CHAT_ENABLED } from '@/lib/chat/config'
 
 const NAV_LINKS = [
   { to: '/', label: 'Explore' },
   { to: '/compare', label: 'Compare' },
+  ...(CHAT_ENABLED ? [{ to: '/chat', label: 'Chat' }] : []),
 ]
 
 export function Header() {

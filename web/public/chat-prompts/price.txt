@@ -1,0 +1,5 @@
+# Suggested-prompt template for the chat empty state's price example chip.
+# One template per line; a random line is picked each time. Blank lines and lines
+# starting with # are ignored. {price} is replaced with a real price on file (rounded
+# up to a nice number, formatted in its real currency).
+Find me the best charger under {price}

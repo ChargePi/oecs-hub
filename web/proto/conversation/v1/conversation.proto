@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+// Mirrors oecs-recommendation-agent's ConversationService contract. Copied rather than
+// imported as a shared module - keep the two in sync by hand.
+package conversation.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+// ConversationService stores and serves a user's conversations with the
+// recommendation agent.
+service ConversationService {
+  // ListConversations returns a page of conversations belonging to a user.
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse);
+
+  // GetConversation returns a single conversation with its full message history.
+  rpc GetConversation(GetConversationRequest) returns (GetConversationResponse);
+
+  // UpsertConversation creates a new conversation (when conversation_id is empty)
+  // or appends a message to an existing one (when conversation_id is set).
+  rpc UpsertConversation(UpsertConversationRequest) returns (UpsertConversationResponse);
+
+  // UpdateConversation updates a conversation's mutable fields. Only title can
+  // be set today. The caller must own the conversation (user_id must match).
+  rpc UpdateConversation(UpdateConversationRequest) returns (UpdateConversationResponse);
+
+  // DeleteConversations deletes one or more conversations, along with their
+  // messages, scoped to the caller's user_id.
+  rpc DeleteConversations(DeleteConversationsRequest) returns (DeleteConversationsResponse);
+
+  // GetConversationStatus reports the progress of the conversation's most
+  // recently requested recommendation. The recommendation service itself is
+  // internal-only, so this is how a caller polls the result of the request
+  // UpsertConversation forwards to it.
+  rpc GetConversationStatus(GetConversationStatusRequest) returns (GetConversationStatusResponse);
+}
+
+enum ConversationStatus {
+  CONVERSATION_STATUS_UNSPECIFIED = 0;
+  CONVERSATION_STATUS_OPEN = 1;
+  CONVERSATION_STATUS_CLOSED = 2;
+  CONVERSATION_STATUS_ARCHIVED = 3;
+}
+
+enum MessageRole {
+  MESSAGE_ROLE_UNSPECIFIED = 0;
+  MESSAGE_ROLE_USER = 1;
+  MESSAGE_ROLE_ASSISTANT = 2;
+  MESSAGE_ROLE_SYSTEM = 3;
+  MESSAGE_ROLE_TOOL = 4;
+}
+
+message Message {
+  string id = 1;
+  string conversation_id = 2;
+  MessageRole role = 3;
+  string content = 4;
+  // Structured extras carried alongside a message, e.g. the agent's evidence
+  // list on an assistant message.
+  google.protobuf.Struct metadata = 5;
+  int32 sequence_number = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message Conversation {
+  string id = 1;
+  string user_id = 2;
+  ConversationStatus status = 3;
+  string title = 4;
+  google.protobuf.Struct metadata = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+  repeated Message messages = 8;
+}
+
+message ListConversationsRequest {
+  string user_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListConversationsResponse {
+  repeated Conversation conversations = 1;
+  string next_page_token = 2;
+}
+
+message GetConversationRequest {
+  string conversation_id = 1;
+}
+
+message GetConversationResponse {
+  Conversation conversation = 1;
+}
+
+message UpsertConversationRequest {
+  // Empty conversation_id creates a new conversation; a set conversation_id
+  // appends the message to that existing conversation.
+  string conversation_id = 1;
+  string user_id = 2;
+  // Appending a MESSAGE_ROLE_USER message forwards a recommendation request
+  // internally - poll GetConversationStatus for the result. Any other role
+  // (the agent worker's own write-back of its reply) does not.
+  Message message = 3;
+  // Deduplicates retried writes (e.g. from a Temporal activity retry) against
+  // the same (conversation_id, idempotency_key) pair.
+  string idempotency_key = 4;
+}
+
+message UpsertConversationResponse {
+  Conversation conversation = 1;
+}
+
+message UpdateConversationRequest {
+  string conversation_id = 1;
+  string user_id = 2;
+  // The conversation's new title. Required - this is currently the only
+  // field UpdateConversation can change.
+  string title = 3;
+}
+
+message UpdateConversationResponse {
+  Conversation conversation = 1;
+}
+
+message DeleteConversationsRequest {
+  string user_id = 1;
+  repeated string conversation_ids = 2;
+}
+
+message DeleteConversationsResponse {
+  int32 deleted_count = 1;
+}
+
+// TurnStatus is the progress of a conversation's most recently requested
+// recommendation - distinct from ConversationStatus above, which is the
+// conversation's own open/closed/archived lifecycle state.
+enum TurnStatus {
+  TURN_STATUS_UNSPECIFIED = 0;
+  // No recommendation has ever been requested for this conversation.
+  TURN_STATUS_NONE = 1;
+  TURN_STATUS_PENDING = 2;
+  TURN_STATUS_RUNNING = 3;
+  TURN_STATUS_COMPLETED = 4;
+  TURN_STATUS_FAILED = 5;
+}
+
+message GetConversationStatusRequest {
+  string conversation_id = 1;
+}
+
+message GetConversationStatusResponse {
+  TurnStatus status = 1;
+}

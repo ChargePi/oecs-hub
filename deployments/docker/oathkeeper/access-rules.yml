@@ -64,6 +64,29 @@
   mutators:
     - handler: header
 
+- id: conversation-service
+  upstream:
+    url: http://host.docker.internal:50051
+  match:
+    # gRPC-Method-shaped, like registry-service-default above - conversation.v1
+    # .ConversationService is called directly (gRPC-Web) now, no oecs-registry
+    # backend involved (see web/src/lib/chat/client.ts and Traefik's own
+    # "conversation" router/service). grpc-web requests are always POST. Every
+    # method is wildcarded here (unlike registry-service-default's explicit list):
+    # conversations are inherently per-user, so there's no public subset to carve
+    # out - ConversationService itself enforces ownership using the identity these
+    # headers carry (ignoring whatever user_id a request claims), not this rule.
+    url: "http://<.*>/conversation.v1.ConversationService/<.*>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required (see
+  # registry-service-submit-charger-spec's identical reasoning above).
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: admin-service
   upstream:
     url: http://backend:50052
