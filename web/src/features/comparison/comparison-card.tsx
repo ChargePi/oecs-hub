@@ -1,6 +1,7 @@
-import { Banknote, Check, Trash2 } from 'lucide-react'
+import { Banknote, Square, SquareCheckBig, Trash2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   comparePricing,
   formatNumericDelta,
@@ -13,7 +14,8 @@ import { cn } from '@/lib/utils'
 import { diffBadgeGroup } from '@/features/product/spec-badges'
 import { SpecRow, SpecSection } from '@/features/product/spec-section'
 import { RatingsSection } from '@/features/product/ratings-section'
-import type { ComparisonGroup } from './comparison-rows'
+import { ProductImage } from '@/features/product/product-image'
+import { chargerTypeGroup, type ComparisonGroup, type ComparisonRow } from './comparison-rows'
 
 /**
  * Comparison cards are laid out as a CSS grid (one column per variant, auto row-flow) rather
@@ -22,50 +24,156 @@ import type { ComparisonGroup } from './comparison-rows'
  * content inside an independent container.
  */
 
+/** Renders one `ComparisonRow` against `baseline`, handling its items/numeric/plain-diff
+ *  variants — shared by the body group cells and the header's embedded charger-type rows. */
+function renderComparisonRow(
+  row: ComparisonRow,
+  variant: ChargerVariant,
+  baseline: ChargerVariant,
+) {
+  const isBaseline = variant.id === baseline.id
+
+  if (row.items) {
+    const items = row.items(variant) ?? []
+    const referenceTexts = new Set((row.items(baseline) ?? []).map((item) => item.text))
+    const commonTexts = new Set(
+      items.filter((item) => referenceTexts.has(item.text)).map((item) => item.text),
+    )
+    return (
+      <SpecRow
+        key={row.label}
+        label={row.label}
+        value={diffBadgeGroup(items, commonTexts)}
+        description={row.description}
+        wide
+      />
+    )
+  }
+
+  if (row.numericValue) {
+    const value = row.numericValue(variant)
+    const baseValue = row.numericValue(baseline)
+    const delta = value != null && baseValue != null ? value - baseValue : undefined
+    const percent = delta && baseValue ? (delta / baseValue) * 100 : undefined
+    const direction = row.betterDirection ?? 'higher'
+    const isBetter = !!delta && (direction === 'higher' ? delta > 0 : delta < 0)
+    const isWorse = !!delta && (direction === 'higher' ? delta < 0 : delta > 0)
+
+    return (
+      <SpecRow
+        key={row.label}
+        label={row.label}
+        value={
+          <span className="inline-flex flex-wrap items-baseline gap-1.5">
+            <span className={cn(isBetter && 'text-success', isWorse && 'text-destructive')}>
+              {row.render?.(variant)}
+            </span>
+            {!isBaseline && delta != null && delta !== 0 && (
+              <span
+                className={cn('text-xs', isBetter && 'text-success', isWorse && 'text-destructive')}
+              >
+                {row.unit
+                  ? formatNumericDelta(delta, row.unit, percent)
+                  : percent != null
+                    ? formatPercentDelta(percent)
+                    : formatNumericDelta(delta)}
+              </span>
+            )}
+          </span>
+        }
+        description={row.description}
+        inline={row.inline}
+      />
+    )
+  }
+
+  const hasDiff = row.diffKey ? row.diffKey(variant) !== row.diffKey(baseline) : false
+
+  return (
+    <SpecRow
+      key={row.label}
+      label={row.label}
+      value={
+        <span
+          className={cn(hasDiff && 'font-semibold underline decoration-dotted underline-offset-4')}
+        >
+          {row.render?.(variant)}
+        </span>
+      }
+      description={row.description}
+      inline={row.inline}
+    />
+  )
+}
+
 export function ComparisonHeaderCell({
   variant,
-  isBaseline,
+  baseline,
   onRemove,
   onSetReference,
 }: {
   variant: ChargerVariant
-  isBaseline: boolean
+  baseline: ChargerVariant
   onRemove: () => void
   onSetReference: () => void
 }) {
+  const isBaseline = variant.id === baseline.id
+
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-2 rounded-t-xl border border-b-0 bg-card px-4 pt-4 pb-3',
+        'flex flex-col gap-3 rounded-t-xl border border-b-0 bg-card px-4 pt-3 pb-4',
         isBaseline ? 'border-2 border-b-0 border-primary' : 'border-border',
       )}
     >
-      <div className="min-w-0">
-        <p className="truncate text-base font-semibold">{variant.model.name}</p>
-        <p className="truncate text-xs text-muted-foreground">{variant.manufacturer.name}</p>
+      <div className="flex items-center justify-end gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onSetReference}
+              disabled={isBaseline}
+              aria-pressed={isBaseline}
+              aria-label={
+                isBaseline
+                  ? `${variant.model.name} is the reference`
+                  : `Set ${variant.model.name} as reference`
+              }
+              className={cn(
+                'flex size-8 items-center justify-center rounded-md transition-colors',
+                isBaseline
+                  ? 'cursor-default text-primary'
+                  : 'text-muted-foreground hover:bg-primary/10 hover:text-primary',
+              )}
+            >
+              {isBaseline ? <SquareCheckBig className="size-4" /> : <Square className="size-4" />}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{isBaseline ? 'Reference variant' : 'Set as reference'}</TooltipContent>
+        </Tooltip>
         <button
           type="button"
-          onClick={onSetReference}
-          disabled={isBaseline}
-          className={cn(
-            'mt-1.5 inline-flex w-fit items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors',
-            isBaseline
-              ? 'cursor-default border-primary bg-primary/10 text-primary'
-              : 'border-border text-muted-foreground hover:border-primary hover:text-primary',
-          )}
+          onClick={onRemove}
+          aria-label={`Remove ${variant.model.name}`}
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
-          {isBaseline && <Check className="size-3" />}
-          {isBaseline ? 'Reference' : 'Set as reference'}
+          <Trash2 className="size-4" />
         </button>
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        aria-label={`Remove ${variant.model.name}`}
-        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-      >
-        <Trash2 className="size-4" />
-      </button>
+
+      <div className="grid grid-cols-2 gap-4">
+        <ProductImage
+          src={variant.model.productImageUrl}
+          alt={variant.model.name}
+          className="aspect-square w-full self-start"
+        />
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold">{variant.model.name}</p>
+          <div className="mt-1 flex flex-col">
+            {chargerTypeGroup.rows.map((row) => renderComparisonRow(row, variant, baseline))}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -86,86 +194,7 @@ export function ComparisonGroupCell({
       className={cn('border-x bg-card px-4 py-3', isBaseline ? 'border-primary' : 'border-border')}
     >
       <SpecSection title={group.title} icon={group.icon} columns={3}>
-        {group.rows.map((row) => {
-          if (row.items) {
-            const items = row.items(variant) ?? []
-            const referenceTexts = new Set((row.items(baseline) ?? []).map((item) => item.text))
-            const commonTexts = new Set(
-              items.filter((item) => referenceTexts.has(item.text)).map((item) => item.text),
-            )
-            return (
-              <SpecRow
-                key={row.label}
-                label={row.label}
-                value={diffBadgeGroup(items, commonTexts)}
-                description={row.description}
-                wide
-              />
-            )
-          }
-
-          if (row.numericValue) {
-            const value = row.numericValue(variant)
-            const baseValue = row.numericValue(baseline)
-            const isBaseline = variant.id === baseline.id
-            const delta = value != null && baseValue != null ? value - baseValue : undefined
-            const percent = delta && baseValue ? (delta / baseValue) * 100 : undefined
-            const direction = row.betterDirection ?? 'higher'
-            const isBetter = !!delta && (direction === 'higher' ? delta > 0 : delta < 0)
-            const isWorse = !!delta && (direction === 'higher' ? delta < 0 : delta > 0)
-
-            return (
-              <SpecRow
-                key={row.label}
-                label={row.label}
-                value={
-                  <span className="inline-flex flex-wrap items-baseline gap-1.5">
-                    <span className={cn(isBetter && 'text-success', isWorse && 'text-destructive')}>
-                      {row.render?.(variant)}
-                    </span>
-                    {!isBaseline && delta != null && delta !== 0 && (
-                      <span
-                        className={cn(
-                          'text-xs',
-                          isBetter && 'text-success',
-                          isWorse && 'text-destructive',
-                        )}
-                      >
-                        {row.unit
-                          ? formatNumericDelta(delta, row.unit, percent)
-                          : percent != null
-                            ? formatPercentDelta(percent)
-                            : formatNumericDelta(delta)}
-                      </span>
-                    )}
-                  </span>
-                }
-                description={row.description}
-                inline={row.inline}
-              />
-            )
-          }
-
-          const hasDiff = row.diffKey ? row.diffKey(variant) !== row.diffKey(baseline) : false
-
-          return (
-            <SpecRow
-              key={row.label}
-              label={row.label}
-              value={
-                <span
-                  className={cn(
-                    hasDiff && 'font-semibold underline decoration-dotted underline-offset-4',
-                  )}
-                >
-                  {row.render?.(variant)}
-                </span>
-              }
-              description={row.description}
-              inline={row.inline}
-            />
-          )
-        })}
+        {group.rows.map((row) => renderComparisonRow(row, variant, baseline))}
       </SpecSection>
     </div>
   )

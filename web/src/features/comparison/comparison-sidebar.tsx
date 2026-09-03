@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { MAX_COMPARISON_ITEMS, useComparisonStore } from '@/stores/comparison-store'
+import { ProductImage } from '@/features/product/product-image'
 import { useComparisonVariants } from './use-comparison-variants'
 
 export function ComparisonSidebar() {
@@ -65,12 +66,19 @@ export function ComparisonSidebar() {
               >
                 <Link
                   to={`/explore/${variant.manufacturer.id}?variant=${variant.id}`}
-                  className="min-w-0 flex-1 rounded-md transition-colors hover:text-primary"
+                  className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md transition-colors hover:text-primary"
                 >
-                  <p className="truncate text-sm font-medium">{variant.model.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {variant.manufacturer.name}
-                  </p>
+                  <ProductImage
+                    src={variant.model.productImageUrl}
+                    alt={variant.model.name}
+                    className="size-10"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{variant.model.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {variant.manufacturer.name}
+                    </p>
+                  </div>
                 </Link>
                 <button
                   type="button"

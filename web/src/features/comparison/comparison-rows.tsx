@@ -53,8 +53,35 @@ function enumItems(
   return values.map((value) => ({ text: humanize(value), description: describe(value) }))
 }
 
-function humanizedBadges(values?: string[], describe?: (item: string) => string | undefined): ReactNode {
+function humanizedBadges(
+  values?: string[],
+  describe?: (item: string) => string | undefined,
+): ReactNode {
   return badgeGroup(values, true, describe)
+}
+
+/**
+ * Manufacturer/model identity fields — rendered in the header cell's second half, next to the
+ * product image, rather than as a body group like the rest of `comparisonGroups`.
+ */
+export const chargerTypeGroup: ComparisonGroup = {
+  title: 'Charger type',
+  icon: Tag,
+  rows: [
+    { label: 'Manufacturer', render: (v) => v.manufacturer.name },
+    { label: 'Product line', render: (v) => v.model.series ?? '—' },
+    {
+      label: 'Type',
+      render: (v) => (
+        <ValueTooltip description={describeChargerType(v.model.type)}>{v.model.type}</ValueTooltip>
+      ),
+      diffKey: (v) => v.model.type,
+      description: fieldDescriptions['model.type'],
+    },
+    { label: 'Level', render: (v) => v.model.level ?? '—' },
+    { label: 'Status', render: (v) => (v.model.status ? humanize(v.model.status) : '—') },
+    { label: 'Release date', render: (v) => v.model.releaseDate ?? '—' },
+  ],
 }
 
 /**
@@ -62,23 +89,6 @@ function humanizedBadges(values?: string[], describe?: (item: string) => string 
  * intentionally not here — it's handled as its own standout footer, not a generic group.
  */
 export const comparisonGroups: ComparisonGroup[] = [
-  {
-    title: 'Charger type',
-    icon: Tag,
-    rows: [
-      { label: 'Manufacturer', render: (v) => v.manufacturer.name },
-      { label: 'Product line', render: (v) => v.model.series ?? '—' },
-      {
-        label: 'Type',
-        render: (v) => <ValueTooltip description={describeChargerType(v.model.type)}>{v.model.type}</ValueTooltip>,
-        diffKey: (v) => v.model.type,
-        description: fieldDescriptions['model.type'],
-      },
-      { label: 'Level', render: (v) => v.model.level ?? '—' },
-      { label: 'Status', render: (v) => (v.model.status ? humanize(v.model.status) : '—') },
-      { label: 'Release date', render: (v) => v.model.releaseDate ?? '—' },
-    ],
-  },
   {
     title: 'Power & electrical',
     icon: Zap,
@@ -131,7 +141,11 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       {
         label: 'Connector types',
-        render: (v) => humanizedBadges(v.hardware.connectors.map((c) => c.type), describeConnectorType),
+        render: (v) =>
+          humanizedBadges(
+            v.hardware.connectors.map((c) => c.type),
+            describeConnectorType,
+          ),
         description: fieldDescriptions['hardware.connectors[].type'],
       },
       {
@@ -163,7 +177,8 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Authentication methods',
-        items: (v) => enumItems(v.hardware.userInterface?.authenticationMethods, describeAuthenticationMethod),
+        items: (v) =>
+          enumItems(v.hardware.userInterface?.authenticationMethods, describeAuthenticationMethod),
         description: fieldDescriptions['hardware.userInterface.authenticationMethods'],
       },
     ],
@@ -199,7 +214,8 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Smart charging features',
-        render: (v) => humanizedBadges(v.software.smartCharging?.features, describeSmartChargingFeature),
+        render: (v) =>
+          humanizedBadges(v.software.smartCharging?.features, describeSmartChargingFeature),
         description: fieldDescriptions['software.smartCharging.features'],
       },
       {
