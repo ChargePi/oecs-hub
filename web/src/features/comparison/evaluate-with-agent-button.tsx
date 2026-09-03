@@ -43,7 +43,7 @@ export function EvaluateWithAgentButton({ variants }: { variants: ChargerVariant
         Evaluate using AI
       </Button>
       <p className="max-w-xs text-center text-xs text-muted-foreground">
-        Starts a new agent chat, asking it to compare these {variants.length} chargers by name.
+        Starts a new agent chat, asking it to compare these {variants.length} chargers.
       </p>
     </div>
   )
