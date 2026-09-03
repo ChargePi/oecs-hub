@@ -1,4 +1,5 @@
 import { Zap } from 'lucide-react'
+import { Link } from 'react-router'
 
 import { GithubIcon } from '@/components/icons/github-icon'
 import { Separator } from '@/components/ui/separator'
@@ -38,6 +39,14 @@ export function Footer() {
         >
           OECS spec
         </a>
+        <div className="flex items-center gap-4">
+          <Link to="/privacy" className="transition-colors hover:text-foreground">
+            Privacy Policy
+          </Link>
+          <Link to="/terms" className="transition-colors hover:text-foreground">
+            Terms of Service
+          </Link>
+        </div>
         <span>
           Developed by{' '}
           <a
