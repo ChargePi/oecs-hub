@@ -40,6 +40,12 @@ const SubmitChargerPage = lazy(() =>
     default: m.SubmitChargerPage,
   })),
 )
+const PrivacyPage = lazy(() =>
+  import('@/features/legal/privacy-page').then((m) => ({ default: m.PrivacyPage })),
+)
+const TermsPage = lazy(() =>
+  import('@/features/legal/terms-page').then((m) => ({ default: m.TermsPage })),
+)
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +57,8 @@ export const router = createBrowserRouter([
         children: [{ path: 'explore/:manufacturerId', element: <GraphPage /> }],
       },
       { path: 'compare', element: <ComparePage /> },
+      { path: 'privacy', element: <PrivacyPage /> },
+      { path: 'terms', element: <TermsPage /> },
       ...(CHAT_ENABLED
         ? [
             {
