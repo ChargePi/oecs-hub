@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, PanelRightOpen } from 'lucide-react'
@@ -26,6 +26,9 @@ export function ChatDashboardPage() {
   // the request again itself - token is bumped on every click (even resending the
   // same text twice in a row) so ChatComposer's prefill effect re-applies it.
   const [resendDraft, setResendDraft] = useState<{ text: string; token: number }>()
+  // Guards the auto-send effect below against firing twice (e.g. StrictMode's double
+  // invoke) - state wouldn't do, since setting it is itself what triggers the send.
+  const autoSentPromptRef = useRef(false)
 
   const {
     data: detail,
@@ -45,6 +48,20 @@ export function ChatDashboardPage() {
   useEffect(() => {
     stream.cancel()
     if (!routeId) stream.reset()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeId])
+
+  // A comparison-view "Evaluate using AI" click lands here as /chat?prompt=... - fire that
+  // message immediately instead of just prefilling the composer. The query param is
+  // stripped via a raw history replace (cosmetic only, not a router navigation - same
+  // reasoning as the conversationId sync below) so refreshing never resends it.
+  useEffect(() => {
+    if (routeId || autoSentPromptRef.current) return
+    const prompt = new URLSearchParams(window.location.search).get('prompt')
+    if (!prompt) return
+    autoSentPromptRef.current = true
+    window.history.replaceState(null, '', '/chat')
+    stream.send(prompt)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeId])
 

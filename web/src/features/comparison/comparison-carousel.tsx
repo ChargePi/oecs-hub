@@ -12,6 +12,7 @@ import {
   ComparisonRatingsCell,
 } from './comparison-card'
 import { comparisonGroups } from './comparison-rows'
+import { EvaluateWithAgentButton } from './evaluate-with-agent-button'
 
 function ComparisonLegend() {
   return (
@@ -46,6 +47,9 @@ export function ComparisonCarousel({ variants }: { variants: ChargerVariant[] })
   return (
     <div className="flex flex-col">
       <ComparisonLegend />
+      <div className="mb-4 flex justify-center">
+        <EvaluateWithAgentButton variants={variants} />
+      </div>
       <div className="overflow-x-auto pb-4">
         <div className="mx-auto flex w-fit items-stretch gap-4">
           <div
