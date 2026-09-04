@@ -33,7 +33,7 @@ export function SearchBar() {
   function goToManufacturer(manufacturerId: string) {
     setIsFocused(false)
     inputRef.current?.blur()
-    navigate(`/explore/${manufacturerId}`)
+    navigate(`/chargers/${manufacturerId}`)
   }
 
   return (

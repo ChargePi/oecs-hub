@@ -5,6 +5,7 @@ import type {
   ChargerSearchPage,
   FieldFilterValue,
   ManufacturerGraph,
+  ManufacturerSearchPage,
   ManufacturerSummary,
   RegistryClient,
   SearchResult,
@@ -116,6 +117,42 @@ export class MockRegistryClient implements RegistryClient {
     })
 
     return delay(summaries.sort((a, b) => a.name.localeCompare(b.name)))
+  }
+
+  async searchManufacturers(params: {
+    query?: string
+    pageSize: number
+    pageToken?: string
+  }): Promise<ManufacturerSearchPage> {
+    const products = groupIntoProducts(chargerVariants)
+    const manufacturers = uniqueManufacturers(chargerVariants)
+
+    const summaries = manufacturers.map((manufacturer) => {
+      const ownProducts = [...products.values()].filter(
+        (product) => product.manufacturerId === manufacturer.id,
+      )
+      return {
+        ...manufacturer,
+        productCount: ownProducts.length,
+        variantCount: ownProducts.reduce((sum, product) => sum + product.variants.length, 0),
+      }
+    })
+
+    const normalized = params.query?.trim().toLowerCase()
+    const filtered = normalized
+      ? summaries.filter((m) => m.name.toLowerCase().includes(normalized))
+      : summaries
+    filtered.sort((a, b) => a.name.localeCompare(b.name))
+
+    const offset = params.pageToken ? Number(params.pageToken) : 0
+    const page = filtered.slice(offset, offset + params.pageSize)
+    const nextOffset = offset + page.length
+
+    return delay({
+      items: page,
+      nextPageToken: nextOffset < filtered.length ? String(nextOffset) : '',
+      totalSize: filtered.length,
+    })
   }
 
   async getManufacturerGraph(manufacturerId: string): Promise<ManufacturerGraph | null> {

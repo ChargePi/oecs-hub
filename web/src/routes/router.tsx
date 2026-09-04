@@ -18,6 +18,11 @@ const ExploreChargersPage = lazy(() =>
 const ComparePage = lazy(() =>
   import('@/features/comparison/compare-page').then((m) => ({ default: m.ComparePage })),
 )
+const ManufacturersPage = lazy(() =>
+  import('@/features/manufacturers/manufacturers-page').then((m) => ({
+    default: m.ManufacturersPage,
+  })),
+)
 const ChatLayout = lazy(() =>
   import('@/features/chat/chat-layout').then((m) => ({ default: m.ChatLayout })),
 )
@@ -60,10 +65,11 @@ export const router = createBrowserRouter([
       {
         element: <ExplorerLayout />,
         children: [
-          { path: 'explore', element: <ExploreChargersPage /> },
-          { path: 'explore/:manufacturerId', element: <GraphPage /> },
+          { path: 'chargers', element: <ExploreChargersPage /> },
+          { path: 'chargers/:manufacturerId', element: <GraphPage /> },
         ],
       },
+      { path: 'manufacturers', element: <ManufacturersPage /> },
       { path: 'compare', element: <ComparePage /> },
       { path: 'privacy', element: <PrivacyPage /> },
       { path: 'terms', element: <TermsPage /> },

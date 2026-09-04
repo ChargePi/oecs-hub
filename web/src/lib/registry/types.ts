@@ -43,6 +43,12 @@ export interface ChargerSearchPage {
   totalSize: number
 }
 
+export interface ManufacturerSearchPage {
+  items: ManufacturerSummary[]
+  nextPageToken: string
+  totalSize: number
+}
+
 export type SubmissionStatus = 'unspecified' | 'submitted' | 'verified' | 'rejected'
 
 export interface SubmitChargerSpecResult {
@@ -67,6 +73,12 @@ export interface SubmitVariantRatingResult {
  */
 export interface RegistryClient {
   listManufacturers(): Promise<ManufacturerSummary[]>
+  /** Paginated, filtered manufacturer search - backs the /manufacturers grid. */
+  searchManufacturers(params: {
+    query?: string
+    pageSize: number
+    pageToken?: string
+  }): Promise<ManufacturerSearchPage>
   getManufacturerGraph(manufacturerId: string): Promise<ManufacturerGraph | null>
   searchCatalog(query: string): Promise<SearchResult[]>
   getVariant(variantId: string): Promise<ChargerVariant | null>
