@@ -105,7 +105,7 @@ export function ComparisonSidebar() {
                 className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card p-2.5"
               >
                 <Link
-                  to={`/explore/${variant.manufacturer.id}?variant=${variant.id}`}
+                  to={`/chargers/${variant.manufacturer.id}?variant=${variant.id}`}
                   className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md transition-colors hover:text-primary"
                 >
                   <ProductImage

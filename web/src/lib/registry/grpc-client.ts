@@ -17,6 +17,7 @@ import type {
   ChargerFilters,
   ChargerSearchPage,
   ManufacturerGraph,
+  ManufacturerSearchPage,
   ManufacturerSummary,
   RegistryClient,
   SearchResult,
@@ -45,6 +46,32 @@ export class GrpcRegistryClient implements RegistryClient {
       return items.map(manufacturerSummaryFromProto).sort((a, b) => a.name.localeCompare(b.name))
     } catch (err) {
       mapGrpcError(err, 'listManufacturers')
+    }
+  }
+
+  /**
+   * Paginated, filtered manufacturer search - unlike listManufacturers, fetches exactly one
+   * page (never collectAllPages) so it pairs directly with useInfiniteQuery.
+   */
+  async searchManufacturers(params: {
+    query?: string
+    pageSize: number
+    pageToken?: string
+  }): Promise<ManufacturerSearchPage> {
+    const req = new registry_v1_registry_pb.GetManufacturersRequest()
+    if (params.query) req.setQuery(params.query)
+    req.setPageSize(params.pageSize)
+    if (params.pageToken) req.setPageToken(params.pageToken)
+
+    try {
+      const resp = await this.client.getManufacturers(req, {})
+      return {
+        items: resp.getManufacturersList().map(manufacturerSummaryFromProto),
+        nextPageToken: resp.getNextPageToken(),
+        totalSize: resp.getTotalSize(),
+      }
+    } catch (err) {
+      mapGrpcError(err, 'searchManufacturers')
     }
   }
 

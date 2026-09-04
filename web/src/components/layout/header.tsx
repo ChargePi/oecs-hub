@@ -7,7 +7,8 @@ import { SearchBar } from '@/features/explorer/search-bar'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 
 const NAV_LINKS = [
-  { to: '/explore', label: 'Explore' },
+  { to: '/manufacturers', label: 'Manufacturers' },
+  { to: '/chargers', label: 'Chargers' },
   { to: '/compare', label: 'Compare' },
   ...(CHAT_ENABLED ? [{ to: '/chat', label: 'Chat' }] : []),
 ]

@@ -6,7 +6,7 @@ import type { ManufacturerSummary } from '@/lib/registry/types'
 
 export function ManufacturerCard({ manufacturer }: { manufacturer: ManufacturerSummary }) {
   return (
-    <Link to={`/explore/${manufacturer.id}`}>
+    <Link to={`/chargers/${manufacturer.id}`}>
       <Card className="h-full transition-colors hover:bg-muted/40">
         <CardHeader className="flex-row items-center gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
