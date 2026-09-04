@@ -2,6 +2,7 @@ import type { ChargerVariant, Product } from '@/lib/oecs/types'
 import { RegistryServiceClient } from './gen/registry/v1/RegistryServiceClientPb'
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
 import {
+  categoryRatingFromProto,
   chargerVariantFromProto,
   chargerVariantFromSummary,
   collectAllPages,
@@ -10,6 +11,7 @@ import {
   manufacturerSummaryFromProto,
   mapGrpcError,
   submissionStatusFromProto,
+  variantRatingInputToProto,
 } from './grpc-mapping'
 import type {
   ManufacturerGraph,
@@ -17,6 +19,8 @@ import type {
   RegistryClient,
   SearchResult,
   SubmitChargerSpecResult,
+  SubmitVariantRatingInput,
+  SubmitVariantRatingResult,
 } from './types'
 
 const BASE_URL = '/api'
@@ -168,6 +172,25 @@ export class GrpcRegistryClient implements RegistryClient {
       return { id: resp.getId(), status: submissionStatusFromProto(resp.getStatus()) }
     } catch (err) {
       mapGrpcError(err, 'submitChargerSpec')
+    }
+  }
+
+  async submitVariantRating(
+    variantId: string,
+    ratings: SubmitVariantRatingInput[],
+  ): Promise<SubmitVariantRatingResult> {
+    const req = new registry_v1_registry_pb.SubmitVariantRatingRequest()
+    req.setVariantId(variantId)
+    req.setRatingsList(ratings.map(variantRatingInputToProto))
+
+    try {
+      const resp = await this.client.submitVariantRating(req, {})
+      return {
+        variantId: resp.getVariantId(),
+        ratings: resp.getRatingsList().map(categoryRatingFromProto),
+      }
+    } catch (err) {
+      mapGrpcError(err, `submitVariantRating(${variantId})`)
     }
   }
 }

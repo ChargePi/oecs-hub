@@ -6,6 +6,8 @@ import type {
   RegistryClient,
   SearchResult,
   SubmitChargerSpecResult,
+  SubmitVariantRatingInput,
+  SubmitVariantRatingResult,
 } from './types'
 
 const SIMULATED_LATENCY_MS = 220
@@ -121,5 +123,15 @@ export class MockRegistryClient implements RegistryClient {
 
   async submitChargerSpec(): Promise<SubmitChargerSpecResult> {
     return delay({ id: crypto.randomUUID(), status: 'submitted' })
+  }
+
+  async submitVariantRating(
+    variantId: string,
+    ratings: SubmitVariantRatingInput[],
+  ): Promise<SubmitVariantRatingResult> {
+    return delay({
+      variantId,
+      ratings: ratings.map((r) => ({ categoryName: r.categoryName, average: r.score, count: 1 })),
+    })
   }
 }

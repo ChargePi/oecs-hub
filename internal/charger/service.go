@@ -254,6 +254,33 @@ func (s *Service) ChangeStatus(ctx context.Context, id uuid.UUID, status Status)
 	return updated, nil
 }
 
+// SubmitRating validates inputs and upserts raterIdentityID's per-category scores for
+// variantID, then evicts the cached charger so the next Get reflects the recomputed
+// aggregate rather than the stale cached one.
+func (s *Service) SubmitRating(ctx context.Context, variantID, raterIdentityID uuid.UUID, inputs []RatingInput) (RatingsSummary, error) {
+	ctx, span := tracer.Start(ctx, "charger.SubmitRating", trace.WithAttributes(idAttr(variantID)))
+	defer span.End()
+
+	if err := validateRatingInputs(inputs); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, err
+	}
+
+	summary, err := s.repo.UpsertRatings(ctx, variantID, raterIdentityID, inputs)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("upsert ratings: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, variantID)
+
+	return summary, nil
+}
+
 func clampPageSize(limit uint32) uint32 {
 	if limit == 0 {
 		return DefaultPageSize

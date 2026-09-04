@@ -23,6 +23,7 @@ type RegistryServiceClient interface {
 	GetCharger(ctx context.Context, in *GetChargerRequest, opts ...grpc.CallOption) (*GetChargerResponse, error)
 	GetManufacturer(ctx context.Context, in *GetManufacturerRequest, opts ...grpc.CallOption) (*GetManufacturerResponse, error)
 	SubmitChargerSpec(ctx context.Context, in *SubmitChargerSpecRequest, opts ...grpc.CallOption) (*SubmitChargerSpecResponse, error)
+	SubmitVariantRating(ctx context.Context, in *SubmitVariantRatingRequest, opts ...grpc.CallOption) (*SubmitVariantRatingResponse, error)
 }
 
 type registryServiceClient struct {
@@ -78,6 +79,15 @@ func (c *registryServiceClient) SubmitChargerSpec(ctx context.Context, in *Submi
 	return out, nil
 }
 
+func (c *registryServiceClient) SubmitVariantRating(ctx context.Context, in *SubmitVariantRatingRequest, opts ...grpc.CallOption) (*SubmitVariantRatingResponse, error) {
+	out := new(SubmitVariantRatingResponse)
+	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/SubmitVariantRating", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RegistryServiceServer is the server API for RegistryService service.
 // All implementations must embed UnimplementedRegistryServiceServer
 // for forward compatibility
@@ -87,6 +97,7 @@ type RegistryServiceServer interface {
 	GetCharger(context.Context, *GetChargerRequest) (*GetChargerResponse, error)
 	GetManufacturer(context.Context, *GetManufacturerRequest) (*GetManufacturerResponse, error)
 	SubmitChargerSpec(context.Context, *SubmitChargerSpecRequest) (*SubmitChargerSpecResponse, error)
+	SubmitVariantRating(context.Context, *SubmitVariantRatingRequest) (*SubmitVariantRatingResponse, error)
 	mustEmbedUnimplementedRegistryServiceServer()
 }
 
@@ -108,6 +119,9 @@ func (UnimplementedRegistryServiceServer) GetManufacturer(context.Context, *GetM
 }
 func (UnimplementedRegistryServiceServer) SubmitChargerSpec(context.Context, *SubmitChargerSpecRequest) (*SubmitChargerSpecResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubmitChargerSpec not implemented")
+}
+func (UnimplementedRegistryServiceServer) SubmitVariantRating(context.Context, *SubmitVariantRatingRequest) (*SubmitVariantRatingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubmitVariantRating not implemented")
 }
 func (UnimplementedRegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {}
 
@@ -212,6 +226,24 @@ func _RegistryService_SubmitChargerSpec_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_SubmitVariantRating_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitVariantRatingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).SubmitVariantRating(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/registry.v1.RegistryService/SubmitVariantRating",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).SubmitVariantRating(ctx, req.(*SubmitVariantRatingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RegistryService_ServiceDesc is the grpc.ServiceDesc for RegistryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -238,6 +270,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SubmitChargerSpec",
 			Handler:    _RegistryService_SubmitChargerSpec_Handler,
+		},
+		{
+			MethodName: "SubmitVariantRating",
+			Handler:    _RegistryService_SubmitVariantRating_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

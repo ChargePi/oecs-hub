@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react'
 import { Navigate, useLocation } from 'react-router'
 
-import { useIdentity } from '@/lib/auth/use-identity'
+import { loginRedirect, useIdentity } from '@/lib/auth/use-identity'
 import { Skeleton } from '@/components/ui/skeleton'
 
 function GuardSkeleton() {
@@ -11,11 +11,6 @@ function GuardSkeleton() {
       <Skeleton className="h-32 w-full" />
     </div>
   )
-}
-
-function loginRedirect(pathname: string, search: string) {
-  const returnTo = encodeURIComponent(pathname + search)
-  return `/auth/login?return_to=${returnTo}`
 }
 
 export function RequireAuth({ children }: PropsWithChildren) {

@@ -1,6 +1,12 @@
 import { useSession } from './use-session'
 import type { AccountType, Traits } from './types'
 
+/** Builds a /auth/login path that returns to (pathname + search) after a successful login. */
+export function loginRedirect(pathname: string, search: string): string {
+  const returnTo = encodeURIComponent(pathname + search)
+  return `/auth/login?return_to=${returnTo}`
+}
+
 export interface Identity {
   id: string
   email: string
