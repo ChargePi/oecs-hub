@@ -21,6 +21,7 @@ type ChargerService interface {
 	Get(ctx context.Context, id uuid.UUID) (*charger.Charger, error)
 	List(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	GetMany(ctx context.Context, ids []uuid.UUID) ([]*charger.Charger, error)
+	SubmitRating(ctx context.Context, variantID, raterIdentityID uuid.UUID, inputs []charger.RatingInput) (charger.RatingsSummary, error)
 }
 
 // ManufacturerService is the subset of manufacturer.Service the public handler depends on.
@@ -239,5 +240,52 @@ func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitC
 	return &registryv1.SubmitChargerSpecResponse{
 		Id:     c.ID.String(),
 		Status: submissionStatusToProto(c.Status),
+	}, nil
+}
+
+func (h *Handler) SubmitVariantRating(ctx context.Context, req *registryv1.SubmitVariantRatingRequest) (*registryv1.SubmitVariantRatingResponse, error) {
+	identity, err := auth.RequireIdentity(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if identity.UserType != "individual" {
+		return nil, status.Error(codes.PermissionDenied, "only individual accounts can submit ratings")
+	}
+
+	variantID, err := uuid.Parse(req.GetVariantId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid variant_id")
+	}
+
+	if len(req.GetRatings()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "ratings is required")
+	}
+
+	identityID, err := uuid.Parse(identity.ID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "invalid identity id from proxy")
+	}
+
+	inputs := make([]charger.RatingInput, len(req.GetRatings()))
+	for i, r := range req.GetRatings() {
+		inputs[i] = charger.RatingInput{CategoryName: r.GetCategoryName(), Score: int(r.GetScore())}
+	}
+
+	summary, err := h.charger.SubmitRating(ctx, variantID, identityID, inputs)
+	if err != nil {
+		switch {
+		case errors.Is(err, charger.ErrNotFound):
+			return nil, status.Error(codes.NotFound, "charger not found")
+		case errors.Is(err, charger.ErrInvalidCategory), errors.Is(err, charger.ErrInvalidScore):
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		default:
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	return &registryv1.SubmitVariantRatingResponse{
+		VariantId: variantID.String(),
+		Ratings:   ratingsSummaryToProto(summary),
 	}, nil
 }

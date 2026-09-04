@@ -639,6 +639,76 @@ export namespace SubmitChargerSpecResponse {
   };
 }
 
+export class VariantRatingInput extends jspb.Message {
+  getCategoryName(): string;
+  setCategoryName(value: string): VariantRatingInput;
+
+  getScore(): number;
+  setScore(value: number): VariantRatingInput;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): VariantRatingInput.AsObject;
+  static toObject(includeInstance: boolean, msg: VariantRatingInput): VariantRatingInput.AsObject;
+  static serializeBinaryToWriter(message: VariantRatingInput, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): VariantRatingInput;
+  static deserializeBinaryFromReader(message: VariantRatingInput, reader: jspb.BinaryReader): VariantRatingInput;
+}
+
+export namespace VariantRatingInput {
+  export type AsObject = {
+    categoryName: string;
+    score: number;
+  };
+}
+
+export class SubmitVariantRatingRequest extends jspb.Message {
+  getVariantId(): string;
+  setVariantId(value: string): SubmitVariantRatingRequest;
+
+  getRatingsList(): Array<VariantRatingInput>;
+  setRatingsList(value: Array<VariantRatingInput>): SubmitVariantRatingRequest;
+  clearRatingsList(): SubmitVariantRatingRequest;
+  addRatings(value?: VariantRatingInput, index?: number): VariantRatingInput;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubmitVariantRatingRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SubmitVariantRatingRequest): SubmitVariantRatingRequest.AsObject;
+  static serializeBinaryToWriter(message: SubmitVariantRatingRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubmitVariantRatingRequest;
+  static deserializeBinaryFromReader(message: SubmitVariantRatingRequest, reader: jspb.BinaryReader): SubmitVariantRatingRequest;
+}
+
+export namespace SubmitVariantRatingRequest {
+  export type AsObject = {
+    variantId: string;
+    ratingsList: Array<VariantRatingInput.AsObject>;
+  };
+}
+
+export class SubmitVariantRatingResponse extends jspb.Message {
+  getVariantId(): string;
+  setVariantId(value: string): SubmitVariantRatingResponse;
+
+  getRatingsList(): Array<CategoryRating>;
+  setRatingsList(value: Array<CategoryRating>): SubmitVariantRatingResponse;
+  clearRatingsList(): SubmitVariantRatingResponse;
+  addRatings(value?: CategoryRating, index?: number): CategoryRating;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubmitVariantRatingResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SubmitVariantRatingResponse): SubmitVariantRatingResponse.AsObject;
+  static serializeBinaryToWriter(message: SubmitVariantRatingResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubmitVariantRatingResponse;
+  static deserializeBinaryFromReader(message: SubmitVariantRatingResponse, reader: jspb.BinaryReader): SubmitVariantRatingResponse;
+}
+
+export namespace SubmitVariantRatingResponse {
+  export type AsObject = {
+    variantId: string;
+    ratingsList: Array<CategoryRating.AsObject>;
+  };
+}
+
 export enum ChargerType {
   CHARGER_TYPE_UNSPECIFIED = 0,
   CHARGER_TYPE_AC = 1,

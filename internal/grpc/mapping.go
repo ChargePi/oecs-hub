@@ -144,6 +144,12 @@ func ratingsToProto(raw []byte) []*registryv1.CategoryRating {
 		return nil
 	}
 
+	return ratingsSummaryToProto(summary)
+}
+
+// ratingsSummaryToProto converts an already-decoded RatingsSummary into the proto list,
+// sorted by category name for a stable response order.
+func ratingsSummaryToProto(summary charger.RatingsSummary) []*registryv1.CategoryRating {
 	names := make([]string, 0, len(summary))
 	for name := range summary {
 		names = append(names, name)

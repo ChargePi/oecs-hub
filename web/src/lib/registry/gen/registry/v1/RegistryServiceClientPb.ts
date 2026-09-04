@@ -254,5 +254,48 @@ export class RegistryServiceClient {
     this.methodDescriptorSubmitChargerSpec);
   }
 
+  methodDescriptorSubmitVariantRating = new grpcWeb.MethodDescriptor(
+    '/registry.v1.RegistryService/SubmitVariantRating',
+    grpcWeb.MethodType.UNARY,
+    registry_v1_registry_pb.SubmitVariantRatingRequest,
+    registry_v1_registry_pb.SubmitVariantRatingResponse,
+    (request: registry_v1_registry_pb.SubmitVariantRatingRequest) => {
+      return request.serializeBinary();
+    },
+    registry_v1_registry_pb.SubmitVariantRatingResponse.deserializeBinary
+  );
+
+  submitVariantRating(
+    request: registry_v1_registry_pb.SubmitVariantRatingRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<registry_v1_registry_pb.SubmitVariantRatingResponse>;
+
+  submitVariantRating(
+    request: registry_v1_registry_pb.SubmitVariantRatingRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: registry_v1_registry_pb.SubmitVariantRatingResponse) => void): grpcWeb.ClientReadableStream<registry_v1_registry_pb.SubmitVariantRatingResponse>;
+
+  submitVariantRating(
+    request: registry_v1_registry_pb.SubmitVariantRatingRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: registry_v1_registry_pb.SubmitVariantRatingResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/registry.v1.RegistryService/SubmitVariantRating',
+        request,
+        metadata || {},
+        this.methodDescriptorSubmitVariantRating,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/registry.v1.RegistryService/SubmitVariantRating',
+    request,
+    metadata || {},
+    this.methodDescriptorSubmitVariantRating);
+  }
+
 }
 

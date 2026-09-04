@@ -1,40 +1,12 @@
 import { Star } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import type { CategoryRating } from '@/lib/oecs/types'
 import { SpecRow, SpecSection } from './spec-section'
 
-/**
- * Display order + copy for the known rating categories (mirrors rating_categories seeded by
- * deployments/migrations/003_add_charger_ratings.sql). A category present in `ratings` but not
- * listed here (a future addition) still renders, appended after these in whatever order the
- * API returned it - this list only fixes the display order for the categories we know about.
- */
-const KNOWN_CATEGORIES: { name: string; label: string; description: string }[] = [
-  {
-    name: 'reliability',
-    label: 'Reliability',
-    description: 'How dependable the charger is in day-to-day use.',
-  },
-  {
-    name: 'support',
-    label: 'Support',
-    description: "Quality of the manufacturer's customer support.",
-  },
-  {
-    name: 'design',
-    label: 'Design',
-    description: 'Build quality and physical design.',
-  },
-  {
-    name: 'ease_of_use',
-    label: 'Ease of use',
-    description: 'How intuitive the charger is to operate.',
-  },
-]
-
 function displayInfo(categoryName: string) {
-  const known = KNOWN_CATEGORIES.find((c) => c.name === categoryName)
+  const known = RATING_CATEGORIES.find((c) => c.name === categoryName)
   return known ?? { name: categoryName, label: categoryName, description: undefined }
 }
 
@@ -42,7 +14,7 @@ function orderRatings(ratings: CategoryRating[]): CategoryRating[] {
   const byName = new Map(ratings.map((r) => [r.categoryName, r]))
   const ordered: CategoryRating[] = []
 
-  for (const { name } of KNOWN_CATEGORIES) {
+  for (const { name } of RATING_CATEGORIES) {
     const rating = byName.get(name)
     if (rating) {
       ordered.push(rating)

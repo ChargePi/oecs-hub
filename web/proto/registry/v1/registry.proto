@@ -152,6 +152,8 @@ message GetManufacturerResponse {
 
 message SubmitChargerSpecRequest {
   bytes spec = 1;
+  // Deprecated: ignored by the server. The submitter is derived from the authenticated
+  // identity forwarded by the Traefik/Oathkeeper edge, not from client-supplied text.
   optional string submitted_by = 2;
 }
 
@@ -160,10 +162,26 @@ message SubmitChargerSpecResponse {
   SubmissionStatus status = 2;
 }
 
+message VariantRatingInput {
+  string category_name = 1;
+  int32 score = 2; // 1-5 inclusive.
+}
+
+message SubmitVariantRatingRequest {
+  string variant_id = 1;
+  repeated VariantRatingInput ratings = 2;
+}
+
+message SubmitVariantRatingResponse {
+  string variant_id = 1;
+  repeated CategoryRating ratings = 2;
+}
+
 service RegistryService {
   rpc SearchChargers(SearchChargersRequest) returns (SearchChargersResponse);
   rpc GetManufacturers(GetManufacturersRequest) returns (GetManufacturersResponse);
   rpc GetCharger(GetChargerRequest) returns (GetChargerResponse);
   rpc GetManufacturer(GetManufacturerRequest) returns (GetManufacturerResponse);
   rpc SubmitChargerSpec(SubmitChargerSpecRequest) returns (SubmitChargerSpecResponse);
+  rpc SubmitVariantRating(SubmitVariantRatingRequest) returns (SubmitVariantRatingResponse);
 }

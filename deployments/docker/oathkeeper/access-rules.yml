@@ -64,6 +64,23 @@
   mutators:
     - handler: header
 
+- id: registry-service-submit-variant-rating
+  upstream:
+    url: http://backend:50051
+  match:
+    url: "http://<.*>/registry.v1.RegistryService/SubmitVariantRating"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required. Same known gap as
+  # registry-service-submit-charger-spec above: individual-vs-manufacturer eligibility
+  # isn't checked here (schema_id/X-User-Type isn't consulted by any authorizer below) -
+  # it's enforced in the Go handler instead. Revisit with a Keto relation.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: conversation-service
   upstream:
     url: http://host.docker.internal:50051

@@ -8,7 +8,7 @@ import type {
   ModelStatus,
 } from '@/lib/oecs/types'
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
-import type { ManufacturerSummary, SubmissionStatus } from './types'
+import type { ManufacturerSummary, SubmissionStatus, SubmitVariantRatingInput } from './types'
 
 const CHARGER_TYPE_FROM_PROTO: Partial<
   Record<registry_v1_registry_pb.ChargerType, ChargerType>
@@ -62,6 +62,15 @@ export function categoryRatingFromProto(r: registry_v1_registry_pb.CategoryRatin
     average: r.getAverage(),
     count: r.getCount(),
   }
+}
+
+export function variantRatingInputToProto(
+  input: SubmitVariantRatingInput,
+): registry_v1_registry_pb.VariantRatingInput {
+  const proto = new registry_v1_registry_pb.VariantRatingInput()
+  proto.setCategoryName(input.categoryName)
+  proto.setScore(input.score)
+  return proto
 }
 
 export function manufacturerSummaryFromProto(
