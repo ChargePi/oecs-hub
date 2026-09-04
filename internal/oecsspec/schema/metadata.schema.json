@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://oecs.dev/schema/1.1.0/metadata.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/metadata.schema.json",
   "title": "OECS Metadata Definitions",
   "description": "Defines provenance and compliance metadata for an OECS document: source documents the specification was derived from, certificates held by the product, and document-level bookkeeping.",
   "$defs": {

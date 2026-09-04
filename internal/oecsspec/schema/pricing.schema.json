@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://oecs.dev/schema/1.1.0/pricing.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/pricing.schema.json",
   "title": "OECS Pricing Definitions",
   "description": "The manufacturer's own published pricing for this model — the Manufacturer's Suggested Retail Price (MSRP), never a distributor/reseller/installer price.",
   "$defs": {

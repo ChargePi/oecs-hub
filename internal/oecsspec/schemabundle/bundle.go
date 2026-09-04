@@ -22,6 +22,7 @@ var SubFiles = []string{
 	"common.schema.json",
 	"connector.schema.json",
 	"hardware.schema.json",
+	"manufacturer.schema.json",
 	"metadata.schema.json",
 	"payment.schema.json",
 	"pricing.schema.json",

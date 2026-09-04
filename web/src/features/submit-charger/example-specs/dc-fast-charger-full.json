@@ -1,6 +1,6 @@
 {
-  "$schema": "https://oecs.dev/schema/1.1.0/charger.schema.json",
-  "version": "1.1.0",
+  "$schema": "https://oecs.dev/schema/2.0.0/charger.schema.json",
+  "version": "2.0.0",
   "manufacturer": {
     "name": "Ionwave Charging Systems",
     "country": "NL",
@@ -64,7 +64,14 @@
         },
         "surgeProtection": "Type 1+2",
         "overVoltageCategory": "III",
-        "features": ["overcurrent", "short-circuit", "insulation-monitoring", "ground-fault", "over-temperature", "overload"]
+        "features": [
+          "overcurrent",
+          "short-circuit",
+          "insulation-monitoring",
+          "ground-fault",
+          "over-temperature",
+          "overload"
+        ]
       }
     },
     "connectors": [
@@ -82,7 +89,7 @@
           "cooling": "liquid"
         },
         "connectorLock": true,
-        "meterAccuracyClass": "Class B (MID)",
+        "meterAccuracyClass": "MID_B",
         "isoPlugAndCharge": true,
         "bidirectional": false
       },
@@ -100,7 +107,7 @@
           "cooling": "liquid"
         },
         "connectorLock": true,
-        "meterAccuracyClass": "Class B (MID)",
+        "meterAccuracyClass": "MID_B",
         "isoPlugAndCharge": false,
         "bidirectional": true
       }
@@ -111,7 +118,13 @@
         "size": { "value": 38.1, "unit": "cm" },
         "resolution": "1280x800"
       },
-      "authenticationMethods": ["rfid", "mobile-app", "credit-card", "plug-and-charge-iso15118", "ocpp-remote-start"],
+      "authenticationMethods": [
+        "rfid",
+        "mobile-app",
+        "credit-card",
+        "plug-and-charge-iso15118",
+        "ocpp-remote-start"
+      ],
       "languageSupport": ["en", "nl", "de", "fr"],
       "audioFeedback": true,
       "accessibilityFeatures": ["audio-guidance", "high-contrast-mode"]
@@ -127,7 +140,7 @@
       "integrated": true,
       "manufacturer": "EMH Metering",
       "model": "ED350L",
-      "accuracyClass": "Class B (MID)",
+      "accuracyClass": "MID_B",
       "certification": "Eichrecht"
     },
     "certifications": [
@@ -152,9 +165,16 @@
       {
         "name": "OCPP",
         "version": "2.0.1",
-        "transport": ["json", "websocket"],
+        "transport": ["websocket/json"],
         "securityProfile": "3 - TLS with Client Certificates",
-        "profiles": ["Core", "SmartCharging", "FirmwareManagement", "ISO15118Support", "TariffAndCost", "DisplayMessage"],
+        "profiles": [
+          "Core",
+          "SmartCharging",
+          "FirmwareManagement",
+          "ISO15118Support",
+          "TariffAndCost",
+          "DisplayMessage"
+        ],
         "certifications": [
           {
             "type": "protocol-conformance",
@@ -181,7 +201,7 @@
       {
         "name": "ISO15118",
         "version": "ISO 15118-20:2022",
-        "transport": ["xml", "tcp"],
+        "transport": ["tcp/xml"],
         "profiles": ["Plug&Charge", "Bidirectional Power Transfer"],
         "certifications": [
           {
@@ -193,12 +213,6 @@
             "jurisdiction": "EU"
           }
         ]
-      },
-      {
-        "name": "OCPI",
-        "version": "2.2.1",
-        "transport": ["https"],
-        "profiles": ["locations", "sessions", "cdrs", "tariffs", "commands"]
       }
     ],
     "smartCharging": {
@@ -220,14 +234,22 @@
     ],
     "integration": {
       "webUI": true,
-      "localInterfaces": ["http", "modbus", "webhooks"],
-      "apiDocumentationUrl": "https://ionwave.example/docs/integration-api"
+      "localInterfaces": [
+        { "type": "http", "documentationUrl": "https://ionwave.example/docs/integration-api" },
+        { "type": "modbus" },
+        { "type": "webhooks" }
+      ]
     },
     "offlineChargingSupported": true,
     "operatingSystem": "Linux 6.1 (Yocto)"
   },
   "payment": {
-    "acceptedMethods": ["contactless-card", "mobile-wallet", "mobile-app", "plug-and-charge-autocharge", "backend-invoicing"],
+    "acceptedMethods": [
+      "contactless-card",
+      "mobile-wallet",
+      "mobile-app",
+      "plug-and-charge-autocharge"
+    ],
     "adHocPaymentSupported": true,
     "terminal": {
       "manufacturer": "Castles Technology",

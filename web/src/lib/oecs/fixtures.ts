@@ -6,6 +6,7 @@ const MANUFACTURERS = {
     id: 'ionwave',
     name: 'Ionwave Charging Systems',
     country: 'NL',
+    logoUrl: '/images/placeholder-charger.svg',
     contact: {
       name: 'Ionwave OEM Support',
       email: 'oem-support@ionwave.example',
@@ -49,8 +50,8 @@ const MANUFACTURERS = {
 
 /**
  * Fixture data standing in for a real oecs-registry backend. Shape and enum values are faithful
- * to the real OECS charger.schema.json (see oecs-scraper/internal/schema) — swapping in a live
- * API later only touches src/lib/registry, never this data's shape.
+ * to the real OECS charger.schema.json v2.0.0 (see internal/oecsspec/schema in this repo) —
+ * swapping in a live API later only touches src/lib/registry, never this data's shape.
  */
 export const chargerVariants: ChargerVariant[] = [
   // --- Ionwave Charging Systems (NL) — "Rapid" DC series ---
@@ -204,7 +205,7 @@ export const chargerVariants: ChargerVariant[] = [
         interfaces: ['ethernet', 'can-bus'],
         cellular: { generations: ['4G-LTE', '5G'], simSlots: 2, esim: true },
       },
-      meter: { integrated: true, accuracyClass: 'Class B (MID)', certification: 'Eichrecht' },
+      meter: { integrated: true, accuracyClass: 'MID_B', certification: 'Eichrecht' },
       certifications: [
         {
           type: 'safety',
@@ -236,7 +237,6 @@ export const chargerVariants: ChargerVariant[] = [
           version: 'ISO 15118-20:2022',
           profiles: ['Plug&Charge', 'Bidirectional Power Transfer'],
         },
-        { name: 'OCPI', version: '2.2.1', profiles: ['locations', 'sessions', 'cdrs', 'tariffs'] },
       ],
       smartCharging: {
         features: ['local-load-balancing', 'backend-managed-profiles', 'dynamic-pricing', 'v2g'],
@@ -250,7 +250,6 @@ export const chargerVariants: ChargerVariant[] = [
         'mobile-wallet',
         'mobile-app',
         'plug-and-charge-autocharge',
-        'backend-invoicing',
       ],
       adHocPaymentSupported: true,
       terminal: {
@@ -419,7 +418,7 @@ export const chargerVariants: ChargerVariant[] = [
       },
       meter: {
         integrated: true,
-        accuracyClass: 'Class B (MID)',
+        accuracyClass: 'MID_B',
         certification: 'MID (2014/32/EU)',
       },
       certifications: [
@@ -509,7 +508,7 @@ export const chargerVariants: ChargerVariant[] = [
       },
       meter: {
         integrated: true,
-        accuracyClass: 'Class B (MID)',
+        accuracyClass: 'MID_B',
         certification: 'MID (2014/32/EU)',
       },
       certifications: [
@@ -553,7 +552,7 @@ export const chargerVariants: ChargerVariant[] = [
       operatingSystem: 'Linux 5.10 (Yocto)',
     },
     payment: {
-      acceptedMethods: ['mobile-app', 'rfid-prepaid', 'backend-invoicing'],
+      acceptedMethods: ['mobile-app', 'rfid-prepaid'],
       adHocPaymentSupported: false,
     },
     pricing: {
@@ -646,19 +645,18 @@ export const chargerVariants: ChargerVariant[] = [
         display: { type: 'color-lcd' },
         authenticationMethods: ['rfid', 'mobile-app', 'credit-card'],
       },
-      meter: { integrated: true, accuracyClass: 'Class B (MID)', certification: 'Eichrecht' },
+      meter: { integrated: true, accuracyClass: 'MID_B', certification: 'Eichrecht' },
     },
     software: {
       firmware: { currentVersion: '3.0.2', updateMethods: ['ota-ocpp'] },
       protocols: [
         { name: 'OCPP', version: '2.0.1', profiles: ['Core', 'SmartCharging', 'Reservation'] },
-        { name: 'OCPI', version: '2.2.1', profiles: ['locations', 'sessions', 'cdrs'] },
       ],
       smartCharging: { features: ['local-load-balancing', 'dynamic-pricing'] },
       offlineChargingSupported: false,
     },
     payment: {
-      acceptedMethods: ['contactless-card', 'mobile-app', 'backend-invoicing'],
+      acceptedMethods: ['contactless-card', 'mobile-app'],
       adHocPaymentSupported: true,
     },
     pricing: {
@@ -875,7 +873,7 @@ export const chargerVariants: ChargerVariant[] = [
     },
     software: {
       firmware: { currentVersion: '1.4.2', updateMethods: ['ota-vendor-cloud'] },
-      protocols: [{ name: 'REST-API', version: '1.0', transport: ['https', 'json'] }],
+      protocols: [{ name: 'REST-API', version: '1.0', transport: ['https/json'] }],
       offlineChargingSupported: true,
     },
     payment: { acceptedMethods: ['free-of-charge'], adHocPaymentSupported: false },

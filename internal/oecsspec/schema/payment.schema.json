@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://oecs.dev/schema/1.1.0/payment.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/payment.schema.json",
   "title": "OECS Payment Definitions",
   "description": "Defines how a driver can pay for a charging session: accepted payment methods, ad-hoc (no app/subscription) payment support, and any integrated payment terminal hardware.",
   "$defs": {
@@ -13,7 +13,6 @@
         "rfid-prepaid",
         "mobile-app",
         "plug-and-charge-autocharge",
-        "backend-invoicing",
         "free-of-charge"
       ]
     },

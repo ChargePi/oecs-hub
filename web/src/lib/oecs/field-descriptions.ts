@@ -1,6 +1,6 @@
 /**
  * Tooltip copy for OECS charger spec fields, hand-maintained against the Go schema — see
- * internal/oecsspec/schema/*.schema.json in the sibling repo for the source of truth. Mirrors the
+ * internal/oecsspec/schema/*.schema.json in this repo for the source of truth. Mirrors the
  * field naming used in ./types.ts.
  *
  * `fieldDescriptions` explains what a *field* (row label) means, keyed by its dotted path off
@@ -59,18 +59,12 @@ export const valueDescriptions: Record<string, string> = {
   // protocolName
   'protocolName.OCPP':
     'Open Charge Point Protocol — the industry-standard protocol for communication between a charge point and a central management system (CSMS).',
-  'protocolName.OCPI':
-    'Open Charge Point Interface — a protocol for roaming and interoperability between charging networks (CPOs) and e-mobility service providers (eMSPs).',
-  'protocolName.OSCP':
-    'Open Smart Charging Protocol — used between a charge point operator and a distribution system operator for grid-load management.',
   'protocolName.ISO15118':
     'ISO 15118 — the vehicle-to-grid communication standard enabling Plug & Charge and high-level DC charging control.',
   'protocolName.IEC61851':
     'IEC 61851 — the base electrical/control standard for conductive EV charging (defines the AC charging modes and pilot signaling).',
   'protocolName.DIN70121':
     'DIN SPEC 70121 — an earlier German standard for DC fast-charging communication, a precursor to ISO 15118.',
-  'protocolName.OpenADR':
-    'Open Automated Demand Response — a standard for utilities/grid operators to signal demand-response events to devices.',
   'protocolName.IEEE2030.5':
     'IEEE 2030.5 (Smart Energy Profile) — a protocol for smart grid device communication, used for demand response and distributed energy resources.',
   'protocolName.EEBus':
@@ -104,8 +98,6 @@ export const valueDescriptions: Record<string, string> = {
   'paymentMethod.mobile-app': "Payment through the operator's or manufacturer's mobile app.",
   'paymentMethod.plug-and-charge-autocharge':
     'Automatic billing on connection via ISO 15118 Plug & Charge or Autocharge, no separate payment action needed.',
-  'paymentMethod.backend-invoicing':
-    'Billed after the fact via account/backend invoicing, e.g. fleet or subscription billing.',
   'paymentMethod.free-of-charge': 'No payment required to charge.',
 
   // authenticationMethod (hardware.userInterface.authenticationMethods)

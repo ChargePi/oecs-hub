@@ -1,4 +1,3 @@
-import { Factory } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -6,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { ChargerVariant, Manufacturer, Product } from '@/lib/oecs/types'
 import { registryClient } from '@/lib/registry/client'
 import { ManufacturerCard } from '@/features/product/manufacturer-card'
+import { ManufacturerLogo } from '@/features/product/manufacturer-logo'
 import { ProductDetail } from '@/features/product/product-detail'
 
 export type GraphSelection =
@@ -48,9 +48,11 @@ export function NodeDetailSheet({
           <>
             <SheetHeader>
               <div className="flex items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                  <Factory className="size-5" />
-                </div>
+                <ManufacturerLogo
+                  logoUrl={selection.manufacturer.logoUrl}
+                  className="size-10"
+                  iconClassName="size-5"
+                />
                 <SheetTitle>{selection.manufacturer.name}</SheetTitle>
               </div>
             </SheetHeader>
