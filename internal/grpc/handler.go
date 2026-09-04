@@ -19,7 +19,7 @@ import (
 type ChargerService interface {
 	Submit(ctx context.Context, raw []byte, submitterIdentityID uuid.UUID, submittedBy, submitterEmail string) (*charger.Charger, error)
 	Get(ctx context.Context, id uuid.UUID) (*charger.Charger, error)
-	List(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
+	Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	GetMany(ctx context.Context, ids []uuid.UUID) ([]*charger.Charger, error)
 	SubmitRating(ctx context.Context, variantID, raterIdentityID uuid.UUID, inputs []charger.RatingInput) (charger.RatingsSummary, error)
 }
@@ -60,7 +60,7 @@ func (h *Handler) SearchChargers(ctx context.Context, req *registryv1.SearchChar
 		return nil, err
 	}
 
-	chargers, total, err := h.charger.List(ctx, filters, limit, offset)
+	chargers, total, err := h.charger.Search(ctx, filters, limit, offset)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -72,12 +72,45 @@ func (h *Handler) SearchChargers(ctx context.Context, req *registryv1.SearchChar
 	}, nil
 }
 
+// allowedSearchFieldPaths are the OECS spec dot-paths the public SearchChargers RPC may
+// filter on. Deliberately restrictive: field_filters values are client-supplied and
+// interpolated into a Postgres jsonpath query (see charger_field_filter.go), so anything
+// not listed here is rejected rather than passed through. This is the sidebar's filter
+// manifest on the frontend (web/src/features/explore-chargers/filter-manifest.ts) - keep
+// the two in sync.
+var allowedSearchFieldPaths = map[string]struct{}{
+	"model.type":                                               {},
+	"model.status":                                             {},
+	"hardware.connectors.type":                                 {},
+	"hardware.connectors.bidirectional":                        {},
+	"hardware.connectors.isoPlugAndCharge":                     {},
+	"hardware.connectors.cable.attached":                       {},
+	"hardware.electrical.output.simultaneousChargingSupported": {},
+	"hardware.electrical.output.dynamicPowerSharing":           {},
+	"manufacturer.country":                                     {},
+	"hardware.housing.formFactor":                              {},
+	"hardware.housing.material":                                {},
+	"hardware.housing.coolingMethod":                           {},
+	"hardware.housing.ingressProtection":                       {},
+	"hardware.electrical.input.phases":                         {},
+	"hardware.electrical.input.connectionType":                 {},
+	"hardware.connectivity.interfaces":                         {},
+	"hardware.connectivity.cellular.generations":               {},
+	"software.smartCharging.features":                          {},
+	"software.offlineChargingSupported":                        {},
+	"software.protocols.name":                                  {},
+	"hardware.userInterface.display.type":                      {},
+	"hardware.userInterface.authenticationMethods":             {},
+	"payment.acceptedMethods":                                  {},
+	"payment.adHocPaymentSupported":                            {},
+	"hardware.certifications.type":                             {},
+	"pricing.pricingModel":                                     {},
+}
+
 func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.SearchFilters, error) {
 	filters := charger.SearchFilters{
-		Query:     req.Query,
-		Country:   req.Country,
-		Protocols: req.GetProtocols(),
-		Statuses:  []charger.Status{charger.StatusVerified},
+		Query:    req.Query,
+		Statuses: []charger.Status{charger.StatusVerified},
 	}
 
 	if req.ManufacturerId != nil {
@@ -87,11 +120,6 @@ func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.Searc
 		}
 
 		filters.ManufacturerID = &id
-	}
-
-	if req.GetChargerType() != registryv1.ChargerType_CHARGER_TYPE_UNSPECIFIED {
-		ct := chargerTypeToDomain(req.GetChargerType())
-		filters.ChargerType = &ct
 	}
 
 	if req.MinPowerKw != nil {
@@ -104,12 +132,19 @@ func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.Searc
 		filters.MaxPowerWatts = &w
 	}
 
-	for _, ct := range req.GetConnectorTypes() {
-		if ct == registryv1.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED {
+	for _, f := range req.GetFieldFilters() {
+		if _, ok := allowedSearchFieldPaths[f.GetField()]; !ok {
+			return filters, status.Errorf(codes.InvalidArgument, "unsupported field: %s", f.GetField())
+		}
+
+		if len(f.GetValues()) == 0 {
 			continue
 		}
 
-		filters.ConnectorTypes = append(filters.ConnectorTypes, connectorTypeToDomain(ct))
+		filters.FieldFilters = append(filters.FieldFilters, charger.FieldFilter{
+			Field:  f.GetField(),
+			Values: f.GetValues(),
+		})
 	}
 
 	return filters, nil

@@ -311,6 +311,30 @@ export namespace Product {
   };
 }
 
+export class FieldFilter extends jspb.Message {
+  getField(): string;
+  setField(value: string): FieldFilter;
+
+  getValuesList(): Array<string>;
+  setValuesList(value: Array<string>): FieldFilter;
+  clearValuesList(): FieldFilter;
+  addValues(value: string, index?: number): FieldFilter;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FieldFilter.AsObject;
+  static toObject(includeInstance: boolean, msg: FieldFilter): FieldFilter.AsObject;
+  static serializeBinaryToWriter(message: FieldFilter, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FieldFilter;
+  static deserializeBinaryFromReader(message: FieldFilter, reader: jspb.BinaryReader): FieldFilter;
+}
+
+export namespace FieldFilter {
+  export type AsObject = {
+    field: string;
+    valuesList: Array<string>;
+  };
+}
+
 export class SearchChargersRequest extends jspb.Message {
   getQuery(): string;
   setQuery(value: string): SearchChargersRequest;
@@ -322,14 +346,6 @@ export class SearchChargersRequest extends jspb.Message {
   hasManufacturerId(): boolean;
   clearManufacturerId(): SearchChargersRequest;
 
-  getChargerType(): ChargerType;
-  setChargerType(value: ChargerType): SearchChargersRequest;
-
-  getConnectorTypesList(): Array<ConnectorType>;
-  setConnectorTypesList(value: Array<ConnectorType>): SearchChargersRequest;
-  clearConnectorTypesList(): SearchChargersRequest;
-  addConnectorTypes(value: ConnectorType, index?: number): SearchChargersRequest;
-
   getMinPowerKw(): number;
   setMinPowerKw(value: number): SearchChargersRequest;
   hasMinPowerKw(): boolean;
@@ -340,21 +356,16 @@ export class SearchChargersRequest extends jspb.Message {
   hasMaxPowerKw(): boolean;
   clearMaxPowerKw(): SearchChargersRequest;
 
-  getCountry(): string;
-  setCountry(value: string): SearchChargersRequest;
-  hasCountry(): boolean;
-  clearCountry(): SearchChargersRequest;
-
-  getProtocolsList(): Array<string>;
-  setProtocolsList(value: Array<string>): SearchChargersRequest;
-  clearProtocolsList(): SearchChargersRequest;
-  addProtocols(value: string, index?: number): SearchChargersRequest;
-
   getPageSize(): number;
   setPageSize(value: number): SearchChargersRequest;
 
   getPageToken(): string;
   setPageToken(value: string): SearchChargersRequest;
+
+  getFieldFiltersList(): Array<FieldFilter>;
+  setFieldFiltersList(value: Array<FieldFilter>): SearchChargersRequest;
+  clearFieldFiltersList(): SearchChargersRequest;
+  addFieldFilters(value?: FieldFilter, index?: number): FieldFilter;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SearchChargersRequest.AsObject;
@@ -368,14 +379,11 @@ export namespace SearchChargersRequest {
   export type AsObject = {
     query?: string;
     manufacturerId?: string;
-    chargerType: ChargerType;
-    connectorTypesList: Array<ConnectorType>;
     minPowerKw?: number;
     maxPowerKw?: number;
-    country?: string;
-    protocolsList: Array<string>;
     pageSize: number;
     pageToken: string;
+    fieldFiltersList: Array<FieldFilter.AsObject>;
   };
 
   export enum QueryCase {
@@ -396,11 +404,6 @@ export namespace SearchChargersRequest {
   export enum MaxPowerKwCase {
     _MAX_POWER_KW_NOT_SET = 0,
     MAX_POWER_KW = 6,
-  }
-
-  export enum CountryCase {
-    _COUNTRY_NOT_SET = 0,
-    COUNTRY = 7,
   }
 }
 

@@ -3,6 +3,7 @@ import type {
   CategoryRating,
   ChargerType,
   ChargerVariant,
+  ConnectorType,
   Contact,
   Manufacturer,
   ModelStatus,
@@ -10,9 +11,7 @@ import type {
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
 import type { ManufacturerSummary, SubmissionStatus, SubmitVariantRatingInput } from './types'
 
-const CHARGER_TYPE_FROM_PROTO: Partial<
-  Record<registry_v1_registry_pb.ChargerType, ChargerType>
-> = {
+const CHARGER_TYPE_FROM_PROTO: Partial<Record<registry_v1_registry_pb.ChargerType, ChargerType>> = {
   [registry_v1_registry_pb.ChargerType.CHARGER_TYPE_AC]: 'AC',
   [registry_v1_registry_pb.ChargerType.CHARGER_TYPE_DC]: 'DC',
   [registry_v1_registry_pb.ChargerType.CHARGER_TYPE_PORTABLE_EVSE]: 'portable-evse',
@@ -23,9 +22,32 @@ export function chargerTypeFromProto(type: registry_v1_registry_pb.ChargerType):
   return CHARGER_TYPE_FROM_PROTO[type] ?? 'AC'
 }
 
-const MODEL_STATUS_FROM_PROTO: Partial<
-  Record<registry_v1_registry_pb.ModelStatus, ModelStatus>
+const CONNECTOR_TYPE_FROM_PROTO: Partial<
+  Record<registry_v1_registry_pb.ConnectorType, ConnectorType>
 > = {
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_TYPE1_J1772]: 'Type1_J1772',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_TYPE2_MENNEKES]: 'Type2_Mennekes',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_TYPE3A]: 'Type3A',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_CCS1_COMBO1]: 'CCS1_Combo1',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_CCS2_COMBO2]: 'CCS2_Combo2',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_CHADEMO]: 'CHAdeMO',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_GBT_AC]: 'GBT_AC',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_GBT_DC]: 'GBT_DC',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_NACS_TESLA]: 'NACS_Tesla',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_DOMESTIC_SOCKET]: 'Domestic_Socket',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_INDUSTRIAL_IEC60309]: 'Industrial_IEC60309',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_MCS_MEGAWATT_CHARGING_SYSTEM]:
+    'MCS_MegawattChargingSystem',
+  [registry_v1_registry_pb.ConnectorType.CONNECTOR_TYPE_OTHER]: 'Other',
+}
+
+export function connectorTypeFromProto(
+  type: registry_v1_registry_pb.ConnectorType,
+): ConnectorType | undefined {
+  return CONNECTOR_TYPE_FROM_PROTO[type]
+}
+
+const MODEL_STATUS_FROM_PROTO: Partial<Record<registry_v1_registry_pb.ModelStatus, ModelStatus>> = {
   [registry_v1_registry_pb.ModelStatus.MODEL_STATUS_PRE_RELEASE]: 'pre-release',
   [registry_v1_registry_pb.ModelStatus.MODEL_STATUS_ACTIVE]: 'active',
   [registry_v1_registry_pb.ModelStatus.MODEL_STATUS_DISCONTINUED]: 'discontinued',
@@ -87,14 +109,18 @@ export function manufacturerSummaryFromProto(
 
 /**
  * Builds a placeholder ChargerVariant from a search-result summary, which carries only the
- * fields listed in the picker/search UI, not the full OECS spec — hardware.connectors and
- * software.protocols are left empty rather than fetching each variant's full spec individually.
- * Callers that need the full spec (comparison view) use `chargerVariantFromProto` on a
- * `GetCharger` response instead.
+ * fields listed in the picker/search/grid UI, not the full OECS spec — connectors are
+ * stubbed from the summary's connector_types (currentType is a best-effort guess from the
+ * charger's own type, since the summary doesn't carry it per-connector) and
+ * software.protocols is left empty, rather than fetching each variant's full spec
+ * individually. Callers that need the full spec (comparison view, detail drawer) use
+ * `chargerVariantFromProto` on a `GetCharger` response instead.
  */
 export function chargerVariantFromSummary(
   summary: registry_v1_registry_pb.ChargerVariantSummary,
 ): ChargerVariant {
+  const chargerType = chargerTypeFromProto(summary.getChargerType())
+
   return {
     id: summary.getId(),
     manufacturer: {
@@ -105,11 +131,15 @@ export function chargerVariantFromSummary(
       name: summary.getModelName(),
       series: summary.hasSeries() ? summary.getSeries() : undefined,
       status: modelStatusFromProto(summary.getModelStatus()),
-      type: chargerTypeFromProto(summary.getChargerType()),
+      type: chargerType,
       productImageUrl: summary.hasProductImageUrl() ? summary.getProductImageUrl() : undefined,
     },
     hardware: {
-      connectors: [],
+      connectors: summary
+        .getConnectorTypesList()
+        .map(connectorTypeFromProto)
+        .filter((type) => type != null)
+        .map((type) => ({ type, currentType: chargerType === 'DC' ? 'DC' : 'AC' })),
       electrical: summary.hasMaxPowerKw()
         ? { output: { maxPower: { value: summary.getMaxPowerKw(), unit: 'kW' } } }
         : undefined,

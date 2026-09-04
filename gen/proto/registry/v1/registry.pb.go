@@ -792,25 +792,82 @@ func (x *Product) GetVariants() []*ChargerVariantSummary {
 	return nil
 }
 
+// FieldFilter matches chargers whose OECS spec has field (a dot-separated path into the
+// spec document, e.g. "hardware.housing.material" or "hardware.connectors.type") equal to
+// any one of values. The set of accepted paths is restricted server-side to a fixed
+// allow-list (see internal/grpc/handler.go) - not every OECS field is filterable.
+type FieldFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Field         string                 `protobuf:"bytes,1,opt,name=field,proto3" json:"field,omitempty"`
+	Values        []string               `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FieldFilter) Reset() {
+	*x = FieldFilter{}
+	mi := &file_registry_v1_registry_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FieldFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FieldFilter) ProtoMessage() {}
+
+func (x *FieldFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_registry_v1_registry_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FieldFilter.ProtoReflect.Descriptor instead.
+func (*FieldFilter) Descriptor() ([]byte, []int) {
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *FieldFilter) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *FieldFilter) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
 type SearchChargersRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Query          *string                `protobuf:"bytes,1,opt,name=query,proto3,oneof" json:"query,omitempty"`
 	ManufacturerId *string                `protobuf:"bytes,2,opt,name=manufacturer_id,json=manufacturerId,proto3,oneof" json:"manufacturer_id,omitempty"`
-	ChargerType    ChargerType            `protobuf:"varint,3,opt,name=charger_type,json=chargerType,proto3,enum=registry.v1.ChargerType" json:"charger_type,omitempty"`
-	ConnectorTypes []ConnectorType        `protobuf:"varint,4,rep,packed,name=connector_types,json=connectorTypes,proto3,enum=registry.v1.ConnectorType" json:"connector_types,omitempty"`
 	MinPowerKw     *float64               `protobuf:"fixed64,5,opt,name=min_power_kw,json=minPowerKw,proto3,oneof" json:"min_power_kw,omitempty"`
 	MaxPowerKw     *float64               `protobuf:"fixed64,6,opt,name=max_power_kw,json=maxPowerKw,proto3,oneof" json:"max_power_kw,omitempty"`
-	Country        *string                `protobuf:"bytes,7,opt,name=country,proto3,oneof" json:"country,omitempty"`
-	Protocols      []string               `protobuf:"bytes,8,rep,name=protocols,proto3" json:"protocols,omitempty"`
 	PageSize       int32                  `protobuf:"varint,9,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	PageToken      string                 `protobuf:"bytes,10,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// AND-matched against each other and against query/manufacturer_id/power range; within
+	// one FieldFilter, values are OR-matched. Covers every OECS-schema-derived facet
+	// (charger type, connector type, country, protocol, etc.) - those no longer have
+	// dedicated fields above.
+	FieldFilters  []*FieldFilter `protobuf:"bytes,11,rep,name=field_filters,json=fieldFilters,proto3" json:"field_filters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SearchChargersRequest) Reset() {
 	*x = SearchChargersRequest{}
-	mi := &file_registry_v1_registry_proto_msgTypes[7]
+	mi := &file_registry_v1_registry_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +879,7 @@ func (x *SearchChargersRequest) String() string {
 func (*SearchChargersRequest) ProtoMessage() {}
 
 func (x *SearchChargersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[7]
+	mi := &file_registry_v1_registry_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +892,7 @@ func (x *SearchChargersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchChargersRequest.ProtoReflect.Descriptor instead.
 func (*SearchChargersRequest) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{7}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SearchChargersRequest) GetQuery() string {
@@ -852,20 +909,6 @@ func (x *SearchChargersRequest) GetManufacturerId() string {
 	return ""
 }
 
-func (x *SearchChargersRequest) GetChargerType() ChargerType {
-	if x != nil {
-		return x.ChargerType
-	}
-	return ChargerType_CHARGER_TYPE_UNSPECIFIED
-}
-
-func (x *SearchChargersRequest) GetConnectorTypes() []ConnectorType {
-	if x != nil {
-		return x.ConnectorTypes
-	}
-	return nil
-}
-
 func (x *SearchChargersRequest) GetMinPowerKw() float64 {
 	if x != nil && x.MinPowerKw != nil {
 		return *x.MinPowerKw
@@ -878,20 +921,6 @@ func (x *SearchChargersRequest) GetMaxPowerKw() float64 {
 		return *x.MaxPowerKw
 	}
 	return 0
-}
-
-func (x *SearchChargersRequest) GetCountry() string {
-	if x != nil && x.Country != nil {
-		return *x.Country
-	}
-	return ""
-}
-
-func (x *SearchChargersRequest) GetProtocols() []string {
-	if x != nil {
-		return x.Protocols
-	}
-	return nil
 }
 
 func (x *SearchChargersRequest) GetPageSize() int32 {
@@ -908,6 +937,13 @@ func (x *SearchChargersRequest) GetPageToken() string {
 	return ""
 }
 
+func (x *SearchChargersRequest) GetFieldFilters() []*FieldFilter {
+	if x != nil {
+		return x.FieldFilters
+	}
+	return nil
+}
+
 type SearchChargersResponse struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	Variants      []*ChargerVariantSummary `protobuf:"bytes,1,rep,name=variants,proto3" json:"variants,omitempty"`
@@ -919,7 +955,7 @@ type SearchChargersResponse struct {
 
 func (x *SearchChargersResponse) Reset() {
 	*x = SearchChargersResponse{}
-	mi := &file_registry_v1_registry_proto_msgTypes[8]
+	mi := &file_registry_v1_registry_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -931,7 +967,7 @@ func (x *SearchChargersResponse) String() string {
 func (*SearchChargersResponse) ProtoMessage() {}
 
 func (x *SearchChargersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[8]
+	mi := &file_registry_v1_registry_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -944,7 +980,7 @@ func (x *SearchChargersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchChargersResponse.ProtoReflect.Descriptor instead.
 func (*SearchChargersResponse) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{8}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SearchChargersResponse) GetVariants() []*ChargerVariantSummary {
@@ -980,7 +1016,7 @@ type GetManufacturersRequest struct {
 
 func (x *GetManufacturersRequest) Reset() {
 	*x = GetManufacturersRequest{}
-	mi := &file_registry_v1_registry_proto_msgTypes[9]
+	mi := &file_registry_v1_registry_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -992,7 +1028,7 @@ func (x *GetManufacturersRequest) String() string {
 func (*GetManufacturersRequest) ProtoMessage() {}
 
 func (x *GetManufacturersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[9]
+	mi := &file_registry_v1_registry_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1005,7 +1041,7 @@ func (x *GetManufacturersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManufacturersRequest.ProtoReflect.Descriptor instead.
 func (*GetManufacturersRequest) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{9}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetManufacturersRequest) GetQuery() string {
@@ -1047,7 +1083,7 @@ type GetManufacturersResponse struct {
 
 func (x *GetManufacturersResponse) Reset() {
 	*x = GetManufacturersResponse{}
-	mi := &file_registry_v1_registry_proto_msgTypes[10]
+	mi := &file_registry_v1_registry_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1059,7 +1095,7 @@ func (x *GetManufacturersResponse) String() string {
 func (*GetManufacturersResponse) ProtoMessage() {}
 
 func (x *GetManufacturersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[10]
+	mi := &file_registry_v1_registry_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1072,7 +1108,7 @@ func (x *GetManufacturersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManufacturersResponse.ProtoReflect.Descriptor instead.
 func (*GetManufacturersResponse) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{10}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetManufacturersResponse) GetManufacturers() []*ManufacturerSummary {
@@ -1105,7 +1141,7 @@ type GetChargerRequest struct {
 
 func (x *GetChargerRequest) Reset() {
 	*x = GetChargerRequest{}
-	mi := &file_registry_v1_registry_proto_msgTypes[11]
+	mi := &file_registry_v1_registry_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1117,7 +1153,7 @@ func (x *GetChargerRequest) String() string {
 func (*GetChargerRequest) ProtoMessage() {}
 
 func (x *GetChargerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[11]
+	mi := &file_registry_v1_registry_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1130,7 +1166,7 @@ func (x *GetChargerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChargerRequest.ProtoReflect.Descriptor instead.
 func (*GetChargerRequest) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{11}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetChargerRequest) GetId() string {
@@ -1149,7 +1185,7 @@ type GetChargerResponse struct {
 
 func (x *GetChargerResponse) Reset() {
 	*x = GetChargerResponse{}
-	mi := &file_registry_v1_registry_proto_msgTypes[12]
+	mi := &file_registry_v1_registry_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1161,7 +1197,7 @@ func (x *GetChargerResponse) String() string {
 func (*GetChargerResponse) ProtoMessage() {}
 
 func (x *GetChargerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[12]
+	mi := &file_registry_v1_registry_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1174,7 +1210,7 @@ func (x *GetChargerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetChargerResponse.ProtoReflect.Descriptor instead.
 func (*GetChargerResponse) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{12}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetChargerResponse) GetVariant() *ChargerVariant {
@@ -1193,7 +1229,7 @@ type GetManufacturerRequest struct {
 
 func (x *GetManufacturerRequest) Reset() {
 	*x = GetManufacturerRequest{}
-	mi := &file_registry_v1_registry_proto_msgTypes[13]
+	mi := &file_registry_v1_registry_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1205,7 +1241,7 @@ func (x *GetManufacturerRequest) String() string {
 func (*GetManufacturerRequest) ProtoMessage() {}
 
 func (x *GetManufacturerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[13]
+	mi := &file_registry_v1_registry_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1218,7 +1254,7 @@ func (x *GetManufacturerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManufacturerRequest.ProtoReflect.Descriptor instead.
 func (*GetManufacturerRequest) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{13}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetManufacturerRequest) GetId() string {
@@ -1238,7 +1274,7 @@ type GetManufacturerResponse struct {
 
 func (x *GetManufacturerResponse) Reset() {
 	*x = GetManufacturerResponse{}
-	mi := &file_registry_v1_registry_proto_msgTypes[14]
+	mi := &file_registry_v1_registry_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1250,7 +1286,7 @@ func (x *GetManufacturerResponse) String() string {
 func (*GetManufacturerResponse) ProtoMessage() {}
 
 func (x *GetManufacturerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[14]
+	mi := &file_registry_v1_registry_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1263,7 +1299,7 @@ func (x *GetManufacturerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManufacturerResponse.ProtoReflect.Descriptor instead.
 func (*GetManufacturerResponse) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{14}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetManufacturerResponse) GetManufacturer() *Manufacturer {
@@ -1292,7 +1328,7 @@ type SubmitChargerSpecRequest struct {
 
 func (x *SubmitChargerSpecRequest) Reset() {
 	*x = SubmitChargerSpecRequest{}
-	mi := &file_registry_v1_registry_proto_msgTypes[15]
+	mi := &file_registry_v1_registry_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1304,7 +1340,7 @@ func (x *SubmitChargerSpecRequest) String() string {
 func (*SubmitChargerSpecRequest) ProtoMessage() {}
 
 func (x *SubmitChargerSpecRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[15]
+	mi := &file_registry_v1_registry_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1317,7 +1353,7 @@ func (x *SubmitChargerSpecRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitChargerSpecRequest.ProtoReflect.Descriptor instead.
 func (*SubmitChargerSpecRequest) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{15}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *SubmitChargerSpecRequest) GetSpec() []byte {
@@ -1344,7 +1380,7 @@ type SubmitChargerSpecResponse struct {
 
 func (x *SubmitChargerSpecResponse) Reset() {
 	*x = SubmitChargerSpecResponse{}
-	mi := &file_registry_v1_registry_proto_msgTypes[16]
+	mi := &file_registry_v1_registry_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1356,7 +1392,7 @@ func (x *SubmitChargerSpecResponse) String() string {
 func (*SubmitChargerSpecResponse) ProtoMessage() {}
 
 func (x *SubmitChargerSpecResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[16]
+	mi := &file_registry_v1_registry_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1369,7 +1405,7 @@ func (x *SubmitChargerSpecResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitChargerSpecResponse.ProtoReflect.Descriptor instead.
 func (*SubmitChargerSpecResponse) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{16}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SubmitChargerSpecResponse) GetId() string {
@@ -1396,7 +1432,7 @@ type VariantRatingInput struct {
 
 func (x *VariantRatingInput) Reset() {
 	*x = VariantRatingInput{}
-	mi := &file_registry_v1_registry_proto_msgTypes[17]
+	mi := &file_registry_v1_registry_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1408,7 +1444,7 @@ func (x *VariantRatingInput) String() string {
 func (*VariantRatingInput) ProtoMessage() {}
 
 func (x *VariantRatingInput) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[17]
+	mi := &file_registry_v1_registry_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1421,7 +1457,7 @@ func (x *VariantRatingInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VariantRatingInput.ProtoReflect.Descriptor instead.
 func (*VariantRatingInput) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{17}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *VariantRatingInput) GetCategoryName() string {
@@ -1448,7 +1484,7 @@ type SubmitVariantRatingRequest struct {
 
 func (x *SubmitVariantRatingRequest) Reset() {
 	*x = SubmitVariantRatingRequest{}
-	mi := &file_registry_v1_registry_proto_msgTypes[18]
+	mi := &file_registry_v1_registry_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1460,7 +1496,7 @@ func (x *SubmitVariantRatingRequest) String() string {
 func (*SubmitVariantRatingRequest) ProtoMessage() {}
 
 func (x *SubmitVariantRatingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[18]
+	mi := &file_registry_v1_registry_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1473,7 +1509,7 @@ func (x *SubmitVariantRatingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitVariantRatingRequest.ProtoReflect.Descriptor instead.
 func (*SubmitVariantRatingRequest) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{18}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SubmitVariantRatingRequest) GetVariantId() string {
@@ -1500,7 +1536,7 @@ type SubmitVariantRatingResponse struct {
 
 func (x *SubmitVariantRatingResponse) Reset() {
 	*x = SubmitVariantRatingResponse{}
-	mi := &file_registry_v1_registry_proto_msgTypes[19]
+	mi := &file_registry_v1_registry_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1512,7 +1548,7 @@ func (x *SubmitVariantRatingResponse) String() string {
 func (*SubmitVariantRatingResponse) ProtoMessage() {}
 
 func (x *SubmitVariantRatingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_registry_v1_registry_proto_msgTypes[19]
+	mi := &file_registry_v1_registry_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1525,7 +1561,7 @@ func (x *SubmitVariantRatingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SubmitVariantRatingResponse.ProtoReflect.Descriptor instead.
 func (*SubmitVariantRatingResponse) Descriptor() ([]byte, []int) {
-	return file_registry_v1_registry_proto_rawDescGZIP(), []int{19}
+	return file_registry_v1_registry_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SubmitVariantRatingResponse) GetVariantId() string {
@@ -1602,28 +1638,26 @@ const file_registry_v1_registry_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0fmanufacturer_id\x18\x02 \x01(\tR\x0emanufacturerId\x12\x16\n" +
 	"\x06series\x18\x03 \x01(\tR\x06series\x12>\n" +
-	"\bvariants\x18\x04 \x03(\v2\".registry.v1.ChargerVariantSummaryR\bvariants\"\xf5\x03\n" +
+	"\bvariants\x18\x04 \x03(\v2\".registry.v1.ChargerVariantSummaryR\bvariants\";\n" +
+	"\vFieldFilter\x12\x14\n" +
+	"\x05field\x18\x01 \x01(\tR\x05field\x12\x16\n" +
+	"\x06values\x18\x02 \x03(\tR\x06values\"\xb4\x03\n" +
 	"\x15SearchChargersRequest\x12\x19\n" +
 	"\x05query\x18\x01 \x01(\tH\x00R\x05query\x88\x01\x01\x12,\n" +
-	"\x0fmanufacturer_id\x18\x02 \x01(\tH\x01R\x0emanufacturerId\x88\x01\x01\x12;\n" +
-	"\fcharger_type\x18\x03 \x01(\x0e2\x18.registry.v1.ChargerTypeR\vchargerType\x12C\n" +
-	"\x0fconnector_types\x18\x04 \x03(\x0e2\x1a.registry.v1.ConnectorTypeR\x0econnectorTypes\x12%\n" +
+	"\x0fmanufacturer_id\x18\x02 \x01(\tH\x01R\x0emanufacturerId\x88\x01\x01\x12%\n" +
 	"\fmin_power_kw\x18\x05 \x01(\x01H\x02R\n" +
 	"minPowerKw\x88\x01\x01\x12%\n" +
 	"\fmax_power_kw\x18\x06 \x01(\x01H\x03R\n" +
-	"maxPowerKw\x88\x01\x01\x12\x1d\n" +
-	"\acountry\x18\a \x01(\tH\x04R\acountry\x88\x01\x01\x12\x1c\n" +
-	"\tprotocols\x18\b \x03(\tR\tprotocols\x12\x1b\n" +
+	"maxPowerKw\x88\x01\x01\x12\x1b\n" +
 	"\tpage_size\x18\t \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\n" +
-	" \x01(\tR\tpageTokenB\b\n" +
+	" \x01(\tR\tpageToken\x12=\n" +
+	"\rfield_filters\x18\v \x03(\v2\x18.registry.v1.FieldFilterR\ffieldFiltersB\b\n" +
 	"\x06_queryB\x12\n" +
 	"\x10_manufacturer_idB\x0f\n" +
 	"\r_min_power_kwB\x0f\n" +
-	"\r_max_power_kwB\n" +
-	"\n" +
-	"\b_country\"\x9f\x01\n" +
+	"\r_max_power_kwJ\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\a\x10\bJ\x04\b\b\x10\tR\fcharger_typeR\x0fconnector_typesR\acountryR\tprotocols\"\x9f\x01\n" +
 	"\x16SearchChargersResponse\x12>\n" +
 	"\bvariants\x18\x01 \x03(\v2\".registry.v1.ChargerVariantSummaryR\bvariants\x12\x1d\n" +
 	"\n" +
@@ -1726,7 +1760,7 @@ func file_registry_v1_registry_proto_rawDescGZIP() []byte {
 }
 
 var file_registry_v1_registry_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_registry_v1_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_registry_v1_registry_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_registry_v1_registry_proto_goTypes = []any{
 	(ChargerType)(0),                    // 0: registry.v1.ChargerType
 	(ModelStatus)(0),                    // 1: registry.v1.ModelStatus
@@ -1739,20 +1773,21 @@ var file_registry_v1_registry_proto_goTypes = []any{
 	(*ChargerVariantSummary)(nil),       // 8: registry.v1.ChargerVariantSummary
 	(*ChargerVariant)(nil),              // 9: registry.v1.ChargerVariant
 	(*Product)(nil),                     // 10: registry.v1.Product
-	(*SearchChargersRequest)(nil),       // 11: registry.v1.SearchChargersRequest
-	(*SearchChargersResponse)(nil),      // 12: registry.v1.SearchChargersResponse
-	(*GetManufacturersRequest)(nil),     // 13: registry.v1.GetManufacturersRequest
-	(*GetManufacturersResponse)(nil),    // 14: registry.v1.GetManufacturersResponse
-	(*GetChargerRequest)(nil),           // 15: registry.v1.GetChargerRequest
-	(*GetChargerResponse)(nil),          // 16: registry.v1.GetChargerResponse
-	(*GetManufacturerRequest)(nil),      // 17: registry.v1.GetManufacturerRequest
-	(*GetManufacturerResponse)(nil),     // 18: registry.v1.GetManufacturerResponse
-	(*SubmitChargerSpecRequest)(nil),    // 19: registry.v1.SubmitChargerSpecRequest
-	(*SubmitChargerSpecResponse)(nil),   // 20: registry.v1.SubmitChargerSpecResponse
-	(*VariantRatingInput)(nil),          // 21: registry.v1.VariantRatingInput
-	(*SubmitVariantRatingRequest)(nil),  // 22: registry.v1.SubmitVariantRatingRequest
-	(*SubmitVariantRatingResponse)(nil), // 23: registry.v1.SubmitVariantRatingResponse
-	(*timestamppb.Timestamp)(nil),       // 24: google.protobuf.Timestamp
+	(*FieldFilter)(nil),                 // 11: registry.v1.FieldFilter
+	(*SearchChargersRequest)(nil),       // 12: registry.v1.SearchChargersRequest
+	(*SearchChargersResponse)(nil),      // 13: registry.v1.SearchChargersResponse
+	(*GetManufacturersRequest)(nil),     // 14: registry.v1.GetManufacturersRequest
+	(*GetManufacturersResponse)(nil),    // 15: registry.v1.GetManufacturersResponse
+	(*GetChargerRequest)(nil),           // 16: registry.v1.GetChargerRequest
+	(*GetChargerResponse)(nil),          // 17: registry.v1.GetChargerResponse
+	(*GetManufacturerRequest)(nil),      // 18: registry.v1.GetManufacturerRequest
+	(*GetManufacturerResponse)(nil),     // 19: registry.v1.GetManufacturerResponse
+	(*SubmitChargerSpecRequest)(nil),    // 20: registry.v1.SubmitChargerSpecRequest
+	(*SubmitChargerSpecResponse)(nil),   // 21: registry.v1.SubmitChargerSpecResponse
+	(*VariantRatingInput)(nil),          // 22: registry.v1.VariantRatingInput
+	(*SubmitVariantRatingRequest)(nil),  // 23: registry.v1.SubmitVariantRatingRequest
+	(*SubmitVariantRatingResponse)(nil), // 24: registry.v1.SubmitVariantRatingResponse
+	(*timestamppb.Timestamp)(nil),       // 25: google.protobuf.Timestamp
 }
 var file_registry_v1_registry_proto_depIdxs = []int32{
 	4,  // 0: registry.v1.Manufacturer.contact:type_name -> registry.v1.Contact
@@ -1763,36 +1798,35 @@ var file_registry_v1_registry_proto_depIdxs = []int32{
 	3,  // 5: registry.v1.ChargerVariantSummary.status:type_name -> registry.v1.SubmissionStatus
 	7,  // 6: registry.v1.ChargerVariantSummary.ratings:type_name -> registry.v1.CategoryRating
 	8,  // 7: registry.v1.ChargerVariant.summary:type_name -> registry.v1.ChargerVariantSummary
-	24, // 8: registry.v1.ChargerVariant.created_at:type_name -> google.protobuf.Timestamp
-	24, // 9: registry.v1.ChargerVariant.updated_at:type_name -> google.protobuf.Timestamp
+	25, // 8: registry.v1.ChargerVariant.created_at:type_name -> google.protobuf.Timestamp
+	25, // 9: registry.v1.ChargerVariant.updated_at:type_name -> google.protobuf.Timestamp
 	8,  // 10: registry.v1.Product.variants:type_name -> registry.v1.ChargerVariantSummary
-	0,  // 11: registry.v1.SearchChargersRequest.charger_type:type_name -> registry.v1.ChargerType
-	2,  // 12: registry.v1.SearchChargersRequest.connector_types:type_name -> registry.v1.ConnectorType
-	8,  // 13: registry.v1.SearchChargersResponse.variants:type_name -> registry.v1.ChargerVariantSummary
-	6,  // 14: registry.v1.GetManufacturersResponse.manufacturers:type_name -> registry.v1.ManufacturerSummary
-	9,  // 15: registry.v1.GetChargerResponse.variant:type_name -> registry.v1.ChargerVariant
-	5,  // 16: registry.v1.GetManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
-	10, // 17: registry.v1.GetManufacturerResponse.products:type_name -> registry.v1.Product
-	3,  // 18: registry.v1.SubmitChargerSpecResponse.status:type_name -> registry.v1.SubmissionStatus
-	21, // 19: registry.v1.SubmitVariantRatingRequest.ratings:type_name -> registry.v1.VariantRatingInput
-	7,  // 20: registry.v1.SubmitVariantRatingResponse.ratings:type_name -> registry.v1.CategoryRating
-	11, // 21: registry.v1.RegistryService.SearchChargers:input_type -> registry.v1.SearchChargersRequest
-	13, // 22: registry.v1.RegistryService.GetManufacturers:input_type -> registry.v1.GetManufacturersRequest
-	15, // 23: registry.v1.RegistryService.GetCharger:input_type -> registry.v1.GetChargerRequest
-	17, // 24: registry.v1.RegistryService.GetManufacturer:input_type -> registry.v1.GetManufacturerRequest
-	19, // 25: registry.v1.RegistryService.SubmitChargerSpec:input_type -> registry.v1.SubmitChargerSpecRequest
-	22, // 26: registry.v1.RegistryService.SubmitVariantRating:input_type -> registry.v1.SubmitVariantRatingRequest
-	12, // 27: registry.v1.RegistryService.SearchChargers:output_type -> registry.v1.SearchChargersResponse
-	14, // 28: registry.v1.RegistryService.GetManufacturers:output_type -> registry.v1.GetManufacturersResponse
-	16, // 29: registry.v1.RegistryService.GetCharger:output_type -> registry.v1.GetChargerResponse
-	18, // 30: registry.v1.RegistryService.GetManufacturer:output_type -> registry.v1.GetManufacturerResponse
-	20, // 31: registry.v1.RegistryService.SubmitChargerSpec:output_type -> registry.v1.SubmitChargerSpecResponse
-	23, // 32: registry.v1.RegistryService.SubmitVariantRating:output_type -> registry.v1.SubmitVariantRatingResponse
-	27, // [27:33] is the sub-list for method output_type
-	21, // [21:27] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	11, // 11: registry.v1.SearchChargersRequest.field_filters:type_name -> registry.v1.FieldFilter
+	8,  // 12: registry.v1.SearchChargersResponse.variants:type_name -> registry.v1.ChargerVariantSummary
+	6,  // 13: registry.v1.GetManufacturersResponse.manufacturers:type_name -> registry.v1.ManufacturerSummary
+	9,  // 14: registry.v1.GetChargerResponse.variant:type_name -> registry.v1.ChargerVariant
+	5,  // 15: registry.v1.GetManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
+	10, // 16: registry.v1.GetManufacturerResponse.products:type_name -> registry.v1.Product
+	3,  // 17: registry.v1.SubmitChargerSpecResponse.status:type_name -> registry.v1.SubmissionStatus
+	22, // 18: registry.v1.SubmitVariantRatingRequest.ratings:type_name -> registry.v1.VariantRatingInput
+	7,  // 19: registry.v1.SubmitVariantRatingResponse.ratings:type_name -> registry.v1.CategoryRating
+	12, // 20: registry.v1.RegistryService.SearchChargers:input_type -> registry.v1.SearchChargersRequest
+	14, // 21: registry.v1.RegistryService.GetManufacturers:input_type -> registry.v1.GetManufacturersRequest
+	16, // 22: registry.v1.RegistryService.GetCharger:input_type -> registry.v1.GetChargerRequest
+	18, // 23: registry.v1.RegistryService.GetManufacturer:input_type -> registry.v1.GetManufacturerRequest
+	20, // 24: registry.v1.RegistryService.SubmitChargerSpec:input_type -> registry.v1.SubmitChargerSpecRequest
+	23, // 25: registry.v1.RegistryService.SubmitVariantRating:input_type -> registry.v1.SubmitVariantRatingRequest
+	13, // 26: registry.v1.RegistryService.SearchChargers:output_type -> registry.v1.SearchChargersResponse
+	15, // 27: registry.v1.RegistryService.GetManufacturers:output_type -> registry.v1.GetManufacturersResponse
+	17, // 28: registry.v1.RegistryService.GetCharger:output_type -> registry.v1.GetChargerResponse
+	19, // 29: registry.v1.RegistryService.GetManufacturer:output_type -> registry.v1.GetManufacturerResponse
+	21, // 30: registry.v1.RegistryService.SubmitChargerSpec:output_type -> registry.v1.SubmitChargerSpecResponse
+	24, // 31: registry.v1.RegistryService.SubmitVariantRating:output_type -> registry.v1.SubmitVariantRatingResponse
+	26, // [26:32] is the sub-list for method output_type
+	20, // [20:26] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_registry_v1_registry_proto_init() }
@@ -1803,16 +1837,16 @@ func file_registry_v1_registry_proto_init() {
 	file_registry_v1_registry_proto_msgTypes[0].OneofWrappers = []any{}
 	file_registry_v1_registry_proto_msgTypes[1].OneofWrappers = []any{}
 	file_registry_v1_registry_proto_msgTypes[4].OneofWrappers = []any{}
-	file_registry_v1_registry_proto_msgTypes[7].OneofWrappers = []any{}
-	file_registry_v1_registry_proto_msgTypes[9].OneofWrappers = []any{}
-	file_registry_v1_registry_proto_msgTypes[15].OneofWrappers = []any{}
+	file_registry_v1_registry_proto_msgTypes[8].OneofWrappers = []any{}
+	file_registry_v1_registry_proto_msgTypes[10].OneofWrappers = []any{}
+	file_registry_v1_registry_proto_msgTypes[16].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_registry_v1_registry_proto_rawDesc), len(file_registry_v1_registry_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   20,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

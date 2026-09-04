@@ -3,6 +3,9 @@ import { persist } from 'zustand/middleware'
 
 const MAX_COMPARISON_ITEMS = 4
 
+/** dataTransfer MIME type used to drag a variant card onto the comparison sidebar. */
+const VARIANT_DRAG_MIME_TYPE = 'application/x-oecs-variant-id'
+
 interface ComparisonState {
   variantIds: string[]
   /** The variant every other compared value is measured against; falls back to the first
@@ -42,4 +45,4 @@ export const useComparisonStore = create<ComparisonState>()(
   ),
 )
 
-export { MAX_COMPARISON_ITEMS }
+export { MAX_COMPARISON_ITEMS, VARIANT_DRAG_MIME_TYPE }

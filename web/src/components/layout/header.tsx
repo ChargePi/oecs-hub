@@ -7,7 +7,7 @@ import { SearchBar } from '@/features/explorer/search-bar'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Explore' },
+  { to: '/explore', label: 'Explore' },
   { to: '/compare', label: 'Compare' },
   ...(CHAT_ENABLED ? [{ to: '/chat', label: 'Chat' }] : []),
 ]
@@ -33,7 +33,6 @@ export function Header() {
             <NavLink
               key={link.to}
               to={link.to}
-              end={link.to === '/'}
               className={({ isActive }) =>
                 cn(
                   'text-sm transition-colors',

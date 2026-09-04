@@ -7,7 +7,6 @@ import (
 
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -64,18 +63,9 @@ func (r *ChargerRepository) Create(ctx context.Context, c *charger.Charger) erro
 	return nil
 }
 
-// List returns chargers matching filters, paginated.
-func (r *ChargerRepository) List(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error) {
-	query := r.applyFilters(r.db.WithContext(ctx).Model(&chargerVariantEntity{}), filters)
-
-	return runSearch(query, limit, offset)
-}
-
-// SearchByFields returns chargers matching filters, paginated. Unlike List, it supports
-// generic filtering over arbitrary OECS spec fields via filters.FieldFilters - see
-// charger.FieldSearchFilters.
-func (r *ChargerRepository) SearchByFields(ctx context.Context, filters charger.FieldSearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error) {
-	query, err := r.applyFieldSearchFilters(r.db.WithContext(ctx).Model(&chargerVariantEntity{}), filters)
+// Search returns chargers matching filters, paginated.
+func (r *ChargerRepository) Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error) {
+	query, err := r.applyFilters(r.db.WithContext(ctx).Model(&chargerVariantEntity{}), filters)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -83,8 +73,8 @@ func (r *ChargerRepository) SearchByFields(ctx context.Context, filters charger.
 	return runSearch(query, limit, offset)
 }
 
-// runSearch counts and fetches the given query's matches, applying the shared List/
-// SearchByFields ordering and page bounds.
+// runSearch counts and fetches the given query's matches, applying Search's shared
+// ordering and page bounds.
 func runSearch(query *gorm.DB, limit, offset uint32) ([]*charger.Charger, int64, error) {
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
@@ -104,7 +94,7 @@ func runSearch(query *gorm.DB, limit, offset uint32) ([]*charger.Charger, int64,
 	return chargersToDomainSlice(entities), total, nil
 }
 
-func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchFilters) *gorm.DB {
+func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchFilters) (*gorm.DB, error) {
 	if filters.Query != nil && *filters.Query != "" {
 		q := "%" + *filters.Query + "%"
 		query = query.Where("(manufacturer_name ILIKE ? OR model_name ILIKE ? OR series ILIKE ?)", q, q, q)
@@ -112,14 +102,6 @@ func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchF
 
 	if filters.ManufacturerID != nil {
 		query = query.Where("manufacturer_id = ?", *filters.ManufacturerID)
-	}
-
-	if filters.ChargerType != nil && *filters.ChargerType != "" {
-		query = query.Where("charger_type = ?", *filters.ChargerType)
-	}
-
-	if len(filters.ConnectorTypes) > 0 {
-		query = query.Where("connector_types && ?", pq.StringArray(filters.ConnectorTypes))
 	}
 
 	if filters.MinPowerWatts != nil {
@@ -128,42 +110,6 @@ func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchF
 
 	if filters.MaxPowerWatts != nil {
 		query = query.Where("min_power_watts <= ?", *filters.MaxPowerWatts)
-	}
-
-	if filters.Country != nil && *filters.Country != "" {
-		query = query.Where("manufacturer_country = ?", *filters.Country)
-	}
-
-	if len(filters.Protocols) > 0 {
-		query = query.Where("protocols && ?", pq.StringArray(filters.Protocols))
-	}
-
-	if len(filters.Statuses) > 0 {
-		statuses := make([]string, len(filters.Statuses))
-		for i, s := range filters.Statuses {
-			statuses[i] = string(s)
-		}
-
-		query = query.Where("status IN ?", statuses)
-	}
-
-	return query
-}
-
-// applyFieldSearchFilters is the FieldSearchFilters counterpart to applyFilters, used by
-// SearchByFields.
-func (r *ChargerRepository) applyFieldSearchFilters(query *gorm.DB, filters charger.FieldSearchFilters) (*gorm.DB, error) {
-	if filters.Query != nil && *filters.Query != "" {
-		q := "%" + *filters.Query + "%"
-		query = query.Where("(manufacturer_name ILIKE ? OR model_name ILIKE ? OR series ILIKE ?)", q, q, q)
-	}
-
-	if filters.ManufacturerID != nil {
-		query = query.Where("manufacturer_id = ?", *filters.ManufacturerID)
-	}
-
-	if filters.ChargerType != nil && *filters.ChargerType != "" {
-		query = query.Where("charger_type = ?", *filters.ChargerType)
 	}
 
 	if len(filters.Statuses) > 0 {
