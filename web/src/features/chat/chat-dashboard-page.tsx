@@ -57,11 +57,13 @@ export function ChatDashboardPage() {
   // reasoning as the conversationId sync below) so refreshing never resends it.
   useEffect(() => {
     if (routeId || autoSentPromptRef.current) return
-    const prompt = new URLSearchParams(window.location.search).get('prompt')
+    const params = new URLSearchParams(window.location.search)
+    const prompt = params.get('prompt')
     if (!prompt) return
+    const chargerIds = params.get('chargerIds')?.split(',').filter(Boolean)
     autoSentPromptRef.current = true
     window.history.replaceState(null, '', '/chat')
-    stream.send(prompt)
+    stream.send(prompt, undefined, chargerIds)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeId])
 

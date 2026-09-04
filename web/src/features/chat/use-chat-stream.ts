@@ -79,7 +79,7 @@ export function useChatStream(userId: string) {
   }, [])
 
   const send = useCallback(
-    (text: string, selectedChoices?: SelectedChoice[]) => {
+    (text: string, selectedChoices?: SelectedChoice[], chargerIds?: string[]) => {
       closeStreamRef.current?.()
 
       const conversationId = state.conversationId
@@ -87,7 +87,13 @@ export function useChatStream(userId: string) {
       setState((s) => ({ ...s, phase: 'streaming', error: null }))
 
       closeStreamRef.current = streamChat(
-        { conversationId: conversationId ?? '', userId, message: text, selectedChoices },
+        {
+          conversationId: conversationId ?? '',
+          userId,
+          message: text,
+          selectedChoices,
+          chargerIds,
+        },
         {
           onMessages: (messages) => setState((s) => ({ ...s, messages })),
           onStatus: (status) => setState((s) => ({ ...s, status })),

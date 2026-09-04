@@ -235,6 +235,22 @@ export async function deleteConversations(conversationIds: string[]): Promise<vo
   }
 }
 
+/** Builds the outgoing message's metadata Struct from whichever optional fields are
+ *  actually present - returns undefined rather than an empty Struct if none are. */
+function buildOutgoingMetadata(params: {
+  selectedChoices?: SelectedChoice[]
+  chargerIds?: string[]
+}): Struct | undefined {
+  const fields: Record<string, unknown> = {}
+  if (params.selectedChoices && params.selectedChoices.length > 0) {
+    fields.selected_choices = params.selectedChoices
+  }
+  if (params.chargerIds && params.chargerIds.length > 0) {
+    fields.charger_ids = params.chargerIds
+  }
+  return Object.keys(fields).length > 0 ? Struct.fromJavaScript(fields) : undefined
+}
+
 export interface StreamHandlers {
   onMessages?: (messages: ChatMessage[]) => void
   onStatus?: (status: TurnStatus) => void
@@ -268,6 +284,11 @@ export function streamChat(
      *  the outgoing message's metadata so the agent uses their fixed weights directly
      *  instead of re-deriving them. */
     selectedChoices?: SelectedChoice[]
+    /** Exact catalog ids the caller already knows precisely (e.g. the variants selected
+     *  on /compare) - attached to the outgoing message's metadata so the agent's
+     *  ResolveChargers skips its name-based resolution loop entirely. Only meaningful on
+     *  the message that starts a new request. */
+    chargerIds?: string[]
   },
   handlers: StreamHandlers,
 ): () => void {
@@ -286,9 +307,8 @@ export function streamChat(
       const message = new ProtoMessage()
       message.setRole(ProtoMessageRole.MESSAGE_ROLE_USER)
       message.setContent(params.message)
-      if (params.selectedChoices && params.selectedChoices.length > 0) {
-        message.setMetadata(Struct.fromJavaScript({ selected_choices: params.selectedChoices }))
-      }
+      const metadata = buildOutgoingMetadata(params)
+      if (metadata) message.setMetadata(metadata)
       upsertReq.setMessage(message)
 
       const upsertResp = await client.upsertConversation(upsertReq, {})

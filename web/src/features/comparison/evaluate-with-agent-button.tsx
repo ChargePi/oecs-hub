@@ -26,7 +26,10 @@ function buildComparisonPrompt(variants: ChargerVariant[]): string {
 }
 
 /** Starts a new agent chat pre-loaded with a comparison prompt for the currently compared
- *  chargers, via the same `/chat?prompt=` handoff ChatDashboardPage auto-sends on landing. */
+ *  chargers, via the same `/chat?prompt=` handoff ChatDashboardPage auto-sends on landing.
+ *  Also carries the exact catalog ids (`chargerIds`) so the agent's ResolveChargers can
+ *  skip its name-based resolution loop entirely - the prompt text still names every
+ *  charger too, for AnalyzeIntent's own compare_chargers classification. */
 export function EvaluateWithAgentButton({ variants }: { variants: ChargerVariant[] }) {
   const navigate = useNavigate()
 
@@ -34,7 +37,8 @@ export function EvaluateWithAgentButton({ variants }: { variants: ChargerVariant
 
   function handleClick() {
     const prompt = buildComparisonPrompt(variants)
-    navigate(`/chat?prompt=${encodeURIComponent(prompt)}`)
+    const chargerIds = variants.map((v) => v.id).join(',')
+    navigate(`/chat?prompt=${encodeURIComponent(prompt)}&chargerIds=${encodeURIComponent(chargerIds)}`)
   }
 
   return (
