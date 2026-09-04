@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { Footer } from '@/components/layout/footer'
+import { Reveal } from '@/components/reveal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { registryClient } from '@/lib/registry/client'
 import { AudienceSection } from './audience-section'
@@ -22,12 +23,14 @@ export function ExplorerPage() {
 
       <div className="border-t border-border/60">
         <div className="mx-auto max-w-5xl px-4 py-16 md:px-6 md:py-24">
-          <h2
-            id="manufacturers"
-            className="mb-10 text-center text-2xl font-semibold tracking-tight"
-          >
-            Browse manufacturers
-          </h2>
+          <Reveal>
+            <h2
+              id="manufacturers"
+              className="mb-10 text-center text-2xl font-semibold tracking-tight"
+            >
+              Browse manufacturers
+            </h2>
+          </Reveal>
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -36,8 +39,10 @@ export function ExplorerPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {manufacturers.map((manufacturer) => (
-                <ManufacturerCard key={manufacturer.id} manufacturer={manufacturer} />
+              {manufacturers.map((manufacturer, i) => (
+                <Reveal key={manufacturer.id} delay={Math.min(i * 60, 300)}>
+                  <ManufacturerCard manufacturer={manufacturer} />
+                </Reveal>
               ))}
             </div>
           )}
