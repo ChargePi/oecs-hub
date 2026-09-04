@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://oecs.dev/schema/1.1.0/hardware.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/hardware.schema.json",
   "title": "OECS Hardware Definitions",
   "description": "Defines the physical/hardware specification of an EV charger: housing, electrical input/output, protection, connectors, user interface, connectivity, and safety systems.",
   "$defs": {
@@ -21,12 +21,12 @@
         "impactRating": { "$ref": "common.schema.json#/$defs/ikRating" },
         "operatingTemperature": { "$ref": "common.schema.json#/$defs/temperatureRange", "description": "Ambient operating temperature range." },
         "storageTemperature": { "$ref": "common.schema.json#/$defs/temperatureRange" },
-        "operatingHumidity": { "$ref": "common.schema.json#/$defs/valueRange", "description": "Relative humidity range, unit '%RH'." },
+        "operatingHumidity": { "$ref": "common.schema.json#/$defs/humidityRange", "description": "Relative humidity range." },
         "dimensions": { "$ref": "common.schema.json#/$defs/dimensions3D" },
-        "weight": { "$ref": "common.schema.json#/$defs/quantity" },
+        "weight": { "$ref": "common.schema.json#/$defs/massQuantity" },
         "color": { "type": "string" },
         "coolingMethod": { "type": "string", "enum": ["passive", "forced-air", "liquid"] },
-        "noiseLevel": { "$ref": "common.schema.json#/$defs/quantity", "description": "Acoustic noise emission, unit typically 'dBA'." }
+        "noiseLevel": { "$ref": "common.schema.json#/$defs/soundLevelQuantity", "description": "Acoustic noise emission." }
       },
       "additionalProperties": false
     },
@@ -35,13 +35,13 @@
       "description": "Characteristics of the grid/supply connection feeding the charger.",
       "properties": {
         "phases": { "type": "integer", "enum": [1, 2, 3] },
-        "voltage": { "$ref": "common.schema.json#/$defs/valueRange", "description": "Unit typically 'V'." },
-        "frequency": { "$ref": "common.schema.json#/$defs/valueRange", "description": "Unit typically 'Hz'." },
-        "maxCurrent": { "$ref": "common.schema.json#/$defs/quantity", "description": "Maximum input current draw, unit typically 'A'." },
+        "voltage": { "$ref": "common.schema.json#/$defs/voltageRange" },
+        "frequency": { "$ref": "common.schema.json#/$defs/frequencyRange" },
+        "maxCurrent": { "$ref": "common.schema.json#/$defs/currentQuantity", "description": "Maximum input current draw." },
         "connectionType": { "type": "string", "enum": ["hardwired", "plug-in"], "description": "Whether the unit is permanently hardwired to the supply or connects via an industrial plug." },
         "powerFactor": { "type": "number", "minimum": 0, "maximum": 1 },
         "efficiency": { "type": "number", "minimum": 0, "maximum": 100, "description": "Rated AC-to-DC (or pass-through) conversion efficiency in percent, at rated load." },
-        "standbyPower": { "$ref": "common.schema.json#/$defs/quantity", "description": "Idle/standby power draw, unit typically 'W'." }
+        "standbyPower": { "$ref": "common.schema.json#/$defs/powerQuantity", "description": "Idle/standby power draw." }
       },
       "additionalProperties": false
     },
@@ -49,10 +49,10 @@
       "type": "object",
       "description": "Aggregate power delivery capability of the charger (a single connector's individual rating is described in the connector object).",
       "properties": {
-        "minPower": { "$ref": "common.schema.json#/$defs/quantity" },
-        "maxPower": { "$ref": "common.schema.json#/$defs/quantity" },
-        "ratedOutputCurrent": { "$ref": "common.schema.json#/$defs/valueRange", "description": "Unit typically 'A'." },
-        "ratedOutputVoltage": { "$ref": "common.schema.json#/$defs/valueRange", "description": "Unit typically 'V'. Relevant primarily for DC chargers." },
+        "minPower": { "$ref": "common.schema.json#/$defs/powerQuantity" },
+        "maxPower": { "$ref": "common.schema.json#/$defs/powerQuantity" },
+        "ratedOutputCurrent": { "$ref": "common.schema.json#/$defs/currentRange" },
+        "ratedOutputVoltage": { "$ref": "common.schema.json#/$defs/voltageRange", "description": "Relevant primarily for DC chargers." },
         "simultaneousChargingSupported": { "type": "boolean", "description": "Only meaningful when there are 2+ connectors. True if more than one connector can actively deliver power at once; false if a second connector just queues behind the first (only one session runs at a time even though multiple connectors exist)." },
         "dynamicPowerSharing": { "type": "boolean", "description": "Only meaningful when there are 2+ connectors. Whether the charger dynamically splits/reallocates its total power budget across concurrently active sessions, rather than each connector having a fixed independent rating." }
       },
@@ -70,7 +70,7 @@
               "items": { "type": "string", "enum": ["AC", "A", "B", "F", "integrated-6mA-DC"] },
               "description": "RCD/RCM types integrated, per IEC 62955 / IEC 60755 classification."
             },
-            "ratedResidualCurrent": { "$ref": "common.schema.json#/$defs/quantity", "description": "Unit typically 'mA'." },
+            "ratedResidualCurrent": { "$ref": "common.schema.json#/$defs/currentQuantity" },
             "external": { "type": "boolean", "description": "True if RCD protection must be supplied externally (upstream) rather than being integrated." }
           },
           "additionalProperties": false
@@ -100,7 +100,7 @@
       "type": "object",
       "properties": {
         "type": { "type": "string", "enum": ["none", "led-indicator", "led-segment", "monochrome-lcd", "color-lcd", "touchscreen"] },
-        "size": { "$ref": "common.schema.json#/$defs/quantity", "description": "Diagonal screen size, unit typically 'cm'." },
+        "size": { "$ref": "common.schema.json#/$defs/lengthQuantity", "description": "Diagonal screen size." },
         "resolution": { "type": "string", "description": "e.g. '800x480'." }
       },
       "additionalProperties": false
@@ -165,10 +165,13 @@
         "integrated": { "type": "boolean", "description": "True if the meter is built into the charger; false if metering is provided by a separate, externally installed meter." },
         "manufacturer": { "type": "string" },
         "model": { "type": "string" },
-        "accuracyClass": { "type": "string", "description": "e.g. 'Class B (MID)', 'Class 1 (IEC 62053-21)'." },
+        "accuracyClass": { "$ref": "common.schema.json#/$defs/meterAccuracyClass" },
+        "accuracyClassOtherName": { "type": "string", "description": "Required when accuracyClass is 'other'; the classification as printed on the datasheet." },
         "certification": { "type": "string", "description": "Legal metrology certification, e.g. 'MID (2014/32/EU)', 'ANSI C12.20', 'Eichrecht'. Its presence is what makes metering suitable for direct billing/invoicing; omit if the meter has no such certification." }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "if": { "required": ["accuracyClass"], "properties": { "accuracyClass": { "const": "other" } } },
+      "then": { "required": ["accuracyClassOtherName"] }
     },
     "safety": {
       "type": "object",

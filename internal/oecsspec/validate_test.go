@@ -12,7 +12,7 @@ func TestValidateExamples(t *testing.T) {
 	}
 
 	// minimal.json is pinned to schema version 1.0.0 and is intentionally excluded:
-	// this service only accepts 1.1.0 documents (version is a JSON Schema const).
+	// this service only accepts 2.0.0 documents (version is a JSON Schema const).
 	examples := []string{
 		"testdata/ac-wallbox-full.json",
 		"testdata/dc-fast-charger-full.json",
@@ -41,7 +41,7 @@ func TestValidateRejectsInvalid(t *testing.T) {
 		t.Fatalf("NewValidator: %v", err)
 	}
 
-	if _, err := v.Validate([]byte(`{"version":"1.1.0"}`)); err == nil {
+	if _, err := v.Validate([]byte(`{"version":"2.0.0"}`)); err == nil {
 		t.Fatal("expected validation error for missing required fields")
 	}
 }

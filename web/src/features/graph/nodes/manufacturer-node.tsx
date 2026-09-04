@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { Factory } from 'lucide-react'
 
+import { ManufacturerLogo } from '@/features/product/manufacturer-logo'
 import type { GraphNodeData } from '../layout'
 
 export function ManufacturerNode({ data, selected }: NodeProps & { data: GraphNodeData }) {
@@ -14,9 +14,11 @@ export function ManufacturerNode({ data, selected }: NodeProps & { data: GraphNo
       }`}
     >
       <Handle type="source" position={Position.Right} className="!bg-primary" />
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-        <Factory className="size-4.5" />
-      </div>
+      <ManufacturerLogo
+        logoUrl={manufacturer.logoUrl}
+        className="size-9"
+        iconClassName="size-4.5"
+      />
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{manufacturer.name}</p>
         {manufacturer.country && (

@@ -1,27 +1,41 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://oecs.dev/schema/1.1.0/common.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/common.schema.json",
   "title": "OECS Common Definitions",
   "description": "Reusable primitive types shared across the Open EV Charger Specification (OECS) schema modules: quantities, ranges, ratings, dates, and identity/reference primitives.",
   "$defs": {
-    "quantity": {
+    "lengthUnit": {
+      "type": "string",
+      "enum": ["mm", "cm", "m", "in"]
+    },
+    "lengthQuantity": {
       "type": "object",
-      "description": "A numeric value paired with its unit of measure.",
+      "description": "A length/distance value paired with its unit of measure.",
       "properties": {
         "value": { "type": "number" },
-        "unit": { "type": "string", "description": "Unit of measure, e.g. 'A', 'V', 'kW', 'kWh', 'mm', 'kg'." }
+        "unit": { "$ref": "#/$defs/lengthUnit" }
       },
       "required": ["value", "unit"],
       "additionalProperties": false
     },
-    "valueRange": {
+    "currentQuantity": {
       "type": "object",
-      "description": "A minimum/maximum/nominal numeric range with a shared unit.",
+      "description": "An electrical current value paired with its unit of measure.",
+      "properties": {
+        "value": { "type": "number" },
+        "unit": { "type": "string", "enum": ["A", "mA"] }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "currentRange": {
+      "type": "object",
+      "description": "A minimum/maximum/nominal electrical current range with a shared unit.",
       "properties": {
         "min": { "type": "number" },
         "max": { "type": "number" },
         "nominal": { "type": "number" },
-        "unit": { "type": "string" }
+        "unit": { "type": "string", "enum": ["A", "mA"] }
       },
       "required": ["unit"],
       "additionalProperties": false,
@@ -29,6 +43,102 @@
         { "required": ["min"] },
         { "required": ["max"] },
         { "required": ["nominal"] }
+      ]
+    },
+    "powerQuantity": {
+      "type": "object",
+      "description": "A power value paired with its unit of measure.",
+      "properties": {
+        "value": { "type": "number" },
+        "unit": { "type": "string", "enum": ["W", "kW"] }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "voltageRange": {
+      "type": "object",
+      "description": "A minimum/maximum/nominal voltage range with a shared unit.",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "nominal": { "type": "number" },
+        "unit": { "type": "string", "enum": ["V"] }
+      },
+      "required": ["unit"],
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["min"] },
+        { "required": ["max"] },
+        { "required": ["nominal"] }
+      ]
+    },
+    "frequencyRange": {
+      "type": "object",
+      "description": "A minimum/maximum/nominal frequency range with a shared unit.",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "nominal": { "type": "number" },
+        "unit": { "type": "string", "enum": ["Hz"] }
+      },
+      "required": ["unit"],
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["min"] },
+        { "required": ["max"] },
+        { "required": ["nominal"] }
+      ]
+    },
+    "massQuantity": {
+      "type": "object",
+      "description": "A mass/weight value paired with its unit of measure.",
+      "properties": {
+        "value": { "type": "number" },
+        "unit": { "type": "string", "enum": ["kg", "lb"] }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "soundLevelQuantity": {
+      "type": "object",
+      "description": "An acoustic sound level value paired with its unit of measure.",
+      "properties": {
+        "value": { "type": "number" },
+        "unit": { "type": "string", "enum": ["dBA", "dB"] }
+      },
+      "required": ["value", "unit"],
+      "additionalProperties": false
+    },
+    "humidityRange": {
+      "type": "object",
+      "description": "A minimum/maximum/nominal relative humidity range with a shared unit.",
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "nominal": { "type": "number" },
+        "unit": { "type": "string", "enum": ["%RH"] }
+      },
+      "required": ["unit"],
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["min"] },
+        { "required": ["max"] },
+        { "required": ["nominal"] }
+      ]
+    },
+    "meterAccuracyClass": {
+      "type": "string",
+      "description": "Legal-metrology metering accuracy classification. Use 'other' with a sibling *OtherName field for a classification not covered here.",
+      "enum": [
+        "MID_A",
+        "MID_B",
+        "MID_C",
+        "MID_D",
+        "IEC62053-21_Class1",
+        "IEC62053-21_Class2",
+        "IEC62053-22_Class0.2S",
+        "IEC62053-22_Class0.5S",
+        "other"
       ]
     },
     "temperatureRange": {
@@ -55,7 +165,7 @@
         "height": { "type": "number", "minimum": 0 },
         "width": { "type": "number", "minimum": 0 },
         "depth": { "type": "number", "minimum": 0 },
-        "unit": { "type": "string", "enum": ["mm", "cm", "m", "in"], "default": "mm" }
+        "unit": { "$ref": "#/$defs/lengthUnit", "default": "mm" }
       },
       "required": ["height", "width", "depth", "unit"],
       "additionalProperties": false

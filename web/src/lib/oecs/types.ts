@@ -1,7 +1,7 @@
 /**
- * TypeScript mirror of the OECS (Open EV Charger Specification) charger.schema.json v1.0.0.
+ * TypeScript mirror of the OECS (Open EV Charger Specification) charger.schema.json v2.0.0.
  * Field names and enum values match the schema exactly — see
- * oecs-scraper/internal/schema/*.schema.json in the sibling repo for the source of truth.
+ * internal/oecsspec/schema/*.schema.json in this repo for the source of truth.
  */
 
 export interface Quantity {
@@ -30,6 +30,7 @@ export interface Manufacturer {
   id: string
   name: string
   country?: string
+  logoUrl?: string
   contact?: Contact
 }
 
@@ -199,12 +200,9 @@ export interface Hardware {
 
 export type ProtocolName =
   | 'OCPP'
-  | 'OCPI'
-  | 'OSCP'
   | 'ISO15118'
   | 'IEC61851'
   | 'DIN70121'
-  | 'OpenADR'
   | 'IEEE2030.5'
   | 'EEBus'
   | 'Modbus-TCP'
@@ -238,11 +236,16 @@ export interface SmartCharging {
   scheduleTypes?: string[]
 }
 
+export interface LocalInterface {
+  type: string
+  documentationUrl?: string
+}
+
 export interface Software {
   firmware?: { currentVersion?: string; updateMethods?: string[] }
   protocols: Protocol[]
   smartCharging?: SmartCharging
-  integration?: { webUI?: boolean; localInterfaces?: string[]; apiDocumentationUrl?: string }
+  integration?: { webUI?: boolean; localInterfaces?: LocalInterface[] }
   offlineChargingSupported?: boolean
   operatingSystem?: string
 }
@@ -253,7 +256,6 @@ export type PaymentMethod =
   | 'rfid-prepaid'
   | 'mobile-app'
   | 'plug-and-charge-autocharge'
-  | 'backend-invoicing'
   | 'free-of-charge'
 
 export interface Payment {

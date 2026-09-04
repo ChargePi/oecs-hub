@@ -1,10 +1,10 @@
 // Package oecsspec mirrors the OECS (Open EV Charger Specification) charger record schema
-// (https://github.com/xBlaz3kx/oecs/blob/main/schema/1.1.0/charger.schema.json), version 1.1.0.
+// (https://github.com/xBlaz3kx/oecs/blob/main/schema/2.0.0/charger.schema.json), version 2.0.0.
 // Only populate a nested struct when its required sub-fields are known - Validate is the source
 // of truth for what's required.
 package oecsspec
 
-const SchemaVersion = "1.1.0"
+const SchemaVersion = "2.0.0"
 
 type Charger struct {
 	Schema       string       `json:"$schema,omitempty"`
@@ -28,6 +28,7 @@ type Contact struct {
 type Manufacturer struct {
 	Name    string   `json:"name"`
 	Country string   `json:"country,omitempty"`
+	LogoURL string   `json:"logoUrl,omitempty"`
 	Contact *Contact `json:"contact,omitempty"`
 }
 
@@ -50,6 +51,16 @@ const (
 	BrandingCustomFaceplate = "custom-faceplate"
 	BrandingCustomizableUI  = "customizable-ui"
 	BrandingCustomLEDColor  = "custom-led-color"
+)
+
+// ModelLevel* are the allowed values of Model.Level - which ones are valid depends on
+// Model.Type: AC is restricted to Level1/Level2, DC to DCFast/DCUltraFast/HPC.
+const (
+	ModelLevelLevel1      = "Level 1"
+	ModelLevelLevel2      = "Level 2"
+	ModelLevelDCFast      = "DC Fast"
+	ModelLevelDCUltraFast = "DC Ultra-Fast"
+	ModelLevelHPC         = "HPC"
 )
 
 type Model struct {
@@ -245,18 +256,19 @@ type Cable struct {
 }
 
 type Connector struct {
-	Label              string      `json:"label,omitempty"`
-	Type               string      `json:"type"`
-	CurrentType        string      `json:"currentType"`
-	Phases             int         `json:"phases,omitempty"`
-	RatedVoltage       *ValueRange `json:"ratedVoltage,omitempty"`
-	RatedCurrent       *Quantity   `json:"ratedCurrent,omitempty"`
-	MaxPower           *Quantity   `json:"maxPower,omitempty"`
-	Cable              *Cable      `json:"cable,omitempty"`
-	ConnectorLock      *bool       `json:"connectorLock,omitempty"`
-	MeterAccuracyClass string      `json:"meterAccuracyClass,omitempty"`
-	ISOPlugAndCharge   *bool       `json:"isoPlugAndCharge,omitempty"`
-	Bidirectional      *bool       `json:"bidirectional,omitempty"`
+	Label                       string      `json:"label,omitempty"`
+	Type                        string      `json:"type"`
+	CurrentType                 string      `json:"currentType"`
+	Phases                      int         `json:"phases,omitempty"`
+	RatedVoltage                *ValueRange `json:"ratedVoltage,omitempty"`
+	RatedCurrent                *Quantity   `json:"ratedCurrent,omitempty"`
+	MaxPower                    *Quantity   `json:"maxPower,omitempty"`
+	Cable                       *Cable      `json:"cable,omitempty"`
+	ConnectorLock               *bool       `json:"connectorLock,omitempty"`
+	MeterAccuracyClass          string      `json:"meterAccuracyClass,omitempty"`
+	MeterAccuracyClassOtherName string      `json:"meterAccuracyClassOtherName,omitempty"`
+	ISOPlugAndCharge            *bool       `json:"isoPlugAndCharge,omitempty"`
+	Bidirectional               *bool       `json:"bidirectional,omitempty"`
 }
 
 const (
@@ -339,12 +351,28 @@ type Connectivity struct {
 	Cellular   *Cellular `json:"cellular,omitempty"`
 }
 
+// MeterAccuracyClass* are legal-metrology metering accuracy classifications, shared by
+// Connector.MeterAccuracyClass and Meter.AccuracyClass. Other plus the sibling
+// *OtherName field covers a classification not listed here.
+const (
+	MeterAccuracyClassMIDA               = "MID_A"
+	MeterAccuracyClassMIDB               = "MID_B"
+	MeterAccuracyClassMIDC               = "MID_C"
+	MeterAccuracyClassMIDD               = "MID_D"
+	MeterAccuracyClassIEC6205321Class1   = "IEC62053-21_Class1"
+	MeterAccuracyClassIEC6205321Class2   = "IEC62053-21_Class2"
+	MeterAccuracyClassIEC6205322Class02S = "IEC62053-22_Class0.2S"
+	MeterAccuracyClassIEC6205322Class05S = "IEC62053-22_Class0.5S"
+	MeterAccuracyClassOther              = "other"
+)
+
 type Meter struct {
-	Integrated    *bool  `json:"integrated,omitempty"`
-	Manufacturer  string `json:"manufacturer,omitempty"`
-	Model         string `json:"model,omitempty"`
-	AccuracyClass string `json:"accuracyClass,omitempty"`
-	Certification string `json:"certification,omitempty"`
+	Integrated             *bool  `json:"integrated,omitempty"`
+	Manufacturer           string `json:"manufacturer,omitempty"`
+	Model                  string `json:"model,omitempty"`
+	AccuracyClass          string `json:"accuracyClass,omitempty"`
+	AccuracyClassOtherName string `json:"accuracyClassOtherName,omitempty"`
+	Certification          string `json:"certification,omitempty"`
 }
 
 const (
@@ -402,12 +430,9 @@ type Firmware struct {
 
 const (
 	ProtocolNameOCPP      = "OCPP"
-	ProtocolNameOCPI      = "OCPI"
-	ProtocolNameOSCP      = "OSCP"
 	ProtocolNameISO15118  = "ISO15118"
 	ProtocolNameIEC61851  = "IEC61851"
 	ProtocolNameDIN70121  = "DIN70121"
-	ProtocolNameOpenADR   = "OpenADR"
 	ProtocolNameIEEE20305 = "IEEE2030.5"
 	ProtocolNameEEBus     = "EEBus"
 	ProtocolNameModbusTCP = "Modbus-TCP"
@@ -442,16 +467,35 @@ type ConfigurationOption struct {
 	Description    string   `json:"description,omitempty"`
 }
 
+// Transport* are transport-protocol/payload-format combinations, as "transport/format"
+// (e.g. TransportWebsocketJSON for OCPP-J). Other plus the sibling TransportOtherName
+// field covers a combination not listed here.
+const (
+	TransportHTTPJSON      = "http/json"
+	TransportHTTPXML       = "http/xml"
+	TransportHTTPSOAP      = "http/soap"
+	TransportHTTPSJSON     = "https/json"
+	TransportHTTPSXML      = "https/xml"
+	TransportHTTPSSOAP     = "https/soap"
+	TransportWebsocketJSON = "websocket/json"
+	TransportTCPXML        = "tcp/xml"
+	TransportTCPModbus     = "tcp/modbus"
+	TransportSerialModbus  = "serial/modbus"
+	TransportCAN           = "can"
+	TransportOther         = "other"
+)
+
 type Protocol struct {
-	Name            string                `json:"name"`
-	OtherName       string                `json:"otherName,omitempty"`
-	Version         string                `json:"version"`
-	Transport       []string              `json:"transport,omitempty"`
-	SecurityProfile string                `json:"securityProfile,omitempty"`
-	Profiles        []string              `json:"profiles,omitempty"`
-	Certifications  []Certificate         `json:"certifications,omitempty"`
-	Configuration   []ConfigurationOption `json:"configuration,omitempty"`
-	Notes           string                `json:"notes,omitempty"`
+	Name               string                `json:"name"`
+	OtherName          string                `json:"otherName,omitempty"`
+	Version            string                `json:"version"`
+	Transport          []string              `json:"transport,omitempty"`
+	TransportOtherName string                `json:"transportOtherName,omitempty"`
+	SecurityProfile    string                `json:"securityProfile,omitempty"`
+	Profiles           []string              `json:"profiles,omitempty"`
+	Certifications     []Certificate         `json:"certifications,omitempty"`
+	Configuration      []ConfigurationOption `json:"configuration,omitempty"`
+	Notes              string                `json:"notes,omitempty"`
 }
 
 const (
@@ -486,10 +530,16 @@ const (
 	LocalInterfaceSerial    = "serial"
 )
 
+// LocalInterface is a single local integration interface exposed for custom/third-party
+// software, with a link to that interface's own documentation, if published.
+type LocalInterface struct {
+	Type             string `json:"type"`
+	DocumentationURL string `json:"documentationUrl,omitempty"`
+}
+
 type Integration struct {
-	WebUI               *bool    `json:"webUI,omitempty"`
-	LocalInterfaces     []string `json:"localInterfaces,omitempty"`
-	APIDocumentationURL string   `json:"apiDocumentationUrl,omitempty"`
+	WebUI           *bool            `json:"webUI,omitempty"`
+	LocalInterfaces []LocalInterface `json:"localInterfaces,omitempty"`
 }
 
 type Software struct {
@@ -508,7 +558,6 @@ const (
 	PaymentMethodRFIDPrepaid             = "rfid-prepaid"
 	PaymentMethodMobileApp               = "mobile-app"
 	PaymentMethodPlugAndChargeAutocharge = "plug-and-charge-autocharge"
-	PaymentMethodBackendInvoicing        = "backend-invoicing"
 	PaymentMethodFreeOfCharge            = "free-of-charge"
 )
 

@@ -23,20 +23,21 @@ func SchemaFS() (fs.FS, error) {
 	return fs.Sub(schemaFS, "schema")
 }
 
-const rootSchemaID = "https://oecs.dev/schema/1.1.0/charger.schema.json"
+const rootSchemaID = "https://oecs.dev/schema/2.0.0/charger.schema.json"
 
 var schemaFiles = []string{
 	"charger.schema.json",
 	"common.schema.json",
 	"connector.schema.json",
 	"hardware.schema.json",
+	"manufacturer.schema.json",
 	"metadata.schema.json",
 	"payment.schema.json",
 	"pricing.schema.json",
 	"software.schema.json",
 }
 
-// Validator validates raw JSON against the embedded OECS 1.1.0 JSON Schema.
+// Validator validates raw JSON against the embedded OECS 2.0.0 JSON Schema.
 type Validator struct {
 	compiled *jsonschema.Schema
 }
@@ -73,7 +74,7 @@ func NewValidator() (*Validator, error) {
 	return &Validator{compiled: compiled}, nil
 }
 
-// Validate validates raw JSON against the OECS 1.1.0 charger schema and, on success,
+// Validate validates raw JSON against the OECS 2.0.0 charger schema and, on success,
 // unmarshals it into a Charger.
 func (v *Validator) Validate(raw []byte) (*Charger, error) {
 	var doc any

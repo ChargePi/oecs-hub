@@ -45,6 +45,70 @@
         },
         "type": "object"
       },
+      "currentQuantity": {
+        "additionalProperties": false,
+        "description": "An electrical current value paired with its unit of measure.",
+        "properties": {
+          "unit": {
+            "enum": [
+              "A",
+              "mA"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "currentRange": {
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "min"
+            ]
+          },
+          {
+            "required": [
+              "max"
+            ]
+          },
+          {
+            "required": [
+              "nominal"
+            ]
+          }
+        ],
+        "description": "A minimum/maximum/nominal electrical current range with a shared unit.",
+        "properties": {
+          "max": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number"
+          },
+          "nominal": {
+            "type": "number"
+          },
+          "unit": {
+            "enum": [
+              "A",
+              "mA"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit"
+        ],
+        "type": "object"
+      },
       "dateTime": {
         "description": "Timestamp in ISO 8601 / RFC 3339 form.",
         "format": "date-time",
@@ -63,14 +127,8 @@
             "type": "number"
           },
           "unit": {
-            "default": "mm",
-            "enum": [
-              "mm",
-              "cm",
-              "m",
-              "in"
-            ],
-            "type": "string"
+            "$ref": "#/$defs/common/lengthUnit",
+            "default": "mm"
           },
           "width": {
             "minimum": 0,
@@ -81,6 +139,90 @@
           "height",
           "width",
           "depth",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "frequencyRange": {
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "min"
+            ]
+          },
+          {
+            "required": [
+              "max"
+            ]
+          },
+          {
+            "required": [
+              "nominal"
+            ]
+          }
+        ],
+        "description": "A minimum/maximum/nominal frequency range with a shared unit.",
+        "properties": {
+          "max": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number"
+          },
+          "nominal": {
+            "type": "number"
+          },
+          "unit": {
+            "enum": [
+              "Hz"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "unit"
+        ],
+        "type": "object"
+      },
+      "humidityRange": {
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "min"
+            ]
+          },
+          {
+            "required": [
+              "max"
+            ]
+          },
+          {
+            "required": [
+              "nominal"
+            ]
+          }
+        ],
+        "description": "A minimum/maximum/nominal relative humidity range with a shared unit.",
+        "properties": {
+          "max": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number"
+          },
+          "nominal": {
+            "type": "number"
+          },
+          "unit": {
+            "enum": [
+              "%RH"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
           "unit"
         ],
         "type": "object"
@@ -100,12 +242,77 @@
         "format": "date",
         "type": "string"
       },
-      "quantity": {
+      "lengthQuantity": {
         "additionalProperties": false,
-        "description": "A numeric value paired with its unit of measure.",
+        "description": "A length/distance value paired with its unit of measure.",
         "properties": {
           "unit": {
-            "description": "Unit of measure, e.g. 'A', 'V', 'kW', 'kWh', 'mm', 'kg'.",
+            "$ref": "#/$defs/common/lengthUnit"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "lengthUnit": {
+        "enum": [
+          "mm",
+          "cm",
+          "m",
+          "in"
+        ],
+        "type": "string"
+      },
+      "massQuantity": {
+        "additionalProperties": false,
+        "description": "A mass/weight value paired with its unit of measure.",
+        "properties": {
+          "unit": {
+            "enum": [
+              "kg",
+              "lb"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "meterAccuracyClass": {
+        "description": "Legal-metrology metering accuracy classification. Use 'other' with a sibling *OtherName field for a classification not covered here.",
+        "enum": [
+          "MID_A",
+          "MID_B",
+          "MID_C",
+          "MID_D",
+          "IEC62053-21_Class1",
+          "IEC62053-21_Class2",
+          "IEC62053-22_Class0.2S",
+          "IEC62053-22_Class0.5S",
+          "other"
+        ],
+        "type": "string"
+      },
+      "powerQuantity": {
+        "additionalProperties": false,
+        "description": "A power value paired with its unit of measure.",
+        "properties": {
+          "unit": {
+            "enum": [
+              "W",
+              "kW"
+            ],
             "type": "string"
           },
           "value": {
@@ -122,6 +329,27 @@
         "description": "A semantic version string (SemVer 2.0.0) or, where the underlying standard does not use SemVer, the vendor/standard's native version identifier (e.g. '1.6', '2.0.1', 'ISO 15118-2:2014').",
         "pattern": "^[0-9A-Za-z .:+_-]+$",
         "type": "string"
+      },
+      "soundLevelQuantity": {
+        "additionalProperties": false,
+        "description": "An acoustic sound level value paired with its unit of measure.",
+        "properties": {
+          "unit": {
+            "enum": [
+              "dBA",
+              "dB"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "type": "object"
       },
       "temperatureRange": {
         "additionalProperties": false,
@@ -172,7 +400,7 @@
         "format": "uri",
         "type": "string"
       },
-      "valueRange": {
+      "voltageRange": {
         "additionalProperties": false,
         "anyOf": [
           {
@@ -191,7 +419,7 @@
             ]
           }
         ],
-        "description": "A minimum/maximum/nominal numeric range with a shared unit.",
+        "description": "A minimum/maximum/nominal voltage range with a shared unit.",
         "properties": {
           "max": {
             "type": "number"
@@ -203,6 +431,9 @@
             "type": "number"
           },
           "unit": {
+            "enum": [
+              "V"
+            ],
             "type": "string"
           }
         },
@@ -231,7 +462,7 @@
             "type": "string"
           },
           "length": {
-            "$ref": "#/$defs/common/quantity"
+            "$ref": "#/$defs/common/lengthQuantity"
           },
           "retractable": {
             "description": "True if the cable retracts into the housing (reel/management system) when not in use.",
@@ -242,6 +473,70 @@
       },
       "connector": {
         "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "Type1_J1772",
+                    "Type2_Mennekes",
+                    "Type3A",
+                    "Domestic_Socket",
+                    "Industrial_IEC60309",
+                    "GBT_AC"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "currentType": {
+                  "const": "AC"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "CCS1_Combo1",
+                    "CCS2_Combo2",
+                    "CHAdeMO",
+                    "GBT_DC",
+                    "MCS_MegawattChargingSystem"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "currentType": {
+                  "const": "DC"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "meterAccuracyClass": {
+                  "const": "other"
+                }
+              },
+              "required": [
+                "meterAccuracyClass"
+              ]
+            },
+            "then": {
+              "required": [
+                "meterAccuracyClassOtherName"
+              ]
+            }
+          }
+        ],
         "description": "A single physical connector on the charger.",
         "properties": {
           "bidirectional": {
@@ -267,11 +562,15 @@
             "type": "string"
           },
           "maxPower": {
-            "$ref": "#/$defs/common/quantity",
-            "description": "Maximum power this connector can deliver, unit typically 'kW'."
+            "$ref": "#/$defs/common/powerQuantity",
+            "description": "Maximum power this connector can deliver."
           },
           "meterAccuracyClass": {
-            "description": "Metering accuracy class of this connector's dedicated meter, e.g. 'Class B (MID)', 'Class 1 (IEC 62053-21)'. Omit if this connector has no dedicated meter (see hardware.meter for the charger's primary meter).",
+            "$ref": "#/$defs/common/meterAccuracyClass",
+            "description": "Metering accuracy class of this connector's dedicated meter. Omit if this connector has no dedicated meter (see hardware.meter for the charger's primary meter)."
+          },
+          "meterAccuracyClassOtherName": {
+            "description": "Required when meterAccuracyClass is 'other'; the classification as printed on the datasheet.",
             "type": "string"
           },
           "phases": {
@@ -284,12 +583,12 @@
             "type": "integer"
           },
           "ratedCurrent": {
-            "$ref": "#/$defs/common/quantity",
-            "description": "Maximum current this connector can deliver, unit typically 'A'."
+            "$ref": "#/$defs/common/currentQuantity",
+            "description": "Maximum current this connector can deliver."
           },
           "ratedVoltage": {
-            "$ref": "#/$defs/common/valueRange",
-            "description": "Rated voltage range for this connector, unit typically 'V'."
+            "$ref": "#/$defs/common/voltageRange",
+            "description": "Rated voltage range for this connector."
           },
           "type": {
             "$ref": "#/$defs/connector/connectorType"
@@ -402,8 +701,8 @@
             "type": "string"
           },
           "size": {
-            "$ref": "#/$defs/common/quantity",
-            "description": "Diagonal screen size, unit typically 'cm'."
+            "$ref": "#/$defs/common/lengthQuantity",
+            "description": "Diagonal screen size."
           },
           "type": {
             "enum": [
@@ -454,12 +753,11 @@
             "type": "number"
           },
           "frequency": {
-            "$ref": "#/$defs/common/valueRange",
-            "description": "Unit typically 'Hz'."
+            "$ref": "#/$defs/common/frequencyRange"
           },
           "maxCurrent": {
-            "$ref": "#/$defs/common/quantity",
-            "description": "Maximum input current draw, unit typically 'A'."
+            "$ref": "#/$defs/common/currentQuantity",
+            "description": "Maximum input current draw."
           },
           "phases": {
             "enum": [
@@ -475,12 +773,11 @@
             "type": "number"
           },
           "standbyPower": {
-            "$ref": "#/$defs/common/quantity",
-            "description": "Idle/standby power draw, unit typically 'W'."
+            "$ref": "#/$defs/common/powerQuantity",
+            "description": "Idle/standby power draw."
           },
           "voltage": {
-            "$ref": "#/$defs/common/valueRange",
-            "description": "Unit typically 'V'."
+            "$ref": "#/$defs/common/voltageRange"
           }
         },
         "type": "object"
@@ -576,12 +873,12 @@
             "type": "string"
           },
           "noiseLevel": {
-            "$ref": "#/$defs/common/quantity",
-            "description": "Acoustic noise emission, unit typically 'dBA'."
+            "$ref": "#/$defs/common/soundLevelQuantity",
+            "description": "Acoustic noise emission."
           },
           "operatingHumidity": {
-            "$ref": "#/$defs/common/valueRange",
-            "description": "Relative humidity range, unit '%RH'."
+            "$ref": "#/$defs/common/humidityRange",
+            "description": "Relative humidity range."
           },
           "operatingTemperature": {
             "$ref": "#/$defs/common/temperatureRange",
@@ -591,7 +888,7 @@
             "$ref": "#/$defs/common/temperatureRange"
           },
           "weight": {
-            "$ref": "#/$defs/common/quantity"
+            "$ref": "#/$defs/common/massQuantity"
           }
         },
         "type": "object"
@@ -599,9 +896,22 @@
       "meter": {
         "additionalProperties": false,
         "description": "The charger's primary energy meter, used for session metering and (where billing-grade) invoicing.",
+        "if": {
+          "properties": {
+            "accuracyClass": {
+              "const": "other"
+            }
+          },
+          "required": [
+            "accuracyClass"
+          ]
+        },
         "properties": {
           "accuracyClass": {
-            "description": "e.g. 'Class B (MID)', 'Class 1 (IEC 62053-21)'.",
+            "$ref": "#/$defs/common/meterAccuracyClass"
+          },
+          "accuracyClassOtherName": {
+            "description": "Required when accuracyClass is 'other'; the classification as printed on the datasheet.",
             "type": "string"
           },
           "certification": {
@@ -619,6 +929,11 @@
             "type": "string"
           }
         },
+        "then": {
+          "required": [
+            "accuracyClassOtherName"
+          ]
+        },
         "type": "object"
       },
       "powerOutput": {
@@ -630,18 +945,17 @@
             "type": "boolean"
           },
           "maxPower": {
-            "$ref": "#/$defs/common/quantity"
+            "$ref": "#/$defs/common/powerQuantity"
           },
           "minPower": {
-            "$ref": "#/$defs/common/quantity"
+            "$ref": "#/$defs/common/powerQuantity"
           },
           "ratedOutputCurrent": {
-            "$ref": "#/$defs/common/valueRange",
-            "description": "Unit typically 'A'."
+            "$ref": "#/$defs/common/currentRange"
           },
           "ratedOutputVoltage": {
-            "$ref": "#/$defs/common/valueRange",
-            "description": "Unit typically 'V'. Relevant primarily for DC chargers."
+            "$ref": "#/$defs/common/voltageRange",
+            "description": "Relevant primarily for DC chargers."
           },
           "simultaneousChargingSupported": {
             "description": "Only meaningful when there are 2+ connectors. True if more than one connector can actively deliver power at once; false if a second connector just queues behind the first (only one session runs at a time even though multiple connectors exist).",
@@ -688,8 +1002,7 @@
                 "type": "boolean"
               },
               "ratedResidualCurrent": {
-                "$ref": "#/$defs/common/quantity",
-                "description": "Unit typically 'mA'."
+                "$ref": "#/$defs/common/currentQuantity"
               },
               "types": {
                 "description": "RCD/RCM types integrated, per IEC 62955 / IEC 60755 classification.",
@@ -781,6 +1094,31 @@
             "type": "array"
           }
         },
+        "type": "object"
+      }
+    },
+    "manufacturer": {
+      "manufacturer": {
+        "additionalProperties": false,
+        "properties": {
+          "contact": {
+            "$ref": "#/$defs/common/contact"
+          },
+          "country": {
+            "description": "ISO 3166-1 alpha-2 country code of the manufacturer's headquarters.",
+            "type": "string"
+          },
+          "logoUrl": {
+            "$ref": "#/$defs/common/uri",
+            "description": "URL of the manufacturer's logo image."
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
         "type": "object"
       }
     },
@@ -980,7 +1318,6 @@
           "rfid-prepaid",
           "mobile-app",
           "plug-and-charge-autocharge",
-          "backend-invoicing",
           "free-of-charge"
         ],
         "type": "string"
@@ -1171,23 +1508,10 @@
         "additionalProperties": false,
         "description": "Interfaces for local administration or integrating custom/third-party software, as distinct from the standardized EV-charging/cloud protocols listed in `protocols` (e.g. a local REST API used for a proprietary integration belongs here even if it happens to speak the same wire format one of those protocols uses).",
         "properties": {
-          "apiDocumentationUrl": {
-            "$ref": "#/$defs/common/uri"
-          },
           "localInterfaces": {
-            "description": "Local integration interfaces exposed for custom software, by protocol/transport.",
+            "description": "Local integration interfaces exposed for custom software. A charger implementing more than one (e.g. both a REST API and an MQTT broker) typically has separate documentation for each, so the documentation link lives per-interface rather than once for the whole section.",
             "items": {
-              "enum": [
-                "http",
-                "grpc",
-                "mqtt",
-                "modbus",
-                "websocket",
-                "webhooks",
-                "ssh",
-                "serial"
-              ],
-              "type": "string"
+              "$ref": "#/$defs/software/localInterface"
             },
             "type": "array",
             "uniqueItems": true
@@ -1199,16 +1523,179 @@
         },
         "type": "object"
       },
-      "protocol": {
+      "localInterface": {
         "additionalProperties": false,
-        "description": "A single communication protocol implemented by the charger, with the specific feature profiles/extensions it supports.",
-        "if": {
-          "properties": {
-            "name": {
-              "const": "other"
-            }
+        "description": "A single local integration interface exposed for custom/third-party software, with a link to that interface's own documentation, if published.",
+        "properties": {
+          "documentationUrl": {
+            "$ref": "#/$defs/common/uri",
+            "description": "Link to this specific interface's API/integration documentation. Omit if undocumented or not publicly published."
+          },
+          "type": {
+            "enum": [
+              "http",
+              "grpc",
+              "mqtt",
+              "modbus",
+              "websocket",
+              "webhooks",
+              "ssh",
+              "serial"
+            ],
+            "type": "string"
           }
         },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "protocol": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "other"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "name",
+                "version",
+                "otherName"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "enum": [
+                    "OCPP",
+                    "Modbus-TCP",
+                    "Modbus-RTU",
+                    "MQTT",
+                    "REST-API"
+                  ]
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "transport"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "OCPP"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "transport": {
+                  "items": {
+                    "enum": [
+                      "http/soap",
+                      "https/soap",
+                      "websocket/json"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "Modbus-TCP"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "transport": {
+                  "items": {
+                    "enum": [
+                      "tcp/modbus"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "Modbus-RTU"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "transport": {
+                  "items": {
+                    "enum": [
+                      "serial/modbus"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "REST-API"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "transport": {
+                  "items": {
+                    "enum": [
+                      "http/json",
+                      "http/xml",
+                      "https/json",
+                      "https/xml",
+                      "other"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "transport": {
+                  "contains": {
+                    "const": "other"
+                  }
+                }
+              },
+              "required": [
+                "transport"
+              ]
+            },
+            "then": {
+              "required": [
+                "transportOtherName"
+              ]
+            }
+          }
+        ],
+        "description": "A single communication protocol implemented by the charger, with the specific feature profiles/extensions it supports.",
         "properties": {
           "certifications": {
             "description": "Formal certifications tied specifically to this protocol/version (e.g. an OCA OCPP conformance certificate, an ISO 15118 security certification). Certifications that apply to the product as a whole rather than one protocol belong in metadata.certificates instead.",
@@ -1235,7 +1722,7 @@
             "type": "string"
           },
           "profiles": {
-            "description": "Supported feature profiles/functional blocks for this protocol (e.g. OCPP 1.6 profiles: Core, FirmwareManagement, LocalAuthListManagement, Reservation, SmartCharging, RemoteTrigger; OCPI modules: locations, sessions, cdrs, tariffs).",
+            "description": "Supported feature profiles/functional blocks for this protocol (e.g. OCPP 1.6 profiles: Core, FirmwareManagement, LocalAuthListManagement, Reservation, SmartCharging, RemoteTrigger).",
             "items": {
               "type": "string"
             },
@@ -1247,20 +1734,29 @@
             "type": "string"
           },
           "transport": {
+            "description": "Transport protocol paired with the message/payload format it carries, as 'transport/format' (e.g. 'websocket/json' for OCPP-J, 'tcp/xml' for ISO 15118/DIN 70121's V2GTP, 'tcp/modbus' for Modbus-TCP). 'can' stands alone for raw CAN-bus signaling, which has no separate payload-format layer. Use 'other' plus the sibling 'transportOtherName' field for a combination not listed (e.g. a REST API serialized as protobuf).",
             "items": {
               "enum": [
-                "json",
-                "soap",
-                "xml",
-                "websocket",
-                "http",
-                "https",
-                "tcp",
-                "can"
+                "http/json",
+                "http/xml",
+                "http/soap",
+                "https/json",
+                "https/xml",
+                "https/soap",
+                "websocket/json",
+                "tcp/xml",
+                "tcp/modbus",
+                "serial/modbus",
+                "can",
+                "other"
               ],
               "type": "string"
             },
             "type": "array"
+          },
+          "transportOtherName": {
+            "description": "Required when transport includes 'other'; the transport/format combination as printed on the datasheet.",
+            "type": "string"
           },
           "version": {
             "$ref": "#/$defs/common/semanticVersion"
@@ -1270,25 +1766,15 @@
           "name",
           "version"
         ],
-        "then": {
-          "required": [
-            "name",
-            "version",
-            "otherName"
-          ]
-        },
         "type": "object"
       },
       "protocolName": {
-        "description": "Well-known communication protocol/standard names. Use 'other' plus the 'otherName' sibling field for anything not listed.",
+        "description": "Well-known communication protocol/standard names implemented by the charger itself. Use 'other' plus the 'otherName' sibling field for anything not listed. Backend-to-backend protocols the charger doesn't itself speak (e.g. OCPI, OSCP, OpenADR) don't belong here.",
         "enum": [
           "OCPP",
-          "OCPI",
-          "OSCP",
           "ISO15118",
           "IEC61851",
           "DIN70121",
-          "OpenADR",
           "IEEE2030.5",
           "EEBus",
           "Modbus-TCP",
@@ -1375,7 +1861,7 @@
       }
     }
   },
-  "$id": "https://oecs.dev/schema/1.1.0/charger.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/charger.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Root schema for a single EV charger's functional and technical specification, covering hardware, software, payment, and provenance/compliance metadata. See /docs/GUIDELINE.md for the narrative guide to this schema.",
@@ -1388,29 +1874,60 @@
       "$ref": "#/$defs/hardware/hardware"
     },
     "manufacturer": {
-      "additionalProperties": false,
-      "properties": {
-        "contact": {
-          "$ref": "#/$defs/common/contact"
-        },
-        "country": {
-          "description": "ISO 3166-1 alpha-2 country code of the manufacturer's headquarters.",
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
+      "$ref": "#/$defs/manufacturer/manufacturer"
     },
     "metadata": {
       "$ref": "#/$defs/metadata/metadata"
     },
     "model": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "AC"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "level": {
+                "enum": [
+                  "Level 1",
+                  "Level 2"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "DC"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "level": {
+                "enum": [
+                  "DC Fast",
+                  "DC Ultra-Fast",
+                  "HPC"
+                ]
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "brandingOptions": {
           "description": "Branding customization available to a network operator/reseller who wants to brand the unit as their own rather than the manufacturer's.",
@@ -1430,7 +1947,14 @@
           "type": "string"
         },
         "level": {
-          "description": "Power/speed tier within the type, e.g. 'Level 1', 'Level 2' (SAE J1772 AC tiers), 'DC Fast', 'DC Ultra-Fast', 'HPC'. Free text since tier terminology varies by standard/region.",
+          "description": "Power/speed tier within the type, e.g. 'Level 1', 'Level 2' (SAE J1772 AC tiers), 'DC Fast', 'DC Ultra-Fast', 'HPC'. Which values are valid depends on type: AC is restricted to 'Level 1'/'Level 2', DC to 'DC Fast'/'DC Ultra-Fast'/'HPC'; portable-evse and wireless are unrestricted since no established tier vocabulary exists for them yet.",
+          "enum": [
+            "Level 1",
+            "Level 2",
+            "DC Fast",
+            "DC Ultra-Fast",
+            "HPC"
+          ],
           "type": "string"
         },
         "name": {
@@ -1483,7 +2007,7 @@
       "$ref": "#/$defs/software/software"
     },
     "version": {
-      "const": "1.1.0",
+      "const": "2.0.0",
       "description": "Version of the OECS schema this document conforms to.",
       "type": "string"
     }

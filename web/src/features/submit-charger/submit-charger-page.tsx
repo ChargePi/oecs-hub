@@ -116,7 +116,7 @@ export function SubmitChargerPage() {
       <div>
         <h1 className="font-heading text-2xl font-semibold">Submit a charger spec</h1>
         <p className="text-sm text-muted-foreground">
-          Paste or upload an OECS charger schema below. It's validated against the OECS 1.1.0 schema
+          Paste or upload an OECS charger schema below. It's validated against the OECS 2.0.0 schema
           as you type; fix any errors before submitting.
         </p>
       </div>

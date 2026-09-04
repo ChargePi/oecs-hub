@@ -1,9 +1,10 @@
 {
-  "$schema": "https://oecs.dev/schema/1.1.0/charger.schema.json",
-  "version": "1.1.0",
+  "$schema": "https://oecs.dev/schema/2.0.0/charger.schema.json",
+  "version": "2.0.0",
   "manufacturer": {
     "name": "VoltGrid GmbH",
     "country": "DE",
+    "logoUrl": "https://voltgrid.example/logo.png",
     "contact": {
       "name": "VoltGrid Technical Support",
       "email": "support@voltgrid.example",
@@ -82,7 +83,7 @@
           "cooling": "none"
         },
         "connectorLock": true,
-        "meterAccuracyClass": "Class B (MID)",
+        "meterAccuracyClass": "MID_B",
         "isoPlugAndCharge": false,
         "bidirectional": false
       }
@@ -108,7 +109,7 @@
       "integrated": true,
       "manufacturer": "Elster",
       "model": "AS1440",
-      "accuracyClass": "Class B (MID)",
+      "accuracyClass": "MID_B",
       "certification": "MID (2014/32/EU)"
     },
     "certifications": [
@@ -141,9 +142,16 @@
       {
         "name": "OCPP",
         "version": "1.6",
-        "transport": ["json", "websocket"],
+        "transport": ["websocket/json"],
         "securityProfile": "3 - TLS with Client Certificates",
-        "profiles": ["Core", "FirmwareManagement", "LocalAuthListManagement", "RemoteTrigger", "SmartCharging", "Reservation"],
+        "profiles": [
+          "Core",
+          "FirmwareManagement",
+          "LocalAuthListManagement",
+          "RemoteTrigger",
+          "SmartCharging",
+          "Reservation"
+        ],
         "certifications": [
           {
             "type": "protocol-conformance",
@@ -170,20 +178,25 @@
       {
         "name": "OCPP",
         "version": "2.0.1",
-        "transport": ["json", "websocket"],
+        "transport": ["websocket/json"],
         "securityProfile": "3 - TLS with Client Certificates",
         "profiles": ["Core", "SmartCharging", "FirmwareManagement", "ISO15118Support"]
       },
       {
         "name": "ISO15118",
         "version": "ISO 15118-2:2014",
-        "transport": ["xml"],
+        "transport": ["tcp/xml"],
         "profiles": ["Plug&Charge"],
         "notes": "PnC available via optional firmware add-on."
       }
     ],
     "smartCharging": {
-      "features": ["local-load-balancing", "backend-managed-profiles", "dynamic-pricing", "solar-integration"],
+      "features": [
+        "local-load-balancing",
+        "backend-managed-profiles",
+        "dynamic-pricing",
+        "solar-integration"
+      ],
       "scheduleTypes": ["absolute", "recurring-daily"]
     },
     "configuration": [
@@ -201,14 +214,15 @@
     ],
     "integration": {
       "webUI": true,
-      "localInterfaces": ["http"],
-      "apiDocumentationUrl": "https://voltgrid.example/docs/local-api"
+      "localInterfaces": [
+        { "type": "http", "documentationUrl": "https://voltgrid.example/docs/local-api" }
+      ]
     },
     "offlineChargingSupported": true,
     "operatingSystem": "Linux 5.10 (Yocto)"
   },
   "payment": {
-    "acceptedMethods": ["mobile-app", "rfid-prepaid", "backend-invoicing"],
+    "acceptedMethods": ["mobile-app", "rfid-prepaid"],
     "adHocPaymentSupported": false
   },
   "pricing": {
@@ -228,7 +242,10 @@
         "publisher": "VoltGrid GmbH",
         "publishedDate": "2024-02-01",
         "retrievedDate": "2026-06-01",
-        "checksum": { "algorithm": "sha256", "value": "b7e23ec29af22b0b4e41da31e868d57226121c84556262f6e8b4f19d1c1c8f5" }
+        "checksum": {
+          "algorithm": "sha256",
+          "value": "b7e23ec29af22b0b4e41da31e868d57226121c84556262f6e8b4f19d1c1c8f5"
+        }
       },
       {
         "type": "technical-specification",

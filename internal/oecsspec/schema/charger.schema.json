@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://oecs.dev/schema/1.1.0/charger.schema.json",
+  "$id": "https://oecs.dev/schema/2.0.0/charger.schema.json",
   "title": "Open EV Charger Specification (OECS)",
   "description": "Root schema for a single EV charger's functional and technical specification, covering hardware, software, payment, and provenance/compliance metadata. See /docs/GUIDELINE.md for the narrative guide to this schema.",
   "type": "object",
@@ -8,19 +8,10 @@
     "$schema": { "type": "string", "format": "uri" },
     "version": {
       "type": "string",
-      "const": "1.1.0",
+      "const": "2.0.0",
       "description": "Version of the OECS schema this document conforms to."
     },
-    "manufacturer": {
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "country": { "type": "string", "description": "ISO 3166-1 alpha-2 country code of the manufacturer's headquarters." },
-        "contact": { "$ref": "common.schema.json#/$defs/contact" }
-      },
-      "required": ["name"],
-      "additionalProperties": false
-    },
+    "manufacturer": { "$ref": "manufacturer.schema.json#/$defs/manufacturer" },
     "model": {
       "type": "object",
       "properties": {
@@ -37,7 +28,8 @@
         },
         "level": {
           "type": "string",
-          "description": "Power/speed tier within the type, e.g. 'Level 1', 'Level 2' (SAE J1772 AC tiers), 'DC Fast', 'DC Ultra-Fast', 'HPC'. Free text since tier terminology varies by standard/region."
+          "enum": ["Level 1", "Level 2", "DC Fast", "DC Ultra-Fast", "HPC"],
+          "description": "Power/speed tier within the type, e.g. 'Level 1', 'Level 2' (SAE J1772 AC tiers), 'DC Fast', 'DC Ultra-Fast', 'HPC'. Which values are valid depends on type: AC is restricted to 'Level 1'/'Level 2', DC to 'DC Fast'/'DC Ultra-Fast'/'HPC'; portable-evse and wireless are unrestricted since no established tier vocabulary exists for them yet."
         },
         "productImageUrl": { "$ref": "common.schema.json#/$defs/uri" },
         "brandingOptions": {
@@ -48,7 +40,17 @@
         }
       },
       "required": ["name"],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "AC" } } },
+          "then": { "properties": { "level": { "enum": ["Level 1", "Level 2"] } } }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "DC" } } },
+          "then": { "properties": { "level": { "enum": ["DC Fast", "DC Ultra-Fast", "HPC"] } } }
+        }
+      ]
     },
     "hardware": { "$ref": "hardware.schema.json#/$defs/hardware" },
     "software": { "$ref": "software.schema.json#/$defs/software" },

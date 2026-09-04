@@ -60,8 +60,8 @@ func extract(spec *oecsspec.Charger) extractedFields {
 }
 
 // quantityToWatts normalizes a Quantity to watts. Only "W" and "kW" (case-insensitive)
-// units are recognized, per common.schema.json's quantity unit examples for power
-// fields; anything else is left unconverted (nil) rather than risk a wrong scale.
+// units are recognized, matching common.schema.json's powerQuantity unit enum; anything
+// else is left unconverted (nil) rather than risk a wrong scale.
 func quantityToWatts(q *oecsspec.Quantity) *float64 {
 	if q == nil {
 		return nil
