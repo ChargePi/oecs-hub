@@ -14,6 +14,8 @@ import {
   variantRatingInputToProto,
 } from './grpc-mapping'
 import type {
+  ChargerFilters,
+  ChargerSearchPage,
   ManufacturerGraph,
   ManufacturerSummary,
   RegistryClient,
@@ -160,6 +162,49 @@ export class GrpcRegistryClient implements RegistryClient {
       return items.map(chargerVariantFromSummary)
     } catch (err) {
       mapGrpcError(err, 'listVariants')
+    }
+  }
+
+  /**
+   * Paginated, filtered charger search - unlike listVariants, fetches exactly one page
+   * (never collectAllPages) so it pairs directly with useInfiniteQuery.
+   */
+  async searchChargers(params: {
+    filters: ChargerFilters
+    pageSize: number
+    pageToken?: string
+  }): Promise<ChargerSearchPage> {
+    const req = new registry_v1_registry_pb.SearchChargersRequest()
+    const { filters } = params
+
+    if (filters.query) req.setQuery(filters.query)
+    if (filters.manufacturerId) req.setManufacturerId(filters.manufacturerId)
+    if (filters.minPowerKw != null) req.setMinPowerKw(filters.minPowerKw)
+    if (filters.maxPowerKw != null) req.setMaxPowerKw(filters.maxPowerKw)
+
+    req.setFieldFiltersList(
+      filters.fields
+        .filter((f) => f.values.length > 0)
+        .map((f) => {
+          const proto = new registry_v1_registry_pb.FieldFilter()
+          proto.setField(f.field)
+          proto.setValuesList(f.values)
+          return proto
+        }),
+    )
+
+    req.setPageSize(params.pageSize)
+    if (params.pageToken) req.setPageToken(params.pageToken)
+
+    try {
+      const resp = await this.client.searchChargers(req, {})
+      return {
+        items: resp.getVariantsList().map(chargerVariantFromSummary),
+        nextPageToken: resp.getNextPageToken(),
+        totalSize: resp.getTotalSize(),
+      }
+    } catch (err) {
+      mapGrpcError(err, 'searchChargers')
     }
   }
 

@@ -101,17 +101,29 @@ message Product {
   repeated ChargerVariantSummary variants = 4;
 }
 
+// FieldFilter matches chargers whose OECS spec has field (a dot-separated path into the
+// spec document, e.g. "hardware.housing.material" or "hardware.connectors.type") equal to
+// any one of values. The set of accepted paths is restricted server-side to a fixed
+// allow-list (see internal/grpc/handler.go) - not every OECS field is filterable.
+message FieldFilter {
+  string field = 1;
+  repeated string values = 2;
+}
+
 message SearchChargersRequest {
   optional string query = 1;
   optional string manufacturer_id = 2;
-  ChargerType charger_type = 3;
-  repeated ConnectorType connector_types = 4;
+  reserved 3, 4, 7, 8;              // charger_type, connector_types, country, protocols
+  reserved "charger_type", "connector_types", "country", "protocols";
   optional double min_power_kw = 5;
   optional double max_power_kw = 6;
-  optional string country = 7;
-  repeated string protocols = 8;
   int32 page_size = 9;
   string page_token = 10;
+  // AND-matched against each other and against query/manufacturer_id/power range; within
+  // one FieldFilter, values are OR-matched. Covers every OECS-schema-derived facet
+  // (charger type, connector type, country, protocol, etc.) - those no longer have
+  // dedicated fields above.
+  repeated FieldFilter field_filters = 11;
 }
 
 message SearchChargersResponse {

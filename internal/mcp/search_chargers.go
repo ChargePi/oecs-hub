@@ -68,7 +68,7 @@ func (h *searchChargersHandler) Handle(ctx context.Context, req mcp.CallToolRequ
 
 	limit := pagination.ClampPageSize(in.PageSize, charger.DefaultPageSize, charger.MaxPageSize)
 
-	results, total, err := h.chargers.SearchByFields(ctx, filters, limit, offset)
+	results, total, err := h.chargers.Search(ctx, filters, limit, offset)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -91,8 +91,8 @@ func (h *searchChargersHandler) Handle(ctx context.Context, req mcp.CallToolRequ
 	return &mcp.CallToolResult{Content: []mcp.Content{}, StructuredContent: out}, nil
 }
 
-func searchChargersFilters(in SearchChargersInput) (charger.FieldSearchFilters, error) {
-	filters := charger.FieldSearchFilters{
+func searchChargersFilters(in SearchChargersInput) (charger.SearchFilters, error) {
+	filters := charger.SearchFilters{
 		Statuses: []charger.Status{charger.StatusVerified},
 	}
 
@@ -101,13 +101,15 @@ func searchChargersFilters(in SearchChargersInput) (charger.FieldSearchFilters, 
 	}
 
 	if in.ChargerType != "" {
-		filters.ChargerType = &in.ChargerType
+		filters.FieldFilters = append(filters.FieldFilters, charger.FieldFilter{
+			Field: "model.type", Values: []string{in.ChargerType},
+		})
 	}
 
 	if in.ManufacturerID != "" {
 		id, err := uuid.Parse(in.ManufacturerID)
 		if err != nil {
-			return charger.FieldSearchFilters{}, fmt.Errorf("invalid manufacturerId: %w", err)
+			return charger.SearchFilters{}, fmt.Errorf("invalid manufacturerId: %w", err)
 		}
 
 		filters.ManufacturerID = &id

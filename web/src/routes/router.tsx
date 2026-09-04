@@ -10,6 +10,11 @@ import { RequireAuth, RequireManufacturer } from './require-auth'
 const GraphPage = lazy(() =>
   import('@/features/graph/graph-page').then((m) => ({ default: m.GraphPage })),
 )
+const ExploreChargersPage = lazy(() =>
+  import('@/features/explore-chargers/explore-chargers-page').then((m) => ({
+    default: m.ExploreChargersPage,
+  })),
+)
 const ComparePage = lazy(() =>
   import('@/features/comparison/compare-page').then((m) => ({ default: m.ComparePage })),
 )
@@ -54,7 +59,10 @@ export const router = createBrowserRouter([
       { index: true, element: <ExplorerPage /> },
       {
         element: <ExplorerLayout />,
-        children: [{ path: 'explore/:manufacturerId', element: <GraphPage /> }],
+        children: [
+          { path: 'explore', element: <ExploreChargersPage /> },
+          { path: 'explore/:manufacturerId', element: <GraphPage /> },
+        ],
       },
       { path: 'compare', element: <ComparePage /> },
       { path: 'privacy', element: <PrivacyPage /> },

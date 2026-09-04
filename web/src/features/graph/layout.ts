@@ -17,6 +17,7 @@ export function buildGraphLayout(
 ) {
   const nodes: Node<GraphNodeData>[] = []
   const edges: Edge[] = []
+  const manufacturerNodeId = `manufacturer:${manufacturer.id}`
 
   let row = 0
   const productCenters: number[] = []
@@ -49,8 +50,8 @@ export function buildGraphLayout(
       data: { kind: 'product', product },
     })
     edges.push({
-      id: `edge:manufacturer->${product.id}`,
-      source: 'manufacturer',
+      id: `edge:${manufacturerNodeId}->${product.id}`,
+      source: manufacturerNodeId,
       target: `product:${product.id}`,
     })
   }
@@ -59,7 +60,7 @@ export function buildGraphLayout(
     productCenters.length > 0 ? (Math.min(...productCenters) + Math.max(...productCenters)) / 2 : 0
 
   nodes.unshift({
-    id: 'manufacturer',
+    id: manufacturerNodeId,
     type: 'manufacturer',
     position: { x: COLUMN_X.manufacturer, y: manufacturerY },
     data: { kind: 'manufacturer', manufacturer },

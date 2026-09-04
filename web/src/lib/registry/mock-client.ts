@@ -1,6 +1,9 @@
 import { chargerVariants } from '@/lib/oecs/fixtures'
 import type { ChargerVariant, Manufacturer, Product } from '@/lib/oecs/types'
 import type {
+  ChargerFilters,
+  ChargerSearchPage,
+  FieldFilterValue,
   ManufacturerGraph,
   ManufacturerSummary,
   RegistryClient,
@@ -45,6 +48,55 @@ function uniqueManufacturers(variants: ChargerVariant[]): Manufacturer[] {
     byId.set(variant.manufacturer.id, variant.manufacturer)
   }
   return [...byId.values()]
+}
+
+/**
+ * Walks a dot-path through a variant, flattening through arrays along the way (mirroring
+ * the Postgres lax-jsonpath semantics fieldFilterPredicate uses server-side), and returns
+ * every leaf value found - a path through an array of objects matches if any element does.
+ */
+function resolveFieldValues(value: unknown, segments: string[]): unknown[] {
+  if (segments.length === 0) {
+    if (Array.isArray(value)) return value
+    return value === undefined ? [] : [value]
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => resolveFieldValues(item, segments))
+  }
+
+  if (value != null && typeof value === 'object') {
+    const [head, ...rest] = segments
+    return resolveFieldValues((value as Record<string, unknown>)[head], rest)
+  }
+
+  return []
+}
+
+function matchesFieldFilter(variant: ChargerVariant, filter: FieldFilterValue): boolean {
+  const values = resolveFieldValues(variant, filter.field.split('.'))
+  return values.some((v) => filter.values.includes(String(v)))
+}
+
+function matchesChargerFilters(variant: ChargerVariant, filters: ChargerFilters): boolean {
+  if (filters.query) {
+    const q = filters.query.trim().toLowerCase()
+    const haystack =
+      `${variant.manufacturer.name} ${variant.model.name} ${variant.model.series ?? ''}`.toLowerCase()
+    if (!haystack.includes(q)) return false
+  }
+
+  if (filters.manufacturerId && variant.manufacturer.id !== filters.manufacturerId) return false
+
+  const maxPowerKw = variant.hardware.electrical?.output?.maxPower?.value
+  if (filters.minPowerKw != null && (maxPowerKw == null || maxPowerKw < filters.minPowerKw)) {
+    return false
+  }
+  if (filters.maxPowerKw != null && (maxPowerKw == null || maxPowerKw > filters.maxPowerKw)) {
+    return false
+  }
+
+  return filters.fields.every((f) => matchesFieldFilter(variant, f))
 }
 
 export class MockRegistryClient implements RegistryClient {
@@ -119,6 +171,23 @@ export class MockRegistryClient implements RegistryClient {
 
   async listVariants(): Promise<ChargerVariant[]> {
     return delay(chargerVariants)
+  }
+
+  async searchChargers(params: {
+    filters: ChargerFilters
+    pageSize: number
+    pageToken?: string
+  }): Promise<ChargerSearchPage> {
+    const filtered = chargerVariants.filter((v) => matchesChargerFilters(v, params.filters))
+    const offset = params.pageToken ? Number(params.pageToken) : 0
+    const page = filtered.slice(offset, offset + params.pageSize)
+    const nextOffset = offset + page.length
+
+    return delay({
+      items: page,
+      nextPageToken: nextOffset < filtered.length ? String(nextOffset) : '',
+      totalSize: filtered.length,
+    })
   }
 
   async submitChargerSpec(): Promise<SubmitChargerSpecResult> {

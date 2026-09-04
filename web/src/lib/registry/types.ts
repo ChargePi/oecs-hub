@@ -19,6 +19,30 @@ export interface ManufacturerGraph {
   products: Product[]
 }
 
+/** One generic OECS field_filter: field is a dot-path (e.g. "hardware.connectors.type"),
+ *  restricted server-side to a fixed allow-list; values are OR-matched. */
+export interface FieldFilterValue {
+  field: string
+  values: string[]
+}
+
+/** Filters accepted by RegistryClient.searchChargers. Every OECS-schema-derived facet is
+ *  expressed via `fields` (see features/explore-chargers/filter-manifest.ts); query,
+ *  manufacturerId, and the power range are dedicated since they aren't OECS field_filters. */
+export interface ChargerFilters {
+  query?: string
+  manufacturerId?: string
+  minPowerKw?: number
+  maxPowerKw?: number
+  fields: FieldFilterValue[]
+}
+
+export interface ChargerSearchPage {
+  items: ChargerVariant[]
+  nextPageToken: string
+  totalSize: number
+}
+
 export type SubmissionStatus = 'unspecified' | 'submitted' | 'verified' | 'rejected'
 
 export interface SubmitChargerSpecResult {
@@ -47,6 +71,12 @@ export interface RegistryClient {
   searchCatalog(query: string): Promise<SearchResult[]>
   getVariant(variantId: string): Promise<ChargerVariant | null>
   listVariants(): Promise<ChargerVariant[]>
+  /** Paginated, filtered charger search - backs the /explore grid and graph views. */
+  searchChargers(params: {
+    filters: ChargerFilters
+    pageSize: number
+    pageToken?: string
+  }): Promise<ChargerSearchPage>
   /**
    * Submits a raw OECS charger spec for review. The server derives the submitter from
    * the authenticated session (via the Traefik/Oathkeeper edge) - callers don't (and

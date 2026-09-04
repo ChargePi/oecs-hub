@@ -27,30 +27,18 @@ type FieldFilter struct {
 	Values []string
 }
 
-// SearchFilters holds the optional filters accepted by Repository.List. A nil/empty
-// field matches "any" for that filter. ConnectorTypes/Protocols are OR-matched.
+// SearchFilters holds the filters accepted by Repository.Search. A nil/empty Query or
+// ManufacturerID matches "any" for that filter. FieldFilters are AND-matched against each
+// other and against Query/ManufacturerID/the power range; within one FieldFilter, Values
+// are OR-matched. Every OECS-schema-derived facet (charger type, connector type, country,
+// protocol, and so on) is expressed as a FieldFilter rather than a dedicated struct field -
+// see internal/grpc/handler.go's allow-list for which paths the public API accepts (the
+// MCP search_chargers tool, an internal caller, is not restricted by that allow-list).
 type SearchFilters struct {
 	Query          *string
 	ManufacturerID *uuid.UUID
-	ChargerType    *string
-	ConnectorTypes []string
 	MinPowerWatts  *float64
 	MaxPowerWatts  *float64
-	Country        *string
-	Protocols      []string
-	Statuses       []Status
-}
-
-// FieldSearchFilters holds the filters accepted by Repository.SearchByFields: an optional
-// free-text query, charger type and manufacturer, plus any number of generic OECS field
-// filters. FieldFilters are AND-matched against each other and against Query/ChargerType/
-// ManufacturerID; within one FieldFilter, Values are OR-matched. Used by the MCP
-// search_chargers tool, which - unlike the public gRPC search - needs to filter on
-// arbitrary OECS spec fields rather than a fixed set of denormalized columns.
-type FieldSearchFilters struct {
-	Query          *string
-	ManufacturerID *uuid.UUID
-	ChargerType    *string
 	Statuses       []Status
 	FieldFilters   []FieldFilter
 }
@@ -59,9 +47,8 @@ type Repository interface {
 	Get(ctx context.Context, id uuid.UUID) (*Charger, error)
 	GetForReview(ctx context.Context, id uuid.UUID) (*Charger, error)
 	Create(ctx context.Context, c *Charger) error
-	List(ctx context.Context, filters SearchFilters, limit, offset uint32) ([]*Charger, int64, error)
-	// SearchByFields returns chargers matching filters, paginated - see FieldSearchFilters.
-	SearchByFields(ctx context.Context, filters FieldSearchFilters, limit, offset uint32) ([]*Charger, int64, error)
+	// Search returns chargers matching filters, paginated.
+	Search(ctx context.Context, filters SearchFilters, limit, offset uint32) ([]*Charger, int64, error)
 	// ListByIDs silently omits missing/unverified IDs rather than erroring.
 	ListByIDs(ctx context.Context, ids []uuid.UUID) ([]*Charger, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status Status, manufacturerID *uuid.UUID) (*Charger, error)

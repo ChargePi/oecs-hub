@@ -14,7 +14,7 @@ import (
 // ChargerService is the subset of charger.Service the tools in this package
 // depend on.
 type ChargerService interface {
-	SearchByFields(ctx context.Context, filters charger.FieldSearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
+	Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	GetMany(ctx context.Context, ids []uuid.UUID) ([]*charger.Charger, error)
 }
 

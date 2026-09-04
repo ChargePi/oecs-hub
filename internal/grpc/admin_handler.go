@@ -16,7 +16,7 @@ import (
 
 // AdminChargerService is the subset of charger.Service the admin handler depends on.
 type AdminChargerService interface {
-	List(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
+	Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	ChangeStatus(ctx context.Context, id uuid.UUID, status charger.Status) (*charger.Charger, error)
 }
 
@@ -46,9 +46,19 @@ func (h *AdminHandler) SearchSchemas(ctx context.Context, req *adminv1.SearchSch
 	limit := pagination.ClampPageSize(int(req.GetPageSize()), charger.DefaultPageSize, charger.MaxPageSize)
 
 	filters := charger.SearchFilters{
-		Query:     req.Query,
-		Country:   req.Country,
-		Protocols: req.GetProtocols(),
+		Query: req.Query,
+	}
+
+	if req.Country != nil && *req.Country != "" {
+		filters.FieldFilters = append(filters.FieldFilters, charger.FieldFilter{
+			Field: "manufacturer.country", Values: []string{*req.Country},
+		})
+	}
+
+	if len(req.GetProtocols()) > 0 {
+		filters.FieldFilters = append(filters.FieldFilters, charger.FieldFilter{
+			Field: "software.protocols.name", Values: req.GetProtocols(),
+		})
 	}
 
 	if req.ManufacturerId != nil {
@@ -62,7 +72,9 @@ func (h *AdminHandler) SearchSchemas(ctx context.Context, req *adminv1.SearchSch
 
 	if req.GetChargerType() != registryv1.ChargerType_CHARGER_TYPE_UNSPECIFIED {
 		ct := chargerTypeToDomain(req.GetChargerType())
-		filters.ChargerType = &ct
+		filters.FieldFilters = append(filters.FieldFilters, charger.FieldFilter{
+			Field: "model.type", Values: []string{ct},
+		})
 	}
 
 	if req.MinPowerKw != nil {
@@ -75,19 +87,26 @@ func (h *AdminHandler) SearchSchemas(ctx context.Context, req *adminv1.SearchSch
 		filters.MaxPowerWatts = &w
 	}
 
+	var connectorTypes []string
 	for _, ct := range req.GetConnectorTypes() {
 		if ct == registryv1.ConnectorType_CONNECTOR_TYPE_UNSPECIFIED {
 			continue
 		}
 
-		filters.ConnectorTypes = append(filters.ConnectorTypes, connectorTypeToDomain(ct))
+		connectorTypes = append(connectorTypes, connectorTypeToDomain(ct))
+	}
+
+	if len(connectorTypes) > 0 {
+		filters.FieldFilters = append(filters.FieldFilters, charger.FieldFilter{
+			Field: "hardware.connectors.type", Values: connectorTypes,
+		})
 	}
 
 	if req.GetStatus() != registryv1.SubmissionStatus_SUBMISSION_STATUS_UNSPECIFIED {
 		filters.Statuses = []charger.Status{submissionStatusToDomain(req.GetStatus())}
 	}
 
-	chargers, total, err := h.charger.List(ctx, filters, limit, offset)
+	chargers, total, err := h.charger.Search(ctx, filters, limit, offset)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
