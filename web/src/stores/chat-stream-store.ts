@@ -34,9 +34,7 @@ const EMPTY_ENTRY: ChatStreamEntry = {
   error: null,
 }
 
-/** A brand-new conversation has no id until the server assigns one, but a send needs a
- *  key to live under from the moment it's fired (so it isn't lost if the user
- *  navigates away before the id comes back) - this is that placeholder. */
+/** Placeholder key for a conversation with no server-assigned id yet. */
 function makeDraftKey(): string {
   return `draft:${crypto.randomUUID()}`
 }
@@ -47,16 +45,11 @@ export function isDraftKey(key: string): boolean {
 
 interface ChatStreamStoreState {
   entries: Record<string, ChatStreamEntry>
-  /** Seeds a key's entry from a REST fetch (ChatDashboardPage's getConversation query).
-   *  No-ops if that key already has a live send in flight - a stale snapshot must never
-   *  clobber one, e.g. after navigating away and back while it's still running. */
+  /** Seeds a key from a REST fetch. No-ops if a send is already live under it, so a
+   *  stale snapshot can't clobber one still in progress. */
   hydrate: (key: string, detail: ConversationDetail) => void
-  /** Starts a send under `key` (a real conversation id, or a fresh draft key for a
-   *  brand-new conversation - see makeDraftKey). Keeps running to completion in the
-   *  store regardless of whether the caller stays mounted/subscribed to this key - the
-   *  whole point is that switching conversations doesn't abort it. Once the server
-   *  assigns a real id (only known at completion - see client.ts's streamChat), the
-   *  entry is mirrored under that id too, so a later lookup by either key finds it. */
+  /** Starts a send under `key`, kept running to completion regardless of whether the
+   *  caller stays subscribed - that's what lets switching conversations not abort it. */
   send: (
     key: string,
     userId: string,
@@ -68,10 +61,9 @@ interface ChatStreamStoreState {
   clearError: (key: string) => void
 }
 
-// Cancel closures live outside the reactive store: they're an imperative handle, not
-// render-relevant data, and keying them by conversation (not a single ref like the old
-// per-page hook) is what lets an in-flight send for one conversation keep running
-// untouched while the user looks at another.
+// Cancel closures are imperative handles, not render-relevant data, so they live
+// outside the reactive store - keyed per conversation so one send's cancel doesn't
+// affect another's.
 const cancelers: Record<string, () => void> = {}
 
 export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
@@ -99,8 +91,7 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
   },
 
   send: (key, userId, queryClient, message, selectedChoices, chargerIds) => {
-    // Guards against two overlapping polls writing into the same entry - e.g. a resend
-    // fired before a prior, still-running send for this same key finished.
+    // Guards against a resend overlapping a still-running prior send for this key.
     cancelers[key]?.()
 
     const prior = get().entries[key] ?? EMPTY_ENTRY
@@ -109,10 +100,7 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
     }))
     useChatActivityStore.getState().startStreaming(key)
 
-    // Mirrors an update under both `key` and the real conversation id once it's known,
-    // so a lookup under either still finds it - the caller (ChatDashboardPage) swaps
-    // its own ref to the real id once it sees one, but nothing here depends on exactly
-    // when that happens.
+    // Mirrors under the real conversation id too, once known, so lookups by either key work.
     function writeBoth(patch: Partial<ChatStreamEntry>) {
       set((s) => {
         const merged = { ...(s.entries[key] ?? EMPTY_ENTRY), ...patch }
