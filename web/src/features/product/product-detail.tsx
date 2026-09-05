@@ -5,7 +5,6 @@ import {
   MonitorSmartphone,
   Plug,
   PlugZap,
-  PlusCircle,
   ShieldCheck,
   Tag,
   Wifi,
@@ -13,13 +12,12 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { describeValue, fieldDescriptions } from '@/lib/oecs/field-descriptions'
 import { formatPricing, formatQuantity, formatValueRange, humanize } from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
-import { useComparisonStore } from '@/stores/comparison-store'
 import { ManufacturerCard } from './manufacturer-card'
+import { ProductImage } from './product-image'
 import { RateVariantControl } from './rate-variant-control'
 import { RatingsSection } from './ratings-section'
 import { boolBadge } from './spec-badges'
@@ -35,37 +33,22 @@ const describeConnectivityInterface = describeValue('connectivityInterface')
 
 export function ProductDetail({ variant }: { variant: ChargerVariant }) {
   const { model, manufacturer, hardware, software, payment, pricing, metadata } = variant
-  const inComparison = useComparisonStore((state) => state.has(variant.id))
-  const add = useComparisonStore((state) => state.add)
-  const remove = useComparisonStore((state) => state.remove)
 
   const electrical = hardware.electrical
   const housing = hardware.housing
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold tracking-tight">{model.name}</h2>
-            {model.series && <Badge variant="secondary">{model.series}</Badge>}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {manufacturer.name}
-            {manufacturer.country && ` · ${manufacturer.country}`}
-          </p>
-        </div>
-
-        <Button
-          variant={inComparison ? 'secondary' : 'default'}
-          size="sm"
-          className="w-fit"
-          onClick={() => (inComparison ? remove(variant.id) : add(variant.id))}
-        >
-          <PlusCircle className="size-4" />
-          {inComparison ? 'Added to comparison' : 'Add to comparison'}
-        </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-xl font-semibold tracking-tight">{model.name}</h2>
+        {model.series && <Badge variant="secondary">{model.series}</Badge>}
       </div>
+
+      <ProductImage
+        src={model.productImageUrl}
+        alt={model.name}
+        className="aspect-square w-full"
+      />
 
       <Separator />
 

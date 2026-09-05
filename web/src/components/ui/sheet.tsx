@@ -34,10 +34,12 @@ function SheetContent({
   children,
   side = 'right',
   showCloseButton = true,
+  headerActions,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left'
   showCloseButton?: boolean
+  headerActions?: React.ReactNode
 }) {
   return (
     <SheetPortal>
@@ -52,13 +54,18 @@ function SheetContent({
         {...props}
       >
         {children}
-        {showCloseButton && (
-          <SheetPrimitive.Close data-slot="sheet-close" asChild>
-            <Button variant="ghost" className="absolute top-3 right-3" size="icon-sm">
-              <XIcon />
-              <span className="sr-only">Close</span>
-            </Button>
-          </SheetPrimitive.Close>
+        {(showCloseButton || headerActions) && (
+          <div className="absolute top-3 right-3 flex items-center gap-1">
+            {headerActions}
+            {showCloseButton && (
+              <SheetPrimitive.Close data-slot="sheet-close" asChild>
+                <Button variant="ghost" size="icon-sm">
+                  <XIcon />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </SheetPrimitive.Close>
+            )}
+          </div>
         )}
       </SheetPrimitive.Content>
     </SheetPortal>
