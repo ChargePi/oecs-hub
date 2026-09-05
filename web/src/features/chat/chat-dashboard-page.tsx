@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useParams } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, PanelRightOpen } from 'lucide-react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -8,19 +8,21 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useIdentity } from '@/lib/auth/use-identity'
 import { getConversation } from '@/lib/chat/client'
+import type { SelectedChoice } from '@/lib/chat/types'
 import { useRecommendationsSidebarStore } from '@/stores/recommendations-sidebar-store'
+import { makeDraftKey, useChatStreamStore } from '@/stores/chat-stream-store'
 import { ChatComposer } from './chat-composer'
 import { ChatEmptyState } from './chat-empty-state'
 import { ChatErrorPopup } from './chat-error-popup'
 import { ChatMessageList } from './chat-message-list'
 import { RecommendationsPanel } from './recommendations-panel'
-import { useChatStream } from './use-chat-stream'
 
 export function ChatDashboardPage() {
   const { conversationId: routeId } = useParams<{ conversationId?: string }>()
   const location = useLocation()
   const { identity } = useIdentity()
-  const stream = useChatStream(identity?.id ?? '')
+  const userId = identity?.id ?? ''
+  const queryClient = useQueryClient()
   const recommendationsCollapsed = useRecommendationsSidebarStore((s) => s.collapsed)
   const toggleRecommendations = useRecommendationsSidebarStore((s) => s.toggle)
   // "Resend" on a failed message loads its text into the composer instead of firing
@@ -30,6 +32,38 @@ export function ChatDashboardPage() {
   // Guards the auto-send effect below against firing twice (e.g. StrictMode's double
   // invoke) - state wouldn't do, since setting it is itself what triggers the send.
   const autoSentPromptRef = useRef(false)
+  // Which chat-stream-store key this page is showing for a conversation that doesn't
+  // have a route id yet - set the moment a send fires from the empty state, cleared on
+  // any real navigation back to /chat's index (see below). Once the send completes and
+  // the URL-sync below learns the real id, this is swapped to match - see
+  // chat-stream-store's send() for why looking it up either way works. Real state, not
+  // a ref: the store subscription below depends on it, and mutating a ref wouldn't
+  // re-render this component to pick up the new key.
+  const [draftKey, setDraftKey] = useState<string>()
+  // Mirrors location.key so the adjustment below can tell "a real navigation just
+  // happened" apart from "re-rendered for some unrelated reason" - see
+  // chat-composer.tsx's appliedToken for the same adjust-during-render shape.
+  const [lastLocationKey, setLastLocationKey] = useState(location.key)
+
+  // A real navigation to /chat's index - either the sidebar's "New conversation" link,
+  // or landing here fresh - discards this page's notion of "my current draft", so the
+  // empty state shows instead of whatever was last sent from it. Checked against
+  // location.key (not just routeId) because "New conversation" re-navigates to /chat
+  // while routeId stays undefined the whole time - react-router still bumps
+  // location.key on that navigation even though the matched param doesn't change.
+  // Adjusted here during render rather than in an effect (avoids an
+  // eslint(react-hooks/set-state-in-effect) violation, and this is exactly the "you
+  // might not need an effect" derived-state case). Never cancels the underlying send
+  // itself (see chat-stream-store) - it only stops this page from looking at it; a send
+  // left running under the old draft key keeps going in the background regardless of
+  // what's on screen.
+  if (location.key !== lastLocationKey) {
+    setLastLocationKey(location.key)
+    if (!routeId) setDraftKey(undefined)
+  }
+
+  const key = routeId ?? draftKey
+  const entry = useChatStreamStore((s) => (key ? s.entries[key] : undefined))
 
   const {
     data: detail,
@@ -41,51 +75,60 @@ export function ChatDashboardPage() {
     enabled: !!routeId,
   })
 
-  // Reacts to sidebar navigation (a real route change, since NavLink targets a
-  // different :conversationId under the same route) and to "New conversation" clicks.
-  // The latter re-navigates to /chat, which react-router still treats as a fresh
-  // navigation (bumping location.key) even though routeId itself stays undefined - see
-  // the replaceState note below for why routeId alone can't be trusted to detect it.
-  // Not remounting on param change is react-router's normal behavior here, so this
-  // effect is what actually swaps/clears the visible conversation - and it must stop
-  // any stream left running for the previous one first, otherwise its events would
-  // keep landing on the new view.
-  useEffect(() => {
-    stream.cancel()
-    if (!routeId) stream.reset()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeId, location.key])
+  function handleSend(text: string, selectedChoices?: SelectedChoice[], chargerIds?: string[]) {
+    const sendKey = key ?? makeDraftKey()
+    if (sendKey !== draftKey) setDraftKey(sendKey)
+    useChatStreamStore.getState().send(sendKey, userId, queryClient, text, selectedChoices, chargerIds)
+  }
 
   // A comparison-view "Evaluate using AI" click lands here as /chat?prompt=... - fire that
-  // message immediately instead of just prefilling the composer. The query param is
-  // stripped via a raw history replace (cosmetic only, not a router navigation - same
-  // reasoning as the conversationId sync below) so refreshing never resends it.
+  // message immediately instead of just prefilling the composer. The draft key is
+  // established during render (autoPromptKey, same reasoning as above); autoSentPromptRef
+  // still guards the actual send below against firing twice (e.g. StrictMode's double
+  // effect invoke) but - same as the original code - is only ever read/written inside
+  // the effect itself, never during render (refs can't be read during render).
+  const [autoPromptKey, setAutoPromptKey] = useState<string>()
+  const pendingAutoPrompt = !routeId && new URLSearchParams(window.location.search).has('prompt')
+  if (pendingAutoPrompt && !autoPromptKey) {
+    setAutoPromptKey(makeDraftKey())
+  }
+
   useEffect(() => {
-    if (routeId || autoSentPromptRef.current) return
+    if (routeId || autoSentPromptRef.current || !autoPromptKey) return
     const params = new URLSearchParams(window.location.search)
     const prompt = params.get('prompt')
     if (!prompt) return
     const chargerIds = params.get('chargerIds')?.split(',').filter(Boolean)
     autoSentPromptRef.current = true
+    // The query param is stripped via a raw history replace (cosmetic only, not a
+    // router navigation - same reasoning as the conversationId sync below) so
+    // refreshing never resends it.
     window.history.replaceState(null, '', '/chat')
-    stream.send(prompt, undefined, chargerIds)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeId])
+    useChatStreamStore.getState().send(autoPromptKey, userId, queryClient, prompt, undefined, chargerIds)
+  }, [routeId, autoPromptKey, userId, queryClient])
 
   useEffect(() => {
-    if (routeId && detail && detail.conversationId === routeId) stream.hydrate(detail)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (routeId && detail && detail.conversationId === routeId) {
+      useChatStreamStore.getState().hydrate(routeId, detail)
+    }
   }, [routeId, detail])
+
+  // Promotes the draft key to the real conversationId once a send resolves - adjusted
+  // during render (not in an effect) for the same set-state-in-effect reason as above.
+  if (entry?.conversationId && entry.conversationId !== draftKey && entry.conversationId !== routeId) {
+    setDraftKey(entry.conversationId)
+  }
 
   useEffect(() => {
     // Cosmetic URL sync only (not a router navigation) for a conversation just started
     // from the empty-state composer, so the address bar reflects it without remounting
-    // this page/interrupting the stream still in flight - see use-chat-stream's design
-    // note on why that matters.
-    if (stream.conversationId && stream.conversationId !== routeId) {
-      window.history.replaceState(null, '', `/chat/${stream.conversationId}`)
+    // this page/interrupting the send still in flight - see chat-stream-store's design
+    // note on why that matters. This effect only touches window.history (not React
+    // state - the draftKey promotion above already handled that), so it's fine here.
+    if (entry?.conversationId && entry.conversationId !== routeId) {
+      window.history.replaceState(null, '', `/chat/${entry.conversationId}`)
     }
-  }, [stream.conversationId, routeId])
+  }, [entry?.conversationId, routeId])
 
   if (routeId && isLoading) {
     return (
@@ -111,36 +154,36 @@ export function ChatDashboardPage() {
     )
   }
 
-  const isStreaming = stream.phase === 'streaming'
+  const isStreaming = entry?.phase === 'streaming'
   // Includes an errored first message on a brand-new conversation (no conversationId,
   // no messages ever landed) - otherwise the failure has nowhere to render and silently
   // reverts to the empty-state prompt as if nothing was sent.
   const hasActiveConversation =
-    stream.conversationId != null || stream.messages.length > 0 || stream.error != null
+    !!entry && (entry.conversationId != null || entry.messages.length > 0 || entry.error != null)
 
   return (
     <div className="flex min-h-0 flex-1">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {!hasActiveConversation ? (
-          <ChatEmptyState onSend={stream.send} disabled={isStreaming} />
+          <ChatEmptyState onSend={handleSend} disabled={isStreaming} />
         ) : (
           <>
             <ChatMessageList
-              messages={stream.messages}
+              messages={entry.messages}
               isStreaming={isStreaming}
-              onSubmitClarification={stream.send}
+              onSubmitClarification={handleSend}
               onResend={(text) => setResendDraft({ text, token: Date.now() })}
             />
             <div className="border-t border-border p-3">
               <div className="mx-auto w-full max-w-2xl">
-                {stream.error && (
+                {entry.error && (
                   <ChatErrorPopup
-                    key={stream.error}
-                    message={stream.error}
-                    onDismiss={stream.clearError}
+                    key={entry.error}
+                    message={entry.error}
+                    onDismiss={() => useChatStreamStore.getState().clearError(key!)}
                   />
                 )}
-                <ChatComposer onSend={stream.send} disabled={isStreaming} prefill={resendDraft} />
+                <ChatComposer onSend={handleSend} disabled={isStreaming} prefill={resendDraft} />
               </div>
             </div>
           </>
@@ -163,8 +206,8 @@ export function ChatDashboardPage() {
           </div>
         ) : (
           <RecommendationsPanel
-            candidates={stream.candidates}
-            evidence={stream.evidence}
+            candidates={entry.candidates}
+            evidence={entry.evidence}
             onCollapse={toggleRecommendations}
           />
         ))}
