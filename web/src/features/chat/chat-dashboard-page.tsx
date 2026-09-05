@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircle, PanelRightOpen } from 'lucide-react'
 
@@ -18,6 +18,7 @@ import { useChatStream } from './use-chat-stream'
 
 export function ChatDashboardPage() {
   const { conversationId: routeId } = useParams<{ conversationId?: string }>()
+  const location = useLocation()
   const { identity } = useIdentity()
   const stream = useChatStream(identity?.id ?? '')
   const recommendationsCollapsed = useRecommendationsSidebarStore((s) => s.collapsed)
@@ -41,15 +42,19 @@ export function ChatDashboardPage() {
   })
 
   // Reacts to sidebar navigation (a real route change, since NavLink targets a
-  // different :conversationId under the same route). Not remounting on param change is
-  // react-router's normal behavior here, so this effect is what actually swaps the
-  // visible conversation - and it must stop any stream left running for the previous
-  // one first, otherwise its events would keep landing on the new view.
+  // different :conversationId under the same route) and to "New conversation" clicks.
+  // The latter re-navigates to /chat, which react-router still treats as a fresh
+  // navigation (bumping location.key) even though routeId itself stays undefined - see
+  // the replaceState note below for why routeId alone can't be trusted to detect it.
+  // Not remounting on param change is react-router's normal behavior here, so this
+  // effect is what actually swaps/clears the visible conversation - and it must stop
+  // any stream left running for the previous one first, otherwise its events would
+  // keep landing on the new view.
   useEffect(() => {
     stream.cancel()
     if (!routeId) stream.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeId])
+  }, [routeId, location.key])
 
   // A comparison-view "Evaluate using AI" click lands here as /chat?prompt=... - fire that
   // message immediately instead of just prefilling the composer. The query param is
