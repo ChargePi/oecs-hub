@@ -25,7 +25,7 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
   const { identity } = useIdentity()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const streamingConversationId = useChatActivityStore((s) => s.streamingConversationId)
+  const streamingConversationIds = useChatActivityStore((s) => s.streamingConversationIds)
 
   const [selectMode, setSelectMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -175,7 +175,7 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
               <ConversationListItem
                 key={conversation.id}
                 conversation={conversation}
-                isStreaming={conversation.id === streamingConversationId}
+                isStreaming={streamingConversationIds.has(conversation.id)}
                 selectMode={selectMode}
                 selected={selectedIds.has(conversation.id)}
                 onToggleSelected={() => toggleSelected(conversation.id)}

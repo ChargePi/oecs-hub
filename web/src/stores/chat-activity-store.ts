@@ -1,14 +1,25 @@
 import { create } from 'zustand'
 
-// Not persisted (unlike comparison-store): this only tracks which conversation has a
-// live SSE stream open in *this* tab right now, so the conversation list sidebar can
-// show a "replying" badge next to it. It has no meaning across reloads/tabs.
+// Which conversations have a live send in this tab, for the sidebar's "replying"
+// badge. A Set, not a single id: a send keeps running in the background after the
+// user switches away (see chat-stream-store.ts), so more than one can be active.
 interface ChatActivityState {
-  streamingConversationId: string | null
-  setStreaming: (conversationId: string | null) => void
+  streamingConversationIds: Set<string>
+  startStreaming: (conversationId: string) => void
+  stopStreaming: (conversationId: string) => void
 }
 
 export const useChatActivityStore = create<ChatActivityState>((set) => ({
-  streamingConversationId: null,
-  setStreaming: (conversationId) => set({ streamingConversationId: conversationId }),
+  streamingConversationIds: new Set(),
+  startStreaming: (conversationId) =>
+    set((s) => ({
+      streamingConversationIds: new Set(s.streamingConversationIds).add(conversationId),
+    })),
+  stopStreaming: (conversationId) =>
+    set((s) => {
+      if (!s.streamingConversationIds.has(conversationId)) return s
+      const next = new Set(s.streamingConversationIds)
+      next.delete(conversationId)
+      return { streamingConversationIds: next }
+    }),
 }))
