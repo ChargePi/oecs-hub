@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // ChargerService is the subset of charger.Service the public handler depends on.
@@ -40,6 +41,11 @@ type KratosClient interface {
 	CompanyName(ctx context.Context, identityID uuid.UUID) (string, error)
 }
 
+// AccountService handles account-lifecycle operations.
+type AccountService interface {
+	DeleteAccount(ctx context.Context, identityID uuid.UUID) error
+}
+
 type Handler struct {
 	registryv1.UnimplementedRegistryServiceServer
 
@@ -47,10 +53,11 @@ type Handler struct {
 	manufacturer ManufacturerService
 	graph        GraphService
 	kratos       KratosClient
+	account      AccountService
 }
 
-func NewHandler(charger ChargerService, manufacturer ManufacturerService, graph GraphService, kratos KratosClient) *Handler {
-	return &Handler{charger: charger, manufacturer: manufacturer, graph: graph, kratos: kratos}
+func NewHandler(charger ChargerService, manufacturer ManufacturerService, graph GraphService, kratos KratosClient, account AccountService) *Handler {
+	return &Handler{charger: charger, manufacturer: manufacturer, graph: graph, kratos: kratos, account: account}
 }
 
 func (h *Handler) SearchChargers(ctx context.Context, req *registryv1.SearchChargersRequest) (*registryv1.SearchChargersResponse, error) {
@@ -334,4 +341,22 @@ func (h *Handler) SubmitVariantRating(ctx context.Context, req *registryv1.Submi
 		VariantId: variantID.String(),
 		Ratings:   ratingsSummaryToProto(summary),
 	}, nil
+}
+
+func (h *Handler) DeleteAccount(ctx context.Context, _ *emptypb.Empty) (*emptypb.Empty, error) {
+	identity, err := auth.RequireIdentity(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	identityID, err := uuid.Parse(identity.ID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "invalid identity id from proxy")
+	}
+
+	if err := h.account.DeleteAccount(ctx, identityID); err != nil {
+		return nil, status.Error(codes.Internal, "failed to delete account")
+	}
+
+	return &emptypb.Empty{}, nil
 }

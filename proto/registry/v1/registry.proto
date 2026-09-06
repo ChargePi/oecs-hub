@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package registry.v1;
 
+import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 enum ChargerType {
@@ -196,4 +197,6 @@ service RegistryService {
   rpc GetManufacturer(GetManufacturerRequest) returns (GetManufacturerResponse);
   rpc SubmitChargerSpec(SubmitChargerSpecRequest) returns (SubmitChargerSpecResponse);
   rpc SubmitVariantRating(SubmitVariantRatingRequest) returns (SubmitVariantRatingResponse);
+  // DeleteAccount deletes the authenticated caller's own account.
+  rpc DeleteAccount(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
