@@ -95,7 +95,9 @@ mutators:
         # is which Kratos identity schema this identity was created under, not a value
         # inside traits. See identity.manufacturer.schema.json / identity.individual.schema.json.
         X-User-Type: "{{ with .Extra }}{{ .schema_id }}{{ end }}"
-        X-Company-Name: "{{ with .Extra.traits.company }}{{ .name }}{{ end }}"
+        # No X-Company-Name: the backend looks that up from Kratos directly at
+        # submission time (internal/kratos) instead of trusting a proxy-forwarded
+        # snapshot - one less display field baked into the header-passthrough contract.
         X-Gateway-Secret: "{{ env \"OECS_HUB_GATEWAY_SECRET\" }}"
 
 errors:

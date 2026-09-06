@@ -35,16 +35,22 @@ type GraphService interface {
 	GetManufacturerGraph(ctx context.Context, manufacturerID uuid.UUID) ([]graph.ProductNode, error)
 }
 
+// KratosClient looks up identity traits the Oathkeeper edge doesn't forward as headers.
+type KratosClient interface {
+	CompanyName(ctx context.Context, identityID uuid.UUID) (string, error)
+}
+
 type Handler struct {
 	registryv1.UnimplementedRegistryServiceServer
 
 	charger      ChargerService
 	manufacturer ManufacturerService
 	graph        GraphService
+	kratos       KratosClient
 }
 
-func NewHandler(charger ChargerService, manufacturer ManufacturerService, graph GraphService) *Handler {
-	return &Handler{charger: charger, manufacturer: manufacturer, graph: graph}
+func NewHandler(charger ChargerService, manufacturer ManufacturerService, graph GraphService, kratos KratosClient) *Handler {
+	return &Handler{charger: charger, manufacturer: manufacturer, graph: graph, kratos: kratos}
 }
 
 func (h *Handler) SearchChargers(ctx context.Context, req *registryv1.SearchChargersRequest) (*registryv1.SearchChargersResponse, error) {
@@ -263,7 +269,12 @@ func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitC
 		return nil, status.Error(codes.Internal, "invalid identity id from proxy")
 	}
 
-	c, err := h.charger.Submit(ctx, req.GetSpec(), identityID, identity.CompanyName, identity.Email)
+	companyName, err := h.kratos.CompanyName(ctx, identityID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to look up submitter identity")
+	}
+
+	c, err := h.charger.Submit(ctx, req.GetSpec(), identityID, companyName, identity.Email)
 	if err != nil {
 		if errors.Is(err, charger.ErrInvalidSpec) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

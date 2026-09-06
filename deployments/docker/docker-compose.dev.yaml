@@ -177,6 +177,7 @@ services:
       - OECS_HUB_GRPC_ADDRESS=0.0.0.0:50051
       - OECS_HUB_ADMIN_GRPC_ADDRESS=0.0.0.0:50052
       - OECS_HUB_AUTH_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
+      - OECS_HUB_KRATOS_ADMIN_URL=http://kratos:4434
     # Routed by Traefik at /api (RegistryService, gRPC-Web) and /admin.v1.AdminService
     # (AdminService, native gRPC - matched by its real service path, not an artificial
     # prefix, since gRPC clients can't route through one) - see traefik/dynamic.yml.
@@ -187,6 +188,7 @@ services:
       - postgres
       - redis
       - memgraph
+      - kratos
 
   web:
     build:
