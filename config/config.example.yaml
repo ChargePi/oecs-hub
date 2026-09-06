@@ -29,6 +29,11 @@ adminGrpc:
 auth:
   gatewaySecret: "changeme-dev-only"
 
+# Kratos admin API (port 4434, not the public 4433 the frontend talks to) - looked up
+# directly for identity traits Oathkeeper doesn't forward as headers, e.g. company name.
+kratos:
+  adminUrl: "http://localhost:4434"
+
 observability:
   tracing:
     enabled: false

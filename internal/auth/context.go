@@ -8,10 +8,9 @@ import "context"
 // Identity is the caller identity forwarded by Oathkeeper's header mutator once it has
 // verified a Kratos session.
 type Identity struct {
-	ID          string
-	Email       string
-	UserType    string
-	CompanyName string
+	ID       string
+	Email    string
+	UserType string
 }
 
 type identityContextKey struct{}

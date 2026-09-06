@@ -46,6 +46,12 @@ type AuthConfiguration struct {
 	GatewaySecret string `json:"gatewaySecret" mapstructure:"gatewaySecret" validate:"required" yaml:"gatewaySecret"`
 }
 
+// KratosConfiguration points at Kratos's admin API (never the public one) - used to look
+// up identity traits the Oathkeeper edge doesn't forward as headers, e.g. company name.
+type KratosConfiguration struct {
+	AdminURL string `json:"adminUrl" mapstructure:"adminUrl" validate:"required" yaml:"adminUrl"`
+}
+
 type Configuration struct {
 	Database      DatabaseConfiguration  `json:"database"      mapstructure:"database"      validate:"required" yaml:"database"`
 	Redis         RedisConfiguration     `json:"redis"         mapstructure:"redis"         validate:"required" yaml:"redis"`
@@ -54,4 +60,5 @@ type Configuration struct {
 	GRPC          GRPCConfiguration      `json:"grpc"          mapstructure:"grpc"          validate:"required" yaml:"grpc"`
 	AdminGRPC     AdminGRPCConfiguration `json:"adminGrpc"     mapstructure:"adminGrpc"     validate:"required" yaml:"adminGrpc"`
 	Auth          AuthConfiguration      `json:"auth"          mapstructure:"auth"          validate:"required" yaml:"auth"`
+	Kratos        KratosConfiguration    `json:"kratos"        mapstructure:"kratos"        validate:"required" yaml:"kratos"`
 }

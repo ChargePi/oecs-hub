@@ -14,7 +14,6 @@ const (
 	userIDHeader        = "x-user-id"
 	userEmailHeader     = "x-user-email"
 	userTypeHeader      = "x-user-type"
-	companyNameHeader   = "x-company-name"
 )
 
 // UnaryInterceptor trusts x-user-* headers only when x-gateway-secret matches
@@ -45,10 +44,9 @@ func identityFromMetadata(ctx context.Context, gatewaySecret string) *Identity {
 	}
 
 	return &Identity{
-		ID:          id,
-		Email:       firstValue(md, userEmailHeader),
-		UserType:    firstValue(md, userTypeHeader),
-		CompanyName: firstValue(md, companyNameHeader),
+		ID:       id,
+		Email:    firstValue(md, userEmailHeader),
+		UserType: firstValue(md, userTypeHeader),
 	}
 }
 

@@ -53,7 +53,6 @@ func TestUnaryInterceptor_ValidSecretAndIdentity(t *testing.T) {
 		userIDHeader, "user-1",
 		userEmailHeader, "user@example.com",
 		userTypeHeader, "manufacturer",
-		companyNameHeader, "Acme Chargers",
 	)
 
 	identity := callWithMetadata(t, "secret", md)
@@ -62,7 +61,7 @@ func TestUnaryInterceptor_ValidSecretAndIdentity(t *testing.T) {
 	}
 
 	if identity.ID != "user-1" || identity.Email != "user@example.com" ||
-		identity.UserType != "manufacturer" || identity.CompanyName != "Acme Chargers" {
+		identity.UserType != "manufacturer" {
 		t.Fatalf("unexpected identity: %+v", identity)
 	}
 }

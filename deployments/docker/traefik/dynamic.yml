@@ -120,5 +120,4 @@ http:
           - "X-User-Id"
           - "X-User-Email"
           - "X-User-Type"
-          - "X-Company-Name"
           - "X-Gateway-Secret"

@@ -17,6 +17,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	grpcHandler "github.com/ChargePi/oecs-hub/internal/grpc"
 	"github.com/ChargePi/oecs-hub/internal/grpc/adminserver"
+	"github.com/ChargePi/oecs-hub/internal/kratos"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
@@ -134,6 +135,8 @@ var (
 			chargerCache := redisStorage.NewChargerCache(redisClient, cfg.Redis.CacheTTL)
 			chargerSvc := charger.NewService(chargerRepo, chargerCache, validator, manufacturerSvc, graphClient)
 
+			kratosAdmin := kratos.NewAdminClient(cfg.Kratos.AdminURL)
+
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv)
@@ -158,7 +161,7 @@ var (
 			)
 
 			grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
-			registryv1.RegisterRegistryServiceServer(grpcServer, grpcHandler.NewHandler(chargerSvc, manufacturerSvc, graphClient))
+			registryv1.RegisterRegistryServiceServer(grpcServer, grpcHandler.NewHandler(chargerSvc, manufacturerSvc, graphClient, kratosAdmin))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service
 			// callers) and gRPC-Web (browsers, which can't speak native gRPC's HTTP/2 trailers).
@@ -253,6 +256,7 @@ func setDefaults() {
 	_ = viper.BindEnv("grpc.allowedOrigins", "OECS_HUB_GRPC_ALLOWED_ORIGINS")
 	_ = viper.BindEnv("adminGrpc.address", "OECS_HUB_ADMIN_GRPC_ADDRESS")
 	_ = viper.BindEnv("auth.gatewaySecret", "OECS_HUB_AUTH_GATEWAY_SECRET")
+	_ = viper.BindEnv("kratos.adminUrl", "OECS_HUB_KRATOS_ADMIN_URL")
 }
 
 // getConfiguration gets the configuration from cache or file.
