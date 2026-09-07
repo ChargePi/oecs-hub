@@ -10,7 +10,7 @@ export function ChatLayout() {
   const toggle = useChatSidebarStore((s) => s.toggle)
 
   return (
-    // Explicit height (matching the sidebar/recommendations panel's own
+    // Explicit height (matching the sidebar/items panel's own
     // h-[calc(100svh-3.5rem)]), and the middle column is itself a flex container - the
     // page rendered by Outlet relies on that to stretch to full height (its empty-state
     // centers with h-full, which needs a definite height to resolve against; a plain

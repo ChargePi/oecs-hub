@@ -4,17 +4,17 @@ import { persist } from 'zustand/middleware'
 // Persisted (unlike chat-activity-store): this is a user display preference, not
 // per-tab session state - it should still be collapsed/expanded the way they left it
 // after a reload.
-interface RecommendationsSidebarState {
+interface ItemsSidebarState {
   collapsed: boolean
   toggle: () => void
 }
 
-export const useRecommendationsSidebarStore = create<RecommendationsSidebarState>()(
+export const useItemsSidebarStore = create<ItemsSidebarState>()(
   persist(
     (set, get) => ({
       collapsed: false,
       toggle: () => set({ collapsed: !get().collapsed }),
     }),
-    { name: 'oecs-recommendations-sidebar' },
+    { name: 'oecs-items-sidebar' },
   ),
 )
