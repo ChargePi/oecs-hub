@@ -240,4 +240,8 @@ export class MockRegistryClient implements RegistryClient {
       ratings: ratings.map((r) => ({ categoryName: r.categoryName, average: r.score, count: 1 })),
     })
   }
+
+  async deleteAccount(): Promise<void> {
+    return delay(undefined)
+  }
 }

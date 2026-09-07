@@ -7,7 +7,8 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Generated proto code - never hand-edited, excluded wholesale rather than patched.
+  globalIgnores(['dist', 'src/lib/registry/gen/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

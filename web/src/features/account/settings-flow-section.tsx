@@ -66,7 +66,7 @@ function AccountTypeIndicator({ accountType }: { accountType: AccountType }) {
 // instead (they collapsed to their intrinsic content width) - whatever internal className
 // merge it does isn't a safe additive one. Wrapping the <Node> children in a plain div
 // with the gap instead leaves OrySettingsFormSection itself untouched.
-// Renders every section (Profile, Security, ...) in one OryCard - calling SettingsFlowSection
+// Renders every section (General, Security, ...) in one OryCard - calling SettingsFlowSection
 // per section used to mean one full card each, each repeating the same Ory-generated header
 // ("OECS Hub" / "Account Settings"). No <OryCardHeader/> here at all: profile-page.tsx renders
 // its own page heading instead, matching every other page's title/subtitle convention rather
@@ -102,16 +102,11 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
             <Fragment key={section.title}>
               {si > 0 && <OryFormGroupDivider />}
               <div className="flex flex-col gap-8">
-                {/* No heading for Profile: profile-page.tsx's own <h1>Profile</h1> right
-                    above this card already says it - a second "Profile" heading here
-                    read as a duplicate title. Security has no such page-level heading,
-                    so it keeps its own. */}
-                {section.title === 'Profile' ? (
+                <h2 className="font-heading text-lg font-semibold text-foreground">
+                  {section.title}
+                </h2>
+                {section.title === 'General' && (
                   <AccountTypeIndicator accountType={accountType} />
-                ) : (
-                  <h2 className="font-heading text-lg font-semibold text-foreground">
-                    {section.title}
-                  </h2>
                 )}
                 {section.groups.map((group, i) => {
                   const nodes: UiNode[] = [

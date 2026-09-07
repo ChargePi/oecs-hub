@@ -104,4 +104,6 @@ export interface RegistryClient {
     variantId: string,
     ratings: SubmitVariantRatingInput[],
   ): Promise<SubmitVariantRatingResult>
+  /** Permanently deletes the caller's own account. Irreversible. */
+  deleteAccount(): Promise<void>
 }
