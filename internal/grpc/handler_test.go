@@ -1,11 +1,69 @@
 package grpc
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
+	"github.com/ChargePi/oecs-hub/internal/auth"
 	"github.com/ChargePi/oecs-hub/internal/charger"
+	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+type fakeAccountService struct {
+	calledWith uuid.UUID
+	err        error
+}
+
+func (f *fakeAccountService) DeleteAccount(_ context.Context, identityID uuid.UUID) error {
+	f.calledWith = identityID
+	return f.err
+}
+
+func TestHandler_DeleteAccount(t *testing.T) {
+	t.Run("no identity is rejected", func(t *testing.T) {
+		h := &Handler{account: &fakeAccountService{}}
+
+		_, err := h.DeleteAccount(context.Background(), &emptypb.Empty{})
+		if status.Code(err) != codes.Unauthenticated {
+			t.Fatalf("expected Unauthenticated, got %v", err)
+		}
+	})
+
+	t.Run("account service failure maps to Internal", func(t *testing.T) {
+		h := &Handler{account: &fakeAccountService{err: errors.New("boom")}}
+		ctx := auth.WithIdentity(context.Background(), &auth.Identity{ID: uuid.NewString()})
+
+		_, err := h.DeleteAccount(ctx, &emptypb.Empty{})
+		if status.Code(err) != codes.Internal {
+			t.Fatalf("expected Internal, got %v", err)
+		}
+	})
+
+	t.Run("happy path deletes the caller's own identity", func(t *testing.T) {
+		identityID := uuid.New()
+		fake := &fakeAccountService{}
+		h := &Handler{account: fake}
+		ctx := auth.WithIdentity(context.Background(), &auth.Identity{ID: identityID.String()})
+
+		resp, err := h.DeleteAccount(ctx, &emptypb.Empty{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if resp == nil {
+			t.Fatal("expected a non-nil response")
+		}
+
+		if fake.calledWith != identityID {
+			t.Fatalf("expected DeleteAccount called with %s, got %s", identityID, fake.calledWith)
+		}
+	})
+}
 
 func TestSearchChargersFilters(t *testing.T) {
 	t.Run("allow-listed field passes through", func(t *testing.T) {

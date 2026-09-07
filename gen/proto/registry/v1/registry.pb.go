@@ -9,6 +9,7 @@ package registryv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -1582,7 +1583,7 @@ var File_registry_v1_registry_proto protoreflect.FileDescriptor
 
 const file_registry_v1_registry_proto_rawDesc = "" +
 	"\n" +
-	"\x1aregistry/v1/registry.proto\x12\vregistry.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x01\n" +
+	"\x1aregistry/v1/registry.proto\x12\vregistry.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x01\n" +
 	"\aContact\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x19\n" +
 	"\x05email\x18\x02 \x01(\tH\x01R\x05email\x88\x01\x01\x12\x19\n" +
@@ -1736,7 +1737,7 @@ const file_registry_v1_registry_proto_rawDesc = "" +
 	"\x1dSUBMISSION_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bSUBMISSION_STATUS_SUBMITTED\x10\x01\x12\x1e\n" +
 	"\x1aSUBMISSION_STATUS_VERIFIED\x10\x02\x12\x1e\n" +
-	"\x1aSUBMISSION_STATUS_REJECTED\x10\x032\xc8\x04\n" +
+	"\x1aSUBMISSION_STATUS_REJECTED\x10\x032\x89\x05\n" +
 	"\x0fRegistryService\x12Y\n" +
 	"\x0eSearchChargers\x12\".registry.v1.SearchChargersRequest\x1a#.registry.v1.SearchChargersResponse\x12_\n" +
 	"\x10GetManufacturers\x12$.registry.v1.GetManufacturersRequest\x1a%.registry.v1.GetManufacturersResponse\x12M\n" +
@@ -1744,7 +1745,8 @@ const file_registry_v1_registry_proto_rawDesc = "" +
 	"GetCharger\x12\x1e.registry.v1.GetChargerRequest\x1a\x1f.registry.v1.GetChargerResponse\x12\\\n" +
 	"\x0fGetManufacturer\x12#.registry.v1.GetManufacturerRequest\x1a$.registry.v1.GetManufacturerResponse\x12b\n" +
 	"\x11SubmitChargerSpec\x12%.registry.v1.SubmitChargerSpecRequest\x1a&.registry.v1.SubmitChargerSpecResponse\x12h\n" +
-	"\x13SubmitVariantRating\x12'.registry.v1.SubmitVariantRatingRequest\x1a(.registry.v1.SubmitVariantRatingResponseB\xac\x01\n" +
+	"\x13SubmitVariantRating\x12'.registry.v1.SubmitVariantRatingRequest\x1a(.registry.v1.SubmitVariantRatingResponse\x12?\n" +
+	"\rDeleteAccount\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.EmptyB\xac\x01\n" +
 	"\x0fcom.registry.v1B\rRegistryProtoP\x01Z=github.com/ChargePi/oecs-hub/gen/proto/registry/v1;registryv1\xa2\x02\x03RXX\xaa\x02\vRegistry.V1\xca\x02\vRegistry\\V1\xe2\x02\x17Registry\\V1\\GPBMetadata\xea\x02\fRegistry::V1b\x06proto3"
 
 var (
@@ -1788,6 +1790,7 @@ var file_registry_v1_registry_proto_goTypes = []any{
 	(*SubmitVariantRatingRequest)(nil),  // 23: registry.v1.SubmitVariantRatingRequest
 	(*SubmitVariantRatingResponse)(nil), // 24: registry.v1.SubmitVariantRatingResponse
 	(*timestamppb.Timestamp)(nil),       // 25: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),               // 26: google.protobuf.Empty
 }
 var file_registry_v1_registry_proto_depIdxs = []int32{
 	4,  // 0: registry.v1.Manufacturer.contact:type_name -> registry.v1.Contact
@@ -1816,14 +1819,16 @@ var file_registry_v1_registry_proto_depIdxs = []int32{
 	18, // 23: registry.v1.RegistryService.GetManufacturer:input_type -> registry.v1.GetManufacturerRequest
 	20, // 24: registry.v1.RegistryService.SubmitChargerSpec:input_type -> registry.v1.SubmitChargerSpecRequest
 	23, // 25: registry.v1.RegistryService.SubmitVariantRating:input_type -> registry.v1.SubmitVariantRatingRequest
-	13, // 26: registry.v1.RegistryService.SearchChargers:output_type -> registry.v1.SearchChargersResponse
-	15, // 27: registry.v1.RegistryService.GetManufacturers:output_type -> registry.v1.GetManufacturersResponse
-	17, // 28: registry.v1.RegistryService.GetCharger:output_type -> registry.v1.GetChargerResponse
-	19, // 29: registry.v1.RegistryService.GetManufacturer:output_type -> registry.v1.GetManufacturerResponse
-	21, // 30: registry.v1.RegistryService.SubmitChargerSpec:output_type -> registry.v1.SubmitChargerSpecResponse
-	24, // 31: registry.v1.RegistryService.SubmitVariantRating:output_type -> registry.v1.SubmitVariantRatingResponse
-	26, // [26:32] is the sub-list for method output_type
-	20, // [20:26] is the sub-list for method input_type
+	26, // 26: registry.v1.RegistryService.DeleteAccount:input_type -> google.protobuf.Empty
+	13, // 27: registry.v1.RegistryService.SearchChargers:output_type -> registry.v1.SearchChargersResponse
+	15, // 28: registry.v1.RegistryService.GetManufacturers:output_type -> registry.v1.GetManufacturersResponse
+	17, // 29: registry.v1.RegistryService.GetCharger:output_type -> registry.v1.GetChargerResponse
+	19, // 30: registry.v1.RegistryService.GetManufacturer:output_type -> registry.v1.GetManufacturerResponse
+	21, // 31: registry.v1.RegistryService.SubmitChargerSpec:output_type -> registry.v1.SubmitChargerSpecResponse
+	24, // 32: registry.v1.RegistryService.SubmitVariantRating:output_type -> registry.v1.SubmitVariantRatingResponse
+	26, // 33: registry.v1.RegistryService.DeleteAccount:output_type -> google.protobuf.Empty
+	27, // [27:34] is the sub-list for method output_type
+	20, // [20:27] is the sub-list for method input_type
 	20, // [20:20] is the sub-list for extension type_name
 	20, // [20:20] is the sub-list for extension extendee
 	0,  // [0:20] is the sub-list for field type_name
