@@ -9,13 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useIdentity } from '@/lib/auth/use-identity'
 import { getConversation } from '@/lib/chat/client'
 import type { SelectedChoice } from '@/lib/chat/types'
-import { useRecommendationsSidebarStore } from '@/stores/recommendations-sidebar-store'
+import { useItemsSidebarStore } from '@/stores/items-sidebar-store'
 import { makeDraftKey, useChatStreamStore } from '@/stores/chat-stream-store'
 import { ChatComposer } from './chat-composer'
 import { ChatEmptyState } from './chat-empty-state'
 import { ChatErrorPopup } from './chat-error-popup'
 import { ChatMessageList } from './chat-message-list'
-import { RecommendationsPanel } from './recommendations-panel'
+import { ItemsPanel } from './items-panel'
 
 export function ChatDashboardPage() {
   const { conversationId: routeId } = useParams<{ conversationId?: string }>()
@@ -23,8 +23,8 @@ export function ChatDashboardPage() {
   const { identity } = useIdentity()
   const userId = identity?.id ?? ''
   const queryClient = useQueryClient()
-  const recommendationsCollapsed = useRecommendationsSidebarStore((s) => s.collapsed)
-  const toggleRecommendations = useRecommendationsSidebarStore((s) => s.toggle)
+  const itemsCollapsed = useItemsSidebarStore((s) => s.collapsed)
+  const toggleItems = useItemsSidebarStore((s) => s.toggle)
   // "Resend" on a failed message loads its text into the composer instead of firing
   // the request again itself - token is bumped on every click (even resending the
   // same text twice in a row) so ChatComposer's prefill effect re-applies it.
@@ -169,24 +169,24 @@ export function ChatDashboardPage() {
       </div>
 
       {hasActiveConversation &&
-        (recommendationsCollapsed ? (
+        (itemsCollapsed ? (
           // The panel's own collapse button goes away with it, so this is the only way
           // back - sticky at the same top offset the panel's header row sits at.
           <div className="sticky top-14 flex h-[calc(100svh-3.5rem)] shrink-0 items-start p-3">
             <Button
               size="icon-sm"
               variant="ghost"
-              onClick={toggleRecommendations}
-              aria-label="Show recommendations"
+              onClick={toggleItems}
+              aria-label="Show items"
             >
               <PanelRightOpen />
             </Button>
           </div>
         ) : (
-          <RecommendationsPanel
+          <ItemsPanel
             candidates={entry.candidates}
             evidence={entry.evidence}
-            onCollapse={toggleRecommendations}
+            onCollapse={toggleItems}
           />
         ))}
     </div>
