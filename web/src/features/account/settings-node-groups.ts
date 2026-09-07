@@ -13,20 +13,19 @@ export const SECURITY_GROUPS = [
   UiNodeGroupEnum.Webauthn,
   UiNodeGroupEnum.Passkey,
   UiNodeGroupEnum.LookupSecret,
-  UiNodeGroupEnum.Oidc,
 ] as const
+
+// Split out from Security into its own sidebar segment - linked social login providers
+// (Google, ...), not a credential.
+export const SOCIAL_GROUPS = [UiNodeGroupEnum.Oidc] as const
 
 export interface AccountSection {
   title: string
   groups: readonly UiNodeGroupEnum[]
 }
 
-// The Profile page consolidates what used to be two separate routes/menu items into one
-// page with two labeled sections, rather than two field-groups indistinguishable from the
-// rest (SettingsFlowSection already puts a divider between every individual method-group -
-// Password, Totp, Webauthn, ... - so without a section heading "Security" would just look
-// like more of the same list Profile started).
-export const ACCOUNT_SECTIONS: readonly AccountSection[] = [
-  { title: 'Profile', groups: PROFILE_GROUPS },
-  { title: 'Security', groups: SECURITY_GROUPS },
-]
+// One section per Profile page sidebar segment - each rendered on its own via
+// SettingsFlowSection, filtered from the single shared settings flow.
+export const PROFILE_SECTION: AccountSection = { title: 'General', groups: PROFILE_GROUPS }
+export const SECURITY_SECTION: AccountSection = { title: 'Security', groups: SECURITY_GROUPS }
+export const SOCIAL_LINKS_SECTION: AccountSection = { title: 'Social Links', groups: SOCIAL_GROUPS }
