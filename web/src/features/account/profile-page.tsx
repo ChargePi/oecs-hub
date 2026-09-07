@@ -4,6 +4,7 @@ import '@ory/elements-react/theme/styles.css'
 import { frontendApi, oryClientConfiguration } from '@/lib/auth/client'
 import { AuthFlowError } from '../auth/auth-flow-error'
 import { useFlow } from '../auth/use-flow'
+import { DeleteAccountControl } from './delete-account-control'
 import { SettingsFlowSection } from './settings-flow-section'
 import { ACCOUNT_SECTIONS } from './settings-node-groups'
 
@@ -27,6 +28,7 @@ export function ProfilePage() {
       <Settings flow={flow} config={oryClientConfiguration}>
         <SettingsFlowSection sections={ACCOUNT_SECTIONS} />
       </Settings>
+      <DeleteAccountControl />
     </div>
   )
 }

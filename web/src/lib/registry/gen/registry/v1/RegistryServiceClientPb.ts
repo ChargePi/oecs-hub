@@ -17,6 +17,7 @@
 
 import * as grpcWeb from 'grpc-web';
 
+import * as google_protobuf_empty_pb from 'google-protobuf/google/protobuf/empty_pb'; // proto import: "google/protobuf/empty.proto"
 import * as registry_v1_registry_pb from '../../registry/v1/registry_pb'; // proto import: "registry/v1/registry.proto"
 
 
@@ -295,6 +296,49 @@ export class RegistryServiceClient {
     request,
     metadata || {},
     this.methodDescriptorSubmitVariantRating);
+  }
+
+  methodDescriptorDeleteAccount = new grpcWeb.MethodDescriptor(
+    '/registry.v1.RegistryService/DeleteAccount',
+    grpcWeb.MethodType.UNARY,
+    google_protobuf_empty_pb.Empty,
+    google_protobuf_empty_pb.Empty,
+    (request: google_protobuf_empty_pb.Empty) => {
+      return request.serializeBinary();
+    },
+    google_protobuf_empty_pb.Empty.deserializeBinary
+  );
+
+  deleteAccount(
+    request: google_protobuf_empty_pb.Empty,
+    metadata?: grpcWeb.Metadata | null): Promise<google_protobuf_empty_pb.Empty>;
+
+  deleteAccount(
+    request: google_protobuf_empty_pb.Empty,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: google_protobuf_empty_pb.Empty) => void): grpcWeb.ClientReadableStream<google_protobuf_empty_pb.Empty>;
+
+  deleteAccount(
+    request: google_protobuf_empty_pb.Empty,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: google_protobuf_empty_pb.Empty) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/registry.v1.RegistryService/DeleteAccount',
+        request,
+        metadata || {},
+        this.methodDescriptorDeleteAccount,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/registry.v1.RegistryService/DeleteAccount',
+    request,
+    metadata || {},
+    this.methodDescriptorDeleteAccount);
   }
 
 }

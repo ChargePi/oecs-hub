@@ -1,3 +1,5 @@
+import { Empty } from 'google-protobuf/google/protobuf/empty_pb'
+
 import type { ChargerVariant, Product } from '@/lib/oecs/types'
 import { RegistryServiceClient } from './gen/registry/v1/RegistryServiceClientPb'
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
@@ -263,6 +265,14 @@ export class GrpcRegistryClient implements RegistryClient {
       }
     } catch (err) {
       mapGrpcError(err, `submitVariantRating(${variantId})`)
+    }
+  }
+
+  async deleteAccount(): Promise<void> {
+    try {
+      await this.client.deleteAccount(new Empty(), {})
+    } catch (err) {
+      mapGrpcError(err, 'deleteAccount')
     }
   }
 }
