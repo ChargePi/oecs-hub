@@ -34,5 +34,14 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    // buf/protoc-gen-js always emits every proto-level import into the .d.ts, even when
+    // the imported type (e.g. google.protobuf.Empty used only in a service RPC signature)
+    // never appears as a field type in this file itself.
+    files: ['src/lib/registry/gen/**/*.d.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
   eslintConfigPrettier,
 ])

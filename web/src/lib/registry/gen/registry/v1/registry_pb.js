@@ -15,6 +15,8 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = globalThis;
 
+var google_protobuf_empty_pb = require('google-protobuf/google/protobuf/empty_pb.js');
+goog.object.extend(proto, google_protobuf_empty_pb);
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');
 goog.object.extend(proto, google_protobuf_timestamp_pb);
 goog.exportSymbol('proto.registry.v1.CategoryRating', null, global);
