@@ -3,5 +3,7 @@
 // a plain .ts source file like grpc-client.ts isn't exempt). Scoped to only what
 // grpc-client.ts actually calls.
 declare module 'google-protobuf/google/protobuf/empty_pb' {
-  export class Empty {}
+  export class Empty {
+    serializeBinary(): Uint8Array
+  }
 }
