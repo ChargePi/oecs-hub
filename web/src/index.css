@@ -23,6 +23,7 @@
   --accent-foreground: #f1f5f9;
   --destructive: #ef4444;
   --success: #22c55e;
+  --warning: #f59e0b;
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
   --ring: #ef4444;
@@ -173,6 +174,7 @@ html {
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
