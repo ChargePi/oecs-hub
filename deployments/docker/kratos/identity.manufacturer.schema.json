@@ -28,14 +28,16 @@
         "company": {
           "type": "object",
           "title": "Company",
+          "$comment": "Not required: a nested `required` here would block free-plan signups, which never fill this in.",
           "properties": {
             "name": { "type": "string", "title": "Company name" },
+            "streetAddress": { "type": "string", "title": "Street address" },
+            "postalCode": { "type": "string", "title": "Postal code" },
             "country": { "type": "string", "title": "Country" }
-          },
-          "required": ["name"]
+          }
         }
       },
-      "required": ["email", "company"],
+      "required": ["email"],
       "additionalProperties": false
     }
   }

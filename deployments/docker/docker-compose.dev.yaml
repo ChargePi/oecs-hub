@@ -181,9 +181,10 @@ services:
     # Routed by Traefik at /api (RegistryService, gRPC-Web) and /admin.v1.AdminService
     # (AdminService, native gRPC - matched by its real service path, not an artificial
     # prefix, since gRPC clients can't route through one) - see traefik/dynamic.yml.
-    # The chat feature (traefik/dynamic.yml's "conversation" router) talks directly to
-    # oecs-recommendation-agent's conversation.v1.ConversationService - this backend
-    # isn't involved in it at all.
+    # The chat feature (traefik/dynamic.yml's "conversation" router) and the billing
+    # feature (its "billing" router) both talk directly to their own separate services
+    # (oecs-recommendation-agent's ConversationService, oecs-billing-service's
+    # BillingService) - this backend isn't involved in either at all.
     depends_on:
       - postgres
       - redis
@@ -200,6 +201,7 @@ services:
       # error rather than silently pretending to work.
       args:
         VITE_FEATURE_CHAT: "true"
+        VITE_FEATURE_BILLING: "true"
     container_name: oecs-hub-web
     hostname: web
     restart: unless-stopped

@@ -48,6 +48,13 @@ http:
       middlewares: ["strip-conversation-api", "oathkeeper-forwardauth"]
       service: conversation
 
+    billing:
+      # oecs-billing-service, reached directly - same pattern as `conversation` above.
+      rule: "Host(`registry.localhost`) && PathPrefix(`/billing-api`)"
+      entryPoints: ["web"]
+      middlewares: ["strip-billing-api", "oathkeeper-forwardauth"]
+      service: billing
+
     admin:
       # No "/admin-api"-style artificial prefix, unlike /api above: AdminService is
       # plain/native gRPC (not gRPC-Web), and real gRPC clients (grpcurl, a Go grpc
@@ -100,6 +107,12 @@ http:
         servers:
           - url: "http://host.docker.internal:50051"
 
+    billing:
+      # Separate compose project, reachable via the host - same as `conversation` above.
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:50060"
+
   middlewares:
     strip-ory:
       stripPrefix:
@@ -112,6 +125,10 @@ http:
     strip-conversation-api:
       stripPrefix:
         prefixes: ["/conversation-api"]
+
+    strip-billing-api:
+      stripPrefix:
+        prefixes: ["/billing-api"]
 
     oathkeeper-forwardauth:
       forwardAuth:

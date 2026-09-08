@@ -118,6 +118,37 @@
   mutators:
     - handler: header
 
+- id: billing-service-public
+  upstream:
+    url: http://host.docker.internal:50060
+  match:
+    # GetPlans only - called from the still-unauthenticated registration wizard.
+    url: "http://<.*>/billing.v1.BillingService/<GetPlans>"
+    methods: ["POST"]
+  authenticators:
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: noop
+
+- id: billing-service
+  upstream:
+    # Informational only (see this file's header comment); real routing lives in Traefik.
+    url: http://host.docker.internal:50060
+  match:
+    # Every other RPC is self-service - enumerated explicitly so a newly added RPC has
+    # no matching rule until someone decides which bucket it belongs in.
+    url: "http://<.*>/billing.v1.BillingService/<GetUsage|ListInvoices|GetPaymentPortalUrl>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: admin-service
   upstream:
     url: http://backend:50052
