@@ -26,6 +26,9 @@ const ManufacturersPage = lazy(() =>
 const ChatLayout = lazy(() =>
   import('@/features/chat/chat-layout').then((m) => ({ default: m.ChatLayout })),
 )
+const ChatAccessGate = lazy(() =>
+  import('@/features/chat/chat-access-gate').then((m) => ({ default: m.ChatAccessGate })),
+)
 const ChatDashboardPage = lazy(() =>
   import('@/features/chat/chat-dashboard-page').then((m) => ({ default: m.ChatDashboardPage })),
 )
@@ -79,7 +82,9 @@ export const router = createBrowserRouter([
               path: 'chat',
               element: (
                 <RequireAuth>
-                  <ChatLayout />
+                  <ChatAccessGate>
+                    <ChatLayout />
+                  </ChatAccessGate>
                 </RequireAuth>
               ),
               children: [

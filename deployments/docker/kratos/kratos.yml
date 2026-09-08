@@ -56,13 +56,51 @@ selfservice:
     registration:
       enabled: true
       ui_url: http://registry.localhost:8000/auth/register
+      # Password field alongside traits in one step, not Kratos's newer two-step flow.
+      enable_legacy_one_step: true
       after:
         password:
           hooks:
             - hook: session
+            - hook: web_hook
+              config:
+                # KNOWN ISSUE: this webhook intermittently fails to reach
+                # oecs-billing-service (unresolved networking issue, cause unknown).
+                # Harmless - registration never blocks on it (response.ignore below) -
+                # but Lago customer provisioning at signup can be missed.
+                url: http://billing-service:50061/internal/webhooks/kratos/registration
+                method: POST
+                body: file:///etc/config/kratos/registration_after_hook.jsonnet
+                response:
+                  ignore: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Kratos-Webhook-Secret
+                    # Hardcoded, not ${VAR}: Kratos doesn't expand env vars in this file.
+                    # Must match oecs-billing-service's OECS_BILLING_LAGO_WEBHOOK_SECRET.
+                    value: changeme-dev-only
+                    in: header
         oidc:
           hooks:
             - hook: session
+            - hook: web_hook
+              config:
+                # KNOWN ISSUE: this webhook intermittently fails to reach
+                # oecs-billing-service (unresolved networking issue, cause unknown).
+                # Harmless - registration never blocks on it (response.ignore below) -
+                # but Lago customer provisioning at signup can be missed.
+                url: http://billing-service:50061/internal/webhooks/kratos/registration
+                method: POST
+                body: file:///etc/config/kratos/registration_after_hook.jsonnet
+                response:
+                  ignore: true
+                auth:
+                  type: api_key
+                  config:
+                    name: X-Kratos-Webhook-Secret
+                    value: changeme-dev-only
+                    in: header
     login:
       ui_url: http://registry.localhost:8000/auth/login
     recovery:

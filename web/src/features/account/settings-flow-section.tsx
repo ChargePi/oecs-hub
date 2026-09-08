@@ -13,6 +13,7 @@ import {
 } from '@ory/elements-react'
 
 import type { AccountType } from '@/lib/auth/types'
+import { isBillingDetailsTraitNode } from '../auth/registration-node-groups'
 import type { AccountSection } from './settings-node-groups'
 
 // Account type has no self-service change flow - manufacturer and individual are
@@ -109,9 +110,13 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
                   <AccountTypeIndicator accountType={accountType} />
                 )}
                 {section.groups.map((group, i) => {
+                  // Billing fields share the "profile" group but are managed in Lago's
+                  // own portal (PaymentMethodsSection), never here.
                   const nodes: UiNode[] = [
                     ...defaultNodes,
-                    ...allNodes.filter((node) => node.group === group),
+                    ...allNodes.filter(
+                      (node) => node.group === group && !isBillingDetailsTraitNode(node),
+                    ),
                   ]
                   return (
                     // Fragment, not a wrapping div: the divider must be a direct flex child

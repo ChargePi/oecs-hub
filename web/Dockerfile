@@ -18,6 +18,10 @@ COPY . .
 # oecs-recommendation-agent conversation.v1.ConversationService (gRPC-Web) at runtime.
 ARG VITE_FEATURE_CHAT=false
 ENV VITE_FEATURE_CHAT=$VITE_FEATURE_CHAT
+# Billing feature toggle, same as VITE_FEATURE_CHAT above - its own separate service
+# (oecs-billing-service), so it gets its own runtime upstream (BILLING_API_URL below).
+ARG VITE_FEATURE_BILLING=false
+ENV VITE_FEATURE_BILLING=$VITE_FEATURE_BILLING
 RUN pnpm build
 
 FROM nginx:1.27-alpine AS runtime
@@ -34,6 +38,8 @@ ENV BACKEND_URL=http://localhost:9999
 # Placeholder like BACKEND_URL above - only reached if the chat feature was actually
 # built in (VITE_FEATURE_CHAT=true) and someone opens /conversation-api/ directly.
 ENV CONVERSATION_API_URL=http://localhost:9999
+# Placeholder like CONVERSATION_API_URL above, for oecs-billing-service.
+ENV BILLING_API_URL=http://localhost:9999
 # Docker's embedded DNS — override at runtime (-e RESOLVER=...) for other environments, e.g. a
 # Kubernetes cluster DNS Service IP.
 ENV RESOLVER=127.0.0.11

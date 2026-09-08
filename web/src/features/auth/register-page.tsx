@@ -1,17 +1,44 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Registration } from '@ory/elements-react/theme'
 import '@ory/elements-react/theme/styles.css'
 
+import { getPaymentPortalUrl } from '@/lib/billing/client'
+import type { PlanTier } from '@/lib/billing/types'
 import { frontendApi, oryClientConfiguration } from '@/lib/auth/client'
 import type { AccountType } from '@/lib/auth/types'
 import { AccountTypeSelector } from './account-type-selector'
 import { AuthFlowError } from './auth-flow-error'
+import { RegistrationWizard } from './registration-wizard'
+import { RequiredLabel } from './required-label'
 import { useAuthSuccess } from './use-auth-success'
 import { useFlow } from './use-flow'
 
 export function RegisterPage() {
-  const onSuccess = useAuthSuccess()
+  const onAuthSuccess = useAuthSuccess()
   const [accountType, setAccountType] = useState<AccountType>('manufacturer')
+
+  // Ref, not state: read by transientPayload's function form at submit time, not via re-render.
+  const planCodeRef = useRef<string | null>(null)
+  const [selectedTier, setSelectedTier] = useState<PlanTier | null>(null)
+
+  const handlePlanSelect = useCallback((code: string, tier: PlanTier) => {
+    planCodeRef.current = code
+    setSelectedTier(tier)
+  }, [])
+
+  // Paid plan: open Lago's hosted portal for card entry right after signup. Never blocks
+  // navigation on failure - the portal is also reachable later from Profile > Billing.
+  const handleSuccess = useCallback(async () => {
+    if (selectedTier === 'paid') {
+      try {
+        const url = await getPaymentPortalUrl()
+        window.open(url, '_blank', 'noopener,noreferrer')
+      } catch (err) {
+        console.error('failed to open payment portal after registration', err)
+      }
+    }
+    onAuthSuccess()
+  }, [selectedTier, onAuthSuccess])
 
   // identitySchema picks which of the two Kratos schemas
   // (identity.manufacturer.schema.json / identity.individual.schema.json) this flow's
@@ -55,7 +82,16 @@ export function RegisterPage() {
           actually arrived - keying on accountType instead would remount one render too
           early (accountType updates before the refetch resolves), permanently baking in
           the previous schema's fields under the newly-selected type's label. */}
-      <Registration key={flow.id} flow={flow} config={oryClientConfiguration} onSuccess={onSuccess} />
+      <Registration
+        key={flow.id}
+        flow={flow}
+        config={oryClientConfiguration}
+        components={{ Node: { Label: RequiredLabel } }}
+        onSuccess={handleSuccess}
+        transientPayload={() => (planCodeRef.current ? { plan_code: planCodeRef.current } : {})}
+      >
+        <RegistrationWizard accountType={accountType} onPlanSelect={handlePlanSelect} />
+      </Registration>
     </div>
   )
 }

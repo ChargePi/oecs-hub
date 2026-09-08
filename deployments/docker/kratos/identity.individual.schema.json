@@ -28,15 +28,15 @@
         "billingAddress": {
           "type": "object",
           "title": "Billing address",
+          "$comment": "Not required: a nested `required` here would block free-plan signups, which never fill this in.",
           "properties": {
             "streetAddress": { "type": "string", "title": "Street address" },
             "postalCode": { "type": "string", "title": "Postal code" },
             "country": { "type": "string", "title": "Country" }
-          },
-          "required": ["streetAddress", "postalCode", "country"]
+          }
         }
       },
-      "required": ["email", "billingAddress"],
+      "required": ["email"],
       "additionalProperties": false
     }
   }
