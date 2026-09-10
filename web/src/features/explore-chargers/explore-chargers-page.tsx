@@ -70,8 +70,8 @@ export function ExploreChargersPage() {
     <div className="flex flex-1">
       <FilterSidebar filters={filterState} onChange={updateFilters} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-border p-4">
-          <h1 className="text-lg font-semibold">Chargers</h1>
+        <div className="relative flex items-center justify-end border-b border-border p-4">
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold">Chargers</h1>
           <div className="flex items-center gap-3">
             <Button
               variant="outline"

@@ -48,7 +48,7 @@ export function ComparisonSidebar() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          'fixed top-20 right-4 z-20 flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm shadow-lg transition-colors hover:bg-muted',
+          'fixed right-4 bottom-4 z-20 flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-sm shadow-lg transition-colors hover:bg-muted',
           isDragOver && 'ring-2 ring-primary',
         )}
       >
