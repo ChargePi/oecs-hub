@@ -42,6 +42,20 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    # Same-origin proxy to Kratos's public API (see src/lib/auth/client.ts's BASE_PATH) -
+    # unlike /conversation-api/ and /billing-api/ below, auth isn't an optional feature,
+    # so there's no inert placeholder default here: KRATOS_URL must be set for anything
+    # auth-related (including the SPA shell itself, via cookie-based session checks) to work.
+    location /ory/ {
+        set $kratos "${KRATOS_URL}";
+        proxy_pass $kratos/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     # Optional: the chat feature's direct line to oecs-recommendation-agent's
     # conversation.v1.ConversationService (gRPC-Web) - a different repo/service
     # entirely, not oecs-registry's own backend, hence its own
