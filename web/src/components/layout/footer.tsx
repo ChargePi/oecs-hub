@@ -6,7 +6,8 @@ import { Separator } from '@/components/ui/separator'
 
 const OECS_SPEC_URL = 'https://github.com/ChargePi/oecs'
 const OECS_HUB_GITHUB_URL = 'https://github.com/ChargePi/oecs-hub'
-const CHARGEPI_URL = 'https://github.com/ChargePi'
+const CHARGEPI_URL = 'https://chargepi.cc'
+const CHARGEPI_GITHUB_URL = 'https://github.com/ChargePi'
 
 export function Footer() {
   return (
@@ -47,7 +48,7 @@ export function Footer() {
             Terms of Service
           </Link>
         </div>
-        <span>
+        <span className="flex items-center gap-1.5">
           Developed by{' '}
           <a
             href={CHARGEPI_URL}
@@ -56,6 +57,15 @@ export function Footer() {
             className="font-medium transition-colors hover:text-foreground"
           >
             ChargePi
+          </a>
+          <a
+            href={CHARGEPI_GITHUB_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="ChargePi on GitHub"
+            className="transition-colors hover:text-foreground"
+          >
+            <GithubIcon className="size-3.5" aria-hidden="true" />
           </a>
         </span>
       </div>
