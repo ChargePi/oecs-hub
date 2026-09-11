@@ -6,6 +6,7 @@ on:
       - main
       - staging
     paths-ignore:
+      - 'web/**'
       - 'docs/**'
       - '.run/**'
       - '.vscode/**'
@@ -22,6 +23,7 @@ on:
       - main
       - staging
     paths-ignore:
+      - 'web/**'
       - 'docs/**'
       - '.run/**'
       - '.vscode/**'
