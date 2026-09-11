@@ -32,9 +32,17 @@ server {
     # and takes the entire static-file server down with it. Routing through a variable defers
     # resolution to request time instead, via the `resolver` above — worst case an actual /api/
     # request 502s.
+    #
+    # The `rewrite ... break` + bare `proxy_pass $backend` (no trailing path) is required to
+    # strip the /api/ prefix: nginx only does that prefix replacement automatically when
+    # proxy_pass's target is a literal known at config-parse time. Once any part of it is a
+    # variable (as it must be here), nginx forwards the request URI completely unmodified -
+    # the upstream would see "/api/registry.v1.RegistryService/Foo" instead of
+    # "/registry.v1.RegistryService/Foo" and reject it as a malformed gRPC method name.
     location /api/ {
         set $backend "${BACKEND_URL}";
-        proxy_pass $backend/;
+        rewrite ^/api/(.*)$ /$1 break;
+        proxy_pass $backend;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -46,9 +54,11 @@ server {
     # unlike /conversation-api/ and /billing-api/ below, auth isn't an optional feature,
     # so there's no inert placeholder default here: KRATOS_URL must be set for anything
     # auth-related (including the SPA shell itself, via cookie-based session checks) to work.
+    # See /api/ above for why the rewrite...break is needed to strip the /ory/ prefix.
     location /ory/ {
         set $kratos "${KRATOS_URL}";
-        proxy_pass $kratos/;
+        rewrite ^/ory/(.*)$ /$1 break;
+        proxy_pass $kratos;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -62,10 +72,12 @@ server {
     # CONVERSATION_API_URL/$conversation_api rather than sharing $backend. Same
     # request-time-resolution trick as /api/ above and for the same reason: this is
     # only reached at all when the chat feature was built in (VITE_FEATURE_CHAT=true),
-    # so it must not stop nginx from starting when unconfigured.
+    # so it must not stop nginx from starting when unconfigured. See /api/ above for
+    # why the rewrite...break is needed to strip the /conversation-api/ prefix.
     location /conversation-api/ {
         set $conversation_api "${CONVERSATION_API_URL}";
-        proxy_pass $conversation_api/;
+        rewrite ^/conversation-api/(.*)$ /$1 break;
+        proxy_pass $conversation_api;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -76,7 +88,8 @@ server {
     # Optional: direct line to oecs-billing-service, same pattern as /api/ above.
     location /billing-api/ {
         set $billing_api "${BILLING_API_URL}";
-        proxy_pass $billing_api/;
+        rewrite ^/billing-api/(.*)$ /$1 break;
+        proxy_pass $billing_api;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
