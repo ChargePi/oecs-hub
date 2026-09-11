@@ -23,6 +23,11 @@ on:
         description: repository name
         type: string
         required: true
+      build-args:
+        description: Extra --build-arg entries, one per line (KEY=value)
+        type: string
+        required: false
+        default: ""
 
 jobs:
   scan:
@@ -109,6 +114,7 @@ jobs:
           context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
           push: ${{ inputs.push }} # Don't push on PR
+          build-args: ${{ inputs.build-args }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

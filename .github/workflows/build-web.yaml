@@ -32,4 +32,6 @@ jobs:
       repository: oecs-hub-web
       dockerfile: "./web/Dockerfile"
       context: "./web"
+      build-args: |
+        VITE_FEATURE_CHAT=true
     secrets: inherit
