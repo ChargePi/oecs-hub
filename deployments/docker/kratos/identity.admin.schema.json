@@ -1,0 +1,31 @@
+{
+  "$id": "https://oecs.dev/schema/identity/admin.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OECS Hub admin identity",
+  "type": "object",
+  "properties": {
+    "traits": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "title": "Email",
+          "minLength": 3,
+          "ory.sh/kratos": {
+            "credentials": {
+              "password": { "identifier": true },
+              "webauthn": { "identifier": true }
+            },
+            "verification": { "via": "email" },
+            "recovery": { "via": "email" }
+          }
+        },
+        "name": { "type": "string", "title": "First name" },
+        "surname": { "type": "string", "title": "Surname" }
+      },
+      "required": ["email", "name", "surname"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -92,6 +92,17 @@ pnpm dev            # http://localhost:5173
 
 See `web/README.md` for frontend-specific commands (lint, typecheck, build, Docker).
 
+### 5. Create an admin user
+
+Admin identities are never created through self-service registration - `cmd/admin-cli` is the only
+way to create one. It generates a random password and prints it once; it is not stored anywhere.
+
+```sh
+export OECS_HUB_KRATOS_ADMIN_URL="http://localhost:4434"
+export OECS_HUB_KETO_WRITE_URL="http://localhost:4467"
+go run ./cmd/admin-cli --email admin@example.com --name Ada --surname Admin
+```
+
 ### Tests & linting
 
 ```sh
