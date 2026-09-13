@@ -80,6 +80,10 @@ services:
       - ./kratos:/etc/config/kratos:ro
     ports:
       - "4433:4433"
+      # Admin API - dev-only, unauthenticated (see internal/kratos/admin_client.go).
+      # Published so cmd/admin-cli can run as a host process, the same way `go run
+      # ./cmd/migrate` runs against postgres's published port below.
+      - "4434:4434"
     depends_on:
       - kratos-migrate
 
@@ -108,6 +112,11 @@ services:
     command: serve --config /etc/config/keto/keto.yml
     volumes:
       - ./keto:/etc/config/keto:ro
+    ports:
+      - "4466:4466"
+      # Write API - dev-only, unauthenticated. Published so cmd/admin-cli can grant the
+      # admin Keto role as a host process; see the kratos service's 4434 above.
+      - "4467:4467"
     depends_on:
       - keto-migrate
 
