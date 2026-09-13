@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Registration } from '@ory/elements-react/theme'
 import '@ory/elements-react/theme/styles.css'
 
@@ -6,6 +7,7 @@ import { getPaymentPortalUrl } from '@/lib/billing/client'
 import type { PlanTier } from '@/lib/billing/types'
 import { frontendApi, oryClientConfiguration } from '@/lib/auth/client'
 import type { AccountType } from '@/lib/auth/types'
+import { Button } from '@/components/ui/button'
 import { AccountTypeSelector } from './account-type-selector'
 import { AuthFlowError } from './auth-flow-error'
 import { RegistrationWizard } from './registration-wizard'
@@ -15,7 +17,13 @@ import { useFlow } from './use-flow'
 
 export function RegisterPage() {
   const onAuthSuccess = useAuthSuccess()
+  const [searchParams] = useSearchParams()
+  // ?flow= means Kratos already started this flow (e.g. resumed after Google OIDC) - skip the picker.
+  const isResuming = searchParams.has('flow')
+
   const [accountType, setAccountType] = useState<AccountType>('manufacturer')
+  // Gates flow creation until the user picks a type, so the default schema isn't silently used.
+  const [confirmed, setConfirmed] = useState(isResuming)
 
   // Ref, not state: read by transientPayload's function form at submit time, not via re-render.
   const planCodeRef = useRef<string | null>(null)
@@ -40,28 +48,17 @@ export function RegisterPage() {
     onAuthSuccess()
   }, [selectedTier, onAuthSuccess])
 
-  // identitySchema picks which of the two Kratos schemas
-  // (identity.manufacturer.schema.json / identity.individual.schema.json) this flow's
-  // fields come from - each already contains only its own type's fields. recreateOn:
-  // [accountType] so switching the selector starts a fresh flow against the new schema
-  // rather than re-rendering fields that don't apply to it - see use-flow.ts's own
-  // comment on recreateOn.
+  // identitySchema picks the Kratos schema; recreateOn: [accountType] starts a fresh flow
+  // when the type changes. enabled: confirmed - no flow until the picker step is done.
   const { flow, error } = useFlow(
     () => frontendApi.createBrowserRegistrationFlow({ identitySchema: accountType }),
     (id) => frontendApi.getRegistrationFlow({ id }),
     [accountType],
+    confirmed,
   )
 
-  // Sync once per new flow, not on every mismatch: after the user switches accountType,
-  // `flow` briefly still holds the previous schema's flow until the refetch (triggered by
-  // useFlow's recreateOn) resolves - during that gap flow.identity_schema legitimately
-  // differs from accountType, and correcting accountType back to match flow every render
-  // would fight the user's click and make the selector look unresponsive. Keying off
-  // flow.id (React's "adjusting state based on a prop" pattern) instead of a plain
-  // mismatch check means this only fires when a genuinely new flow object arrives - most
-  // importantly when resuming via `?flow=` (e.g. back from Google OIDC needing missing
-  // traits), where that flow was already created against a specific schema, possibly not
-  // today's default 'manufacturer'.
+  // Sync once per new flow (keyed on flow.id), not on every mismatch: avoids fighting the
+  // brief gap after switching accountType where flow still holds the previous schema.
   const [syncedFlowId, setSyncedFlowId] = useState<string | null>(null)
   if (flow && flow.id !== syncedFlowId) {
     setSyncedFlowId(flow.id)
@@ -70,12 +67,33 @@ export function RegisterPage() {
     }
   }
 
+  if (!confirmed) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-4 py-16">
+        <h1 className="text-center text-lg font-semibold">Choose your account type</h1>
+        <AccountTypeSelector value={accountType} onChange={setAccountType} />
+        <Button size="lg" onClick={() => setConfirmed(true)}>
+          Continue
+        </Button>
+      </div>
+    )
+  }
+
   if (error) return <AuthFlowError />
   if (!flow) return null
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-4 py-16">
-      <AccountTypeSelector value={accountType} onChange={setAccountType} />
+      {/* Hidden while resuming: restarting would discard the in-progress social-login step. */}
+      {!isResuming && (
+        <button
+          type="button"
+          onClick={() => setConfirmed(false)}
+          className="self-start text-sm text-muted-foreground hover:text-foreground hover:underline"
+        >
+          &larr; Change account type
+        </button>
+      )}
       {/* key={flow.id}, not key={accountType}: Registration is a stateful all-in-one
           form component that captures its node list on mount and ignores later prop
           changes, so it must only remount once a flow scoped to the new schema has

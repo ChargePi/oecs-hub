@@ -8,13 +8,16 @@ import { useSearchParams } from 'react-router'
 // recreateOn: extra values that should re-trigger `create` (never `get` - a flow already
 // started keeps whatever it started with). Every caller except RegisterPage passes none,
 // since login/recovery/verification/settings flows take no such per-render parameter.
-// RegisterPage passes [accountType]: a registration flow is schema-scoped
-// (identitySchema, chosen by AccountTypeSelector), so picking a different account type
-// must create a new flow against the new schema, not just re-render the existing one.
+// RegisterPage passes [accountType]: a registration flow is schema-scoped, so picking a
+// different account type must create a new flow against the new schema.
+//
+// enabled: false skips the fetch entirely, so RegisterPage's picker step doesn't create
+// a flow before the user has chosen a type.
 export function useFlow<T>(
   create: () => Promise<T>,
   get: (id: string) => Promise<T>,
   recreateOn: unknown[] = [],
+  enabled = true,
 ) {
   const [searchParams] = useSearchParams()
   const flowId = searchParams.get('flow')
@@ -28,6 +31,8 @@ export function useFlow<T>(
   })
 
   useEffect(() => {
+    if (!enabled) return
+
     let cancelled = false
 
     const promise = flowId ? get(flowId) : create()
@@ -43,12 +48,13 @@ export function useFlow<T>(
     return () => {
       cancelled = true
     }
-    // create/get are re-created every render at the call site (bound to a stable
-    // singleton client) - only flowId and recreateOn's values should re-trigger the
-    // fetch. recreateOn is fixed-length per call site (each caller always passes the
-    // same number of values), so its spread here doesn't violate the rules of hooks.
+    // create/get are re-created every render (bound to a stable singleton client) - only
+    // flowId, enabled, and recreateOn should re-trigger the fetch. recreateOn is
+    // fixed-length per call site, so spreading it here doesn't violate rules of hooks.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowId, ...recreateOn])
+  }, [flowId, enabled, ...recreateOn])
+
+  if (!enabled) return { flow: null, error: false }
 
   if (state.flowId !== flowId) return { flow: null, error: false }
 
