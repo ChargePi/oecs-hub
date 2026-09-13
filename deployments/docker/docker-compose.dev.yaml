@@ -5,8 +5,6 @@
 name: oecs-hub
 services:
 
-  # Single shared instance for oecs_hub, kratos and keto - each gets its own database
-  # and role, provisioned on first boot by postgres/init (see that file's header).
   postgres:
     image: postgres:16
     container_name: oecs-hub-postgres
@@ -17,7 +15,6 @@ services:
       - POSTGRES_PASSWORD=oecs
       - POSTGRES_DB=oecs_hub
     ports:
-      # Host port 5434: 5432/5433 are often already taken by other local postgres instances.
       - "5434:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
@@ -29,9 +26,6 @@ services:
     hostname: redis
     restart: unless-stopped
     ports:
-      # Host port 6380, not 6379: already taken by an unrelated project's redis on this
-      # host. Container-to-container traffic uses the "redis" hostname/6379 internally,
-      # unaffected by this remap.
       - "6380:6379"
     volumes:
       - redis:/data
@@ -47,37 +41,22 @@ services:
     volumes:
       - memgraph:/var/lib/memgraph
 
-  # --- Auth edge: Traefik (public entrypoint) -> Oathkeeper (decision point) ->
-  # Kratos (identity) + Keto (admin-role check). See ../../.claude/plans (auth plan) for
-  # the full design. Self-contained: no external Traefik instance assumed.
-
   traefik:
     image: traefik:v3.3
     container_name: oecs-hub-traefik
     hostname: traefik
     restart: unless-stopped
-    # Static file provider, not the Docker provider: this environment's Docker Desktop
-    # (WSL2 backend) doesn't reliably expose a bind-mountable /var/run/docker.sock to
-    # containers - the socket a container sees isn't the one docker-compose itself talks
-    # to, so label-based discovery silently finds nothing. The routing topology here is
-    # fixed anyway (docker-compose's own DNS gives every service a stable hostname), so
-    # deployments/docker/traefik/dynamic.yml just declares it statically instead.
     command:
       - --providers.file.filename=/etc/traefik/dynamic.yml
       - --entrypoints.web.address=:80
       - --api.insecure=true
     ports:
       - "8000:80"
-      # Traefik's own dashboard - dev convenience only, not for production use.
-      # Host port 8091, not 8081: already taken by an unrelated project on this host.
       - "8091:8080"
     volumes:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
 
   kratos-migrate:
-    # v25.4.0: the earliest release supporting the identity_schema query parameter that
-    # selects which identity schema a self-service registration flow uses - see
-    # identity.manufacturer.schema.json / identity.individual.schema.json.
     image: oryd/kratos:v25.4.0
     container_name: oecs-hub-kratos-migrate
     command: migrate sql -e --yes
@@ -99,12 +78,6 @@ services:
       - OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET=${OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET:-}
     volumes:
       - ./kratos:/etc/config/kratos:ro
-    # Public API (4433) is Traefik-routed at /ory (see traefik/dynamic.yml) since the
-    # frontend talks to Kratos directly for self-service flows. Admin API (4434) is
-    # deliberately not routed there - never reachable publicly, only container-to-container.
-    #
-    # 4433 is also published to the host for the bare `pnpm dev` + `go run` fast-iteration
-    # loop's /ory proxy (see web/vite.config.ts) - that mode has no Traefik in front.
     ports:
       - "4433:4433"
     depends_on:
@@ -116,8 +89,6 @@ services:
     hostname: mailslurper
     restart: unless-stopped
     ports:
-      # Web UI only, for reading dev verification/recovery emails. SMTP (1025/1026) stays
-      # container-network-only - Kratos is the only sender.
       - "4437:4436"
 
   keto-migrate:
@@ -137,8 +108,6 @@ services:
     command: serve --config /etc/config/keto/keto.yml
     volumes:
       - ./keto:/etc/config/keto:ro
-    # Never Traefik-routed - read API (4466) reached only by Oathkeeper, write API
-    # (4467) reached only via the admin-bootstrap runbook (docker compose exec).
     depends_on:
       - keto-migrate
 
@@ -152,16 +121,9 @@ services:
       - OECS_HUB_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
     volumes:
       - ./oathkeeper:/etc/config/oathkeeper:ro
-    # No router of its own - never reachable through Traefik's public entrypoint, only
-    # container-to-container via the forwardAuth middleware declared in traefik/dynamic.yml.
     depends_on:
       - kratos
       - keto
-
-  # --- App services, containerized so the full Traefik->Oathkeeper->Kratos flow is
-  # testable via `docker compose up`. `go run ./cmd/app` / `pnpm --dir web dev` remain
-  # available as a separate, faster loop for everything except auth-gated flows (see the
-  # auth plan's Context section for why that tradeoff is deliberate).
 
   backend:
     build:
@@ -178,13 +140,6 @@ services:
       - OECS_HUB_ADMIN_GRPC_ADDRESS=0.0.0.0:50052
       - OECS_HUB_AUTH_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
       - OECS_HUB_KRATOS_ADMIN_URL=http://kratos:4434
-    # Routed by Traefik at /api (RegistryService, gRPC-Web) and /admin.v1.AdminService
-    # (AdminService, native gRPC - matched by its real service path, not an artificial
-    # prefix, since gRPC clients can't route through one) - see traefik/dynamic.yml.
-    # The chat feature (traefik/dynamic.yml's "conversation" router) and the billing
-    # feature (its "billing" router) both talk directly to their own separate services
-    # (oecs-recommendation-agent's ConversationService, oecs-billing-service's
-    # BillingService) - this backend isn't involved in either at all.
     depends_on:
       - postgres
       - redis
@@ -194,26 +149,20 @@ services:
   web:
     build:
       context: ../../web
-      # Bakes the chat feature into the JS bundle (see web/src/lib/chat/config.ts) -
-      # off by default, and even when on, only works if Traefik's "conversation"
-      # router can actually reach oecs-recommendation-agent's conversation service
-      # (see that router's own comment) - otherwise the UI shows a normal request
-      # error rather than silently pretending to work.
       args:
         VITE_FEATURE_CHAT: "true"
         VITE_FEATURE_BILLING: "true"
     container_name: oecs-hub-web
     hostname: web
     restart: unless-stopped
-    # Suggested-prompt templates (see web/src/features/chat/use-suggested-prompts.ts) are
-    # fetched from here at runtime, not baked into the JS bundle - bind-mounting the
-    # source directory means editing these .txt files takes effect on refresh, no
-    # rebuild needed. Swap in a different host directory to fully customize the wording.
+    environment:
+      - BACKEND_URL=http://backend:50051
+      - KRATOS_URL=http://kratos:4433
     volumes:
       - ../../web/public/chat-prompts:/usr/share/nginx/html/chat-prompts:ro
-    # Routed by Traefik at / (lowest priority, catch-all) - see traefik/dynamic.yml.
     depends_on:
       - backend
+      - kratos
 
 volumes:
   postgres:
