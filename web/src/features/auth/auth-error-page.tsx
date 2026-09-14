@@ -42,7 +42,7 @@ export function AuthErrorPage() {
   }, [id])
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4 py-16 text-center">
+    <div className="m-auto flex w-full max-w-md flex-col gap-4 px-4 text-center">
       <h1 className="text-lg font-semibold">Something went wrong</h1>
       <p className="text-sm text-muted-foreground">{id ? (message ?? 'Loading…') : GENERIC_MESSAGE}</p>
       <Button asChild size="lg" className="self-center">
