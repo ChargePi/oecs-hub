@@ -114,7 +114,7 @@ selfservice:
       after:
         default_browser_return_url: http://registry.localhost:8000/
     settings:
-      ui_url: http://registry.localhost:8000/settings
+      ui_url: http://registry.localhost:8000/profile
       # Kratos's own default already requires AAL2 to change credentials (password,
       # totp, webauthn) even when this is aal1 - that's native behavior, not something
       # this config needs to fight. This only controls reaching the settings page itself.
