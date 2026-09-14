@@ -45,6 +45,9 @@ const RecoveryPage = lazy(() =>
 const VerificationPage = lazy(() =>
   import('@/features/auth/verification-page').then((m) => ({ default: m.VerificationPage })),
 )
+const AuthErrorPage = lazy(() =>
+  import('@/features/auth/auth-error-page').then((m) => ({ default: m.AuthErrorPage })),
+)
 const ProfilePage = lazy(() =>
   import('@/features/account/profile-page').then((m) => ({ default: m.ProfilePage })),
 )
@@ -99,6 +102,7 @@ export const router = createBrowserRouter([
       { path: 'auth/register', element: <RegisterPage /> },
       { path: 'auth/recovery', element: <RecoveryPage /> },
       { path: 'auth/verification', element: <VerificationPage /> },
+      { path: 'auth/error', element: <AuthErrorPage /> },
       {
         path: 'profile',
         element: (
