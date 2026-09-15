@@ -12,6 +12,10 @@ const (
 	StatusSubmitted Status = "submitted"
 	StatusVerified  Status = "verified"
 	StatusRejected  Status = "rejected"
+	// StatusCancelled is a manufacturer-initiated withdrawal of their own submission,
+	// distinct from an admin StatusRejected decision. Only reachable from
+	// StatusSubmitted - see Service.CancelSubmission.
+	StatusCancelled Status = "cancelled"
 )
 
 type Charger struct {

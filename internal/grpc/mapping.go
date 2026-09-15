@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sort"
 
+	manufacturerv1 "github.com/ChargePi/oecs-hub/gen/proto/manufacturer/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
@@ -114,6 +115,8 @@ func submissionStatusToProto(s charger.Status) registryv1.SubmissionStatus {
 		return registryv1.SubmissionStatus_SUBMISSION_STATUS_VERIFIED
 	case charger.StatusRejected:
 		return registryv1.SubmissionStatus_SUBMISSION_STATUS_REJECTED
+	case charger.StatusCancelled:
+		return registryv1.SubmissionStatus_SUBMISSION_STATUS_CANCELLED
 	default:
 		return registryv1.SubmissionStatus_SUBMISSION_STATUS_UNSPECIFIED
 	}
@@ -127,6 +130,8 @@ func submissionStatusToDomain(s registryv1.SubmissionStatus) charger.Status {
 		return charger.StatusVerified
 	case registryv1.SubmissionStatus_SUBMISSION_STATUS_REJECTED:
 		return charger.StatusRejected
+	case registryv1.SubmissionStatus_SUBMISSION_STATUS_CANCELLED:
+		return charger.StatusCancelled
 	default:
 		return ""
 	}
@@ -205,6 +210,30 @@ func chargersToProtoSummaries(chargers []*charger.Charger) []*registryv1.Charger
 	out := make([]*registryv1.ChargerVariantSummary, len(chargers))
 	for i, c := range chargers {
 		out[i] = chargerToProtoSummary(c)
+	}
+
+	return out
+}
+
+// chargerToManufacturerSummaryProto wraps chargerToProtoSummary with the submission
+// timestamps the manufacturer self-service API's table needs.
+func chargerToManufacturerSummaryProto(c *charger.Charger) *manufacturerv1.ManufacturerChargerSummary {
+	summary := &manufacturerv1.ManufacturerChargerSummary{
+		Summary:     chargerToProtoSummary(c),
+		SubmittedAt: timestamppb.New(c.SubmittedAt),
+		Spec:        c.Spec,
+	}
+	if c.ReviewedAt != nil {
+		summary.ReviewedAt = timestamppb.New(*c.ReviewedAt)
+	}
+
+	return summary
+}
+
+func chargersToManufacturerSummaryProto(chargers []*charger.Charger) []*manufacturerv1.ManufacturerChargerSummary {
+	out := make([]*manufacturerv1.ManufacturerChargerSummary, len(chargers))
+	for i, c := range chargers {
+		out[i] = chargerToManufacturerSummaryProto(c)
 	}
 
 	return out

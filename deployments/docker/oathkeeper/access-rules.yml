@@ -95,6 +95,27 @@
   mutators:
     - handler: header
 
+- id: manufacturer-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # manufacturer.v1.ManufacturerService is registered on the same public gRPC server
+    # as RegistryService (see cmd/app/main.go), not the isolated AdminAPI - manufacturers
+    # authenticate as ordinary browser users, same as registry-service-submit-charger-spec
+    # above. Every RPC is self-service and manufacturer-only - enumerated explicitly, same
+    # reasoning as registry-service-default's comment above.
+    url: "http://<.*>/manufacturer.v1.ManufacturerService/<GetManufacturerChargers|CancelSubmission|EditSpecification>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required. Manufacturer-vs-individual
+  # eligibility isn't checked here either (same known gap noted above) - it's enforced
+  # in the Go handler instead.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: conversation-service
   upstream:
     url: http://host.docker.internal:50051

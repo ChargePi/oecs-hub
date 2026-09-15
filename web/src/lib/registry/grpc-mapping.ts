@@ -181,6 +181,7 @@ const SUBMISSION_STATUS_FROM_PROTO: Partial<
   [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_SUBMITTED]: 'submitted',
   [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_VERIFIED]: 'verified',
   [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_REJECTED]: 'rejected',
+  [registry_v1_registry_pb.SubmissionStatus.SUBMISSION_STATUS_CANCELLED]: 'cancelled',
 }
 
 export function submissionStatusFromProto(

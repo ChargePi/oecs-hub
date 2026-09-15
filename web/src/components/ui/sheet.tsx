@@ -48,7 +48,7 @@ function SheetContent({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          'bg-popover text-popover-foreground data-open:animate-in data-open:fade-in-0 data-[side=right]:data-open:slide-in-from-right-10 data-closed:animate-out data-closed:fade-out-0 data-[side=right]:data-closed:slide-out-to-right-10 fixed z-50 flex flex-col gap-0 bg-clip-padding shadow-lg transition duration-200 ease-in-out data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-full data-[side=right]:border-l data-[side=right]:border-border data-[side=right]:sm:max-w-md',
+          'bg-popover text-popover-foreground data-open:animate-in data-open:fade-in-0 data-[side=right]:data-open:slide-in-from-right-10 data-[side=left]:data-open:slide-in-from-left-10 data-closed:animate-out data-closed:fade-out-0 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=left]:data-closed:slide-out-to-left-10 fixed z-50 flex flex-col gap-0 bg-clip-padding shadow-lg transition duration-200 ease-in-out data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-full data-[side=right]:border-l data-[side=right]:border-border data-[side=right]:sm:max-w-md data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-full data-[side=left]:border-r data-[side=left]:border-border data-[side=left]:sm:max-w-md',
           className,
         )}
         {...props}

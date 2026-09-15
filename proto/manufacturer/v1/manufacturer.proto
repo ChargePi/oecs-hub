@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package manufacturer.v1;
+
+import "google/protobuf/timestamp.proto";
+import "registry/v1/registry.proto";
+
+// ManufacturerChargerSummary wraps a ChargerVariantSummary with the submission
+// timestamps the manufacturer's own submissions table needs, which the public-facing
+// summary doesn't carry.
+message ManufacturerChargerSummary {
+  registry.v1.ChargerVariantSummary summary = 1;
+  google.protobuf.Timestamp submitted_at = 2;
+  optional google.protobuf.Timestamp reviewed_at = 3;
+  // The full raw OECS spec, included here (unlike the public ChargerVariantSummary)
+  // so the "edit spec" segment can prefill the editor without a second round trip -
+  // this list is always scoped to the caller's own, typically small, set of
+  // submissions.
+  bytes spec = 4;
+}
+
+message GetManufacturerChargersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message GetManufacturerChargersResponse {
+  repeated ManufacturerChargerSummary chargers = 1;
+  int64 total_size = 2;
+  string next_page_token = 3;
+}
+
+message CancelSubmissionRequest {
+  string id = 1;
+}
+
+message CancelSubmissionResponse {
+  ManufacturerChargerSummary charger = 1;
+}
+
+message EditSpecificationRequest {
+  string id = 1;
+  bytes spec = 2;
+}
+
+message EditSpecificationResponse {
+  registry.v1.ChargerVariant variant = 1;
+}
+
+// ManufacturerService is a manufacturer-only, self-service API: every RPC derives the
+// caller and the scope of "their" chargers from the authenticated identity, never from
+// a client-supplied id.
+service ManufacturerService {
+  // GetManufacturerChargers lists the authenticated manufacturer's own submissions,
+  // across every status (submitted/verified/rejected/cancelled).
+  rpc GetManufacturerChargers(GetManufacturerChargersRequest) returns (GetManufacturerChargersResponse);
+  // CancelSubmission withdraws one of the caller's own pending submissions.
+  rpc CancelSubmission(CancelSubmissionRequest) returns (CancelSubmissionResponse);
+  // EditSpecification overwrites the spec of one of the caller's own pending
+  // submissions.
+  rpc EditSpecification(EditSpecificationRequest) returns (EditSpecificationResponse);
+}

@@ -121,6 +121,10 @@ func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchF
 		query = query.Where("status IN ?", statuses)
 	}
 
+	if filters.SubmitterIdentityID != nil {
+		query = query.Where("submitted_by_identity_id = ?", *filters.SubmitterIdentityID)
+	}
+
 	for _, f := range filters.FieldFilters {
 		path, vars, err := fieldFilterPredicate(f)
 		if err != nil {
@@ -165,6 +169,63 @@ func (r *ChargerRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 	result := r.db.WithContext(ctx).Model(&chargerVariantEntity{}).Where("id = ?", id).Updates(updates)
 	if result.Error != nil {
 		return nil, fmt.Errorf("update charger status: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, charger.ErrNotFound
+	}
+
+	return r.GetForReview(ctx, id)
+}
+
+// UpdateSpec overwrites id's spec and extracted fields with c's, scoped to rows still
+// owned by submitterIdentityID and pending review.
+func (r *ChargerRepository) UpdateSpec(ctx context.Context, id, submitterIdentityID uuid.UUID, c *charger.Charger) (*charger.Charger, error) {
+	entity := chargerToEntity(c)
+
+	updates := map[string]any{
+		"manufacturer_name":    entity.ManufacturerName,
+		"manufacturer_country": entity.ManufacturerCountry,
+		"series":               entity.Series,
+		"model_name":           entity.ModelName,
+		"part_number":          entity.PartNumber,
+		"charger_type":         entity.ChargerType,
+		"model_status":         entity.ModelStatus,
+		"connector_types":      entity.ConnectorTypes,
+		"protocols":            entity.Protocols,
+		"min_power_watts":      entity.MinPowerWatts,
+		"max_power_watts":      entity.MaxPowerWatts,
+		"product_image_url":    entity.ProductImageURL,
+		"schema_version":       entity.SchemaVersion,
+		"spec":                 entity.Spec,
+		"updated_at":           gorm.Expr("NOW()"),
+	}
+
+	result := r.db.WithContext(ctx).Model(&chargerVariantEntity{}).
+		Where("id = ? AND submitted_by_identity_id = ? AND status = ?", id, submitterIdentityID, string(charger.StatusSubmitted)).
+		Updates(updates)
+	if result.Error != nil {
+		return nil, fmt.Errorf("update charger spec: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, charger.ErrNotFound
+	}
+
+	return r.GetForReview(ctx, id)
+}
+
+// CancelSubmission sets id's status to cancelled, scoped to rows still owned by
+// submitterIdentityID and pending review.
+func (r *ChargerRepository) CancelSubmission(ctx context.Context, id, submitterIdentityID uuid.UUID) (*charger.Charger, error) {
+	result := r.db.WithContext(ctx).Model(&chargerVariantEntity{}).
+		Where("id = ? AND submitted_by_identity_id = ? AND status = ?", id, submitterIdentityID, string(charger.StatusSubmitted)).
+		Updates(map[string]any{
+			"status":     string(charger.StatusCancelled),
+			"updated_at": gorm.Expr("NOW()"),
+		})
+	if result.Error != nil {
+		return nil, fmt.Errorf("cancel submission: %w", result.Error)
 	}
 
 	if result.RowsAffected == 0 {

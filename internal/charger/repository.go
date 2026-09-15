@@ -41,6 +41,10 @@ type SearchFilters struct {
 	MaxPowerWatts  *float64
 	Statuses       []Status
 	FieldFilters   []FieldFilter
+	// SubmitterIdentityID, if set, matches only chargers submitted by this Kratos
+	// identity - used by the manufacturer self-service API to scope results to the
+	// caller's own submissions, regardless of status.
+	SubmitterIdentityID *uuid.UUID
 }
 
 type Repository interface {
@@ -52,6 +56,17 @@ type Repository interface {
 	// ListByIDs silently omits missing/unverified IDs rather than erroring.
 	ListByIDs(ctx context.Context, ids []uuid.UUID) ([]*Charger, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status Status, manufacturerID *uuid.UUID) (*Charger, error)
+	// UpdateSpec overwrites id's spec and extracted fields with c's, but only while id is
+	// still owned by submitterIdentityID and has Status == StatusSubmitted. Returns
+	// ErrNotFound otherwise (ambiguous between not-found/not-yours/already-reviewed,
+	// matching UpdateStatus's terseness) - used by the manufacturer self-service
+	// EditSpecification RPC.
+	UpdateSpec(ctx context.Context, id, submitterIdentityID uuid.UUID, c *Charger) (*Charger, error)
+	// CancelSubmission sets id's Status to StatusCancelled, but only while id is still
+	// owned by submitterIdentityID and has Status == StatusSubmitted. Returns ErrNotFound
+	// otherwise, same ambiguity as UpdateSpec. Used by the manufacturer self-service
+	// CancelSubmission RPC.
+	CancelSubmission(ctx context.Context, id, submitterIdentityID uuid.UUID) (*Charger, error)
 	// UpsertRatings records raterIdentityID's score for each input category against
 	// variantID, overwriting any prior score of theirs in the same category, then returns
 	// the recomputed aggregate across all raters. Returns ErrNotFound if variantID doesn't

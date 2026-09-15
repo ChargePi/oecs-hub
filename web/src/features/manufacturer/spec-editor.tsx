@@ -1,11 +1,10 @@
-import { type ChangeEvent, type DragEvent, useMemo, useRef, useState } from 'react'
+import { type ChangeEvent, type DragEvent, type ReactNode, useMemo, useRef, useState } from 'react'
 import Editor, { type OnMount, type OnValidate } from '@monaco-editor/react'
 import { CheckCircle2, Upload, XCircle } from 'lucide-react'
 
 import { jsonDefaults } from 'monaco-editor/languages/features/json/register'
 
 import { monaco } from '@/lib/monaco-setup'
-import { registryClient } from '@/lib/registry/client'
 import { useToastAction } from '@/lib/use-toast-action'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -14,11 +13,35 @@ import acWallboxExample from './example-specs/ac-wallbox-full.json?raw'
 import dcFastChargerExample from './example-specs/dc-fast-charger-full.json?raw'
 import { useOecsJsonSchemas } from './use-oecs-json-schemas'
 
-type SubmitState = { status: 'idle' } | { status: 'success'; id: string } | { status: 'error'; message: string }
+type SubmitState = { status: 'idle' } | { status: 'success' } | { status: 'error'; message: string }
 
-export function SubmitChargerPage() {
+export interface SpecEditorProps {
+  /** '' for a new submission, or the existing spec JSON when editing one. */
+  initialValue?: string
+  /** Only shown (and only loadable) when there's no initialValue - editing an existing
+   *  spec has nothing to do with the "new submission" examples. */
+  showExamples?: boolean
+  onSubmit: (raw: string) => Promise<unknown>
+  submitLabel: string
+  submittingLabel: string
+  successMessage: ReactNode
+}
+
+/**
+ * The Monaco JSON editor + OECS schema validation + upload/drag-drop block shared by
+ * "submit a new spec" and "edit an existing spec". Callers own what onSubmit actually
+ * does with the raw JSON (submit vs. edit).
+ */
+export function SpecEditor({
+  initialValue = '',
+  showExamples = true,
+  onSubmit,
+  submitLabel,
+  submittingLabel,
+  successMessage,
+}: SpecEditorProps) {
   const { schema, error: schemasError } = useOecsJsonSchemas()
-  const [value, setValue] = useState('')
+  const [value, setValue] = useState(initialValue)
   const [errorCount, setErrorCount] = useState(0)
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' })
   const [isDraggingFile, setIsDraggingFile] = useState(false)
@@ -90,41 +113,35 @@ export function SubmitChargerPage() {
       return
     }
 
-    const result = await run(() => registryClient.submitChargerSpec(new TextEncoder().encode(value)))
-    if (result) setSubmitState({ status: 'success', id: result.id })
+    const result = await run(() => onSubmit(value))
+    if (result !== undefined) setSubmitState({ status: 'success' })
   }
 
   const canSubmit = schemasLoaded && value.trim().length > 0 && errorCount === 0 && !isPending
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-10 md:px-6">
-      <div>
-        <h1 className="font-heading text-2xl font-semibold">Submit a charger spec</h1>
-        <p className="text-sm text-muted-foreground">
-          Paste or upload an OECS charger schema below. It's validated against the OECS 2.0.0 schema
-          as you type; fix any errors before submitting.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-          <Upload />
-          Upload file
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json,application/json"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
-        <Button variant="outline" size="sm" onClick={() => setValue(acWallboxExample)}>
-          Load AC wallbox example
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setValue(dcFastChargerExample)}>
-          Load DC fast charger example
-        </Button>
-      </div>
+    <div className="flex w-full flex-col gap-4">
+      {showExamples && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Upload />
+            Upload file
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <Button variant="outline" size="sm" onClick={() => setValue(acWallboxExample)}>
+            Load AC wallbox example
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setValue(dcFastChargerExample)}>
+            Load DC fast charger example
+          </Button>
+        </div>
+      )}
 
       <div
         className="relative overflow-hidden rounded-lg border border-border/60"
@@ -170,25 +187,22 @@ export function SubmitChargerPage() {
                 : '')}
         </p>
         <Button onClick={handleSubmit} disabled={!canSubmit}>
-          {isPending ? 'Submitting…' : 'Submit'}
+          {isPending ? submittingLabel : submitLabel}
         </Button>
       </div>
 
       {submitState.status === 'success' && (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Submitted</AlertTitle>
-          <AlertDescription>
-            Your spec was submitted for review (id: {submitState.id}). You'll see it listed as
-            "submitted" until an admin verifies it.
-          </AlertDescription>
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{successMessage}</AlertDescription>
         </Alert>
       )}
 
       {submitState.status === 'error' && (
         <Alert variant="destructive">
           <XCircle />
-          <AlertTitle>Submission failed</AlertTitle>
+          <AlertTitle>Failed</AlertTitle>
           <AlertDescription>{submitState.message}</AlertDescription>
         </Alert>
       )}

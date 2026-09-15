@@ -56,9 +56,9 @@ const AuthErrorPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('@/features/account/profile-page').then((m) => ({ default: m.ProfilePage })),
 )
-const SubmitChargerPage = lazy(() =>
-  import('@/features/submit-charger/submit-charger-page').then((m) => ({
-    default: m.SubmitChargerPage,
+const ManufacturerChargersPage = lazy(() =>
+  import('@/features/manufacturer/manufacturer-chargers-page').then((m) => ({
+    default: m.ManufacturerChargersPage,
   })),
 )
 const PrivacyPage = lazy(() =>
@@ -117,11 +117,12 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      { path: 'submit-charger', element: <Navigate to="/manufacturer/chargers" replace /> },
       {
-        path: 'submit-charger',
+        path: 'manufacturer/chargers',
         element: (
           <RequireManufacturer>
-            <SubmitChargerPage />
+            <ManufacturerChargersPage />
           </RequireManufacturer>
         ),
       },

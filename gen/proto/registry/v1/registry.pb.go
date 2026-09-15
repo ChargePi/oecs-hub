@@ -222,6 +222,9 @@ const (
 	SubmissionStatus_SUBMISSION_STATUS_SUBMITTED   SubmissionStatus = 1
 	SubmissionStatus_SUBMISSION_STATUS_VERIFIED    SubmissionStatus = 2
 	SubmissionStatus_SUBMISSION_STATUS_REJECTED    SubmissionStatus = 3
+	// A manufacturer withdrew their own pending submission - distinct from an admin
+	// rejection.
+	SubmissionStatus_SUBMISSION_STATUS_CANCELLED SubmissionStatus = 4
 )
 
 // Enum value maps for SubmissionStatus.
@@ -231,12 +234,14 @@ var (
 		1: "SUBMISSION_STATUS_SUBMITTED",
 		2: "SUBMISSION_STATUS_VERIFIED",
 		3: "SUBMISSION_STATUS_REJECTED",
+		4: "SUBMISSION_STATUS_CANCELLED",
 	}
 	SubmissionStatus_value = map[string]int32{
 		"SUBMISSION_STATUS_UNSPECIFIED": 0,
 		"SUBMISSION_STATUS_SUBMITTED":   1,
 		"SUBMISSION_STATUS_VERIFIED":    2,
 		"SUBMISSION_STATUS_REJECTED":    3,
+		"SUBMISSION_STATUS_CANCELLED":   4,
 	}
 )
 
@@ -1732,12 +1737,13 @@ const file_registry_v1_registry_proto_rawDesc = "" +
 	"\x12&\n" +
 	"\"CONNECTOR_TYPE_INDUSTRIAL_IEC60309\x10\v\x12/\n" +
 	"+CONNECTOR_TYPE_MCS_MEGAWATT_CHARGING_SYSTEM\x10\f\x12\x18\n" +
-	"\x14CONNECTOR_TYPE_OTHER\x10\r*\x96\x01\n" +
+	"\x14CONNECTOR_TYPE_OTHER\x10\r*\xb7\x01\n" +
 	"\x10SubmissionStatus\x12!\n" +
 	"\x1dSUBMISSION_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bSUBMISSION_STATUS_SUBMITTED\x10\x01\x12\x1e\n" +
 	"\x1aSUBMISSION_STATUS_VERIFIED\x10\x02\x12\x1e\n" +
-	"\x1aSUBMISSION_STATUS_REJECTED\x10\x032\x89\x05\n" +
+	"\x1aSUBMISSION_STATUS_REJECTED\x10\x03\x12\x1f\n" +
+	"\x1bSUBMISSION_STATUS_CANCELLED\x10\x042\x89\x05\n" +
 	"\x0fRegistryService\x12Y\n" +
 	"\x0eSearchChargers\x12\".registry.v1.SearchChargersRequest\x1a#.registry.v1.SearchChargersResponse\x12_\n" +
 	"\x10GetManufacturers\x12$.registry.v1.GetManufacturersRequest\x1a%.registry.v1.GetManufacturersResponse\x12M\n" +
