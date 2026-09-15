@@ -108,10 +108,18 @@ http:
           - url: "http://host.docker.internal:50051"
 
     billing:
-      # Separate compose project, reachable via the host - same as `conversation` above.
+      # Separate compose project (oecs-billing-service), but its own compose file
+      # explicitly joins this stack's network as "oecs-hub_default" for this purpose -
+      # reach it by container name directly, not via host.docker.internal (unlike
+      # `conversation`, which stays on its own project's network and has no such join).
+      # host.docker.internal was tried first (matching `conversation`'s pattern) but
+      # proved unreliable here: Traefik's container resolves it to a Docker Desktop/WSL2
+      # VM address that accepts the connection but never forwards traffic to the
+      # published host port, so every request hung until the client's own timeout -
+      # confirmed by `billing-service`'s container logs never showing the request landing.
       loadBalancer:
         servers:
-          - url: "http://host.docker.internal:50060"
+          - url: "http://billing-service:50060"
 
   middlewares:
     strip-ory:

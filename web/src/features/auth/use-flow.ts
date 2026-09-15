@@ -18,9 +18,14 @@ export function useFlow<T>(
   get: (id: string) => Promise<T>,
   recreateOn: unknown[] = [],
   enabled = true,
+  // Explicit override for the URL's `?flow=`, incl. `null` to ignore it outright. Used by
+  // RegisterPage: a `?flow=` that doesn't match its own resume check belongs to an
+  // unrelated flow (e.g. Kratos's generic sign-up link) and must not be fetched here -
+  // `undefined` (the default) means "trust the URL", as every other caller wants.
+  flowIdOverride?: string | null,
 ) {
   const [searchParams] = useSearchParams()
-  const flowId = searchParams.get('flow')
+  const flowId = flowIdOverride !== undefined ? flowIdOverride : searchParams.get('flow')
   // Keyed by flowId so a change in flowId can never show a stale flow/error from a
   // previous id - only ever set from the effect's async callbacks below, never
   // synchronously in the effect body (that would trigger a cascading extra render).

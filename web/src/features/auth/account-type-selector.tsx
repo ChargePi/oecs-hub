@@ -6,12 +6,23 @@ import type { AccountType } from '@/lib/auth/types'
 interface AccountTypeOption {
   value: AccountType
   label: string
+  description: string
   icon: typeof Building2
 }
 
 const OPTIONS: readonly AccountTypeOption[] = [
-  { value: 'manufacturer', label: 'Manufacturer', icon: Building2 },
-  { value: 'individual', label: 'Individual', icon: User },
+  {
+    value: 'manufacturer',
+    label: 'Manufacturer',
+    description: 'For charger brands. List your models and manage your company profile.',
+    icon: Building2,
+  },
+  {
+    value: 'individual',
+    label: 'Individual',
+    description: 'Explore, compare, and rate chargers.',
+    icon: User,
+  },
 ]
 
 interface AccountTypeSelectorProps {
@@ -35,9 +46,9 @@ export function AccountTypeSelector({ value, onChange }: AccountTypeSelectorProp
             aria-pressed={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-center transition-colors',
+              'flex flex-col items-center gap-1.5 rounded-xl border px-3 py-4 text-center transition-colors',
               selected
-                ? 'border-primary bg-primary/5'
+                ? 'border-primary bg-primary/15'
                 : 'border-border/60 hover:border-border hover:bg-muted/40',
             )}
           >
@@ -48,6 +59,7 @@ export function AccountTypeSelector({ value, onChange }: AccountTypeSelectorProp
             <span className={cn('text-sm font-medium', !selected && 'text-muted-foreground')}>
               {option.label}
             </span>
+            <span className="text-xs text-muted-foreground">{option.description}</span>
           </button>
         )
       })}

@@ -1,14 +1,7 @@
 import { useState } from 'react'
 import { FlowType } from '@ory/client-fetch'
 import type { UiNode } from '@ory/client-fetch'
-import {
-  Node,
-  OryCard,
-  OryCardContent,
-  OryCardValidationMessages,
-  OryForm,
-  useOryFlow,
-} from '@ory/elements-react'
+import { Node, OryCard, OryCardValidationMessages, OryForm, useOryFlow } from '@ory/elements-react'
 
 import { BILLING_ENABLED } from '@/lib/billing/config'
 import type { PlanTier } from '@/lib/billing/types'
@@ -16,6 +9,7 @@ import type { AccountType } from '@/lib/auth/types'
 import { cn } from '@/lib/utils'
 import { PlanStep } from './plan-step'
 import {
+  isBillingDetailsTraitNode,
   isCredentialFieldNode,
   isDefaultNode,
   isGeneralInfoTraitNode,
@@ -23,22 +17,33 @@ import {
   isSubmitNode,
 } from './registration-node-groups'
 
+type Step = 1 | 2
+
 interface RegistrationWizardProps {
   accountType: AccountType
   onPlanSelect: (code: string, tier: PlanTier) => void
-}
-
-type Step = 1 | 2
-
-const STEP_LABELS: Record<Step, string> = {
-  1: 'General',
-  2: 'Plan',
+  // Controlled by register-page.tsx (1 = General info, 2 = Plan), which folds this into
+  // the overall Account type/General info/Plan/Billing breadcrumb and keeps this whole
+  // tree mounted (CSS-hidden) rather than unmounting it when stepping back to Account
+  // type - this component has no idea it's step 2-3 of a larger sequence.
+  step: Step
+  onStepChange: (step: Step) => void
 }
 
 // Never pair native `hidden` with a `display`-setting class like "flex" on one element -
 // the author class wins over `[hidden]`, so it'd stay visible. Toggle the class instead.
 function stepClassName(active: boolean): string {
-  return active ? 'flex flex-col gap-6' : 'hidden'
+  return active ? 'flex flex-col gap-8' : 'hidden'
+}
+
+function OrDivider() {
+  return (
+    <div className="flex items-center gap-3" aria-hidden="true">
+      <div className="h-px flex-1 bg-border/60" />
+      <span className="text-xs text-muted-foreground">or</span>
+      <div className="h-px flex-1 bg-border/60" />
+    </div>
+  )
 }
 
 // Matches Ory Elements' own button styling so Next/Back look identical to the flow's
@@ -58,11 +63,20 @@ function wizardButtonClassName(primary: boolean): string {
 // <Registration>'s prebuilt card renders every node flat in one form - splitting it into
 // steps means providing our own children instead, all inside one <OryForm>. Every node
 // stays mounted, only CSS-hidden per step, so field values survive stepping back and
-// forth. Billing details are managed in Lago's own portal (PaymentMethodsSection), not
-// collected here - the plan step only decides which plan gets subscribed at signup.
-export function RegistrationWizard({ accountType, onPlanSelect }: RegistrationWizardProps) {
+// forth. Card/payment details are managed in Lago's own portal (PaymentMethodsSection),
+// not collected here - the plan step only decides which plan gets subscribed at signup.
+// The schema's own company/billing-address traits ARE collected here though - they're
+// identity data, not payment data (traits.company.name is what SubmitChargerSpec
+// attributes a submission to, see internal/grpc/handler.go), and settings-flow-section.tsx
+// deliberately excludes them from Profile (isBillingDetailsTraitNode), so this is the only
+// place a user can ever set them.
+export function RegistrationWizard({
+  accountType,
+  onPlanSelect,
+  step,
+  onStepChange,
+}: RegistrationWizardProps) {
   const flowContainer = useOryFlow()
-  const [step, setStep] = useState<Step>(1)
   const [selectedPlanCode, setSelectedPlanCode] = useState<string | null>(null)
 
   if (flowContainer.flowType !== FlowType.Registration) return null
@@ -71,8 +85,14 @@ export function RegistrationWizard({ accountType, onPlanSelect }: RegistrationWi
   const defaultNodes = allNodes.filter(isDefaultNode)
   const oidcNodes = allNodes.filter(isOidcNode)
   const generalInfoNodes = allNodes.filter(isGeneralInfoTraitNode)
+  const billingDetailNodes = allNodes.filter(isBillingDetailsTraitNode)
   const credentialNodes = allNodes.filter(isCredentialFieldNode)
   const submitNodes = allNodes.filter(isSubmitNode)
+
+  // "Mailing address", not "Billing address": the breadcrumb already has a "Billing"
+  // step (payment/Lago portal, register-complete-page.tsx) - reusing the word here for
+  // an unrelated mailing address is exactly the duplication that got flagged.
+  const billingDetailsLabel = accountType === 'manufacturer' ? 'Company details' : 'Mailing address'
 
   const skipPlan = !BILLING_ENABLED
 
@@ -92,32 +112,35 @@ export function RegistrationWizard({ accountType, onPlanSelect }: RegistrationWi
   }
 
   return (
+    // OryCard is still needed - not for its box styling (that's overridden away via
+    // components.Card.Root in register-page.tsx, see the comment there for why), but
+    // because it's what wires up OryFormProvider (react-hook-form context) that <Node>/
+    // <OryForm> need - removing it entirely crashes with "Cannot destructure property
+    // 'setValue' of null" (confirmed empirically). The div supplies the layout OryCard's
+    // own (now-bypassed) padding/gap would otherwise have provided.
     <OryCard>
-      <OryCardContent>
+      <div className="flex flex-col gap-6">
         <OryCardValidationMessages />
-        {!skipPlan && (
-          <div className="mb-6 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            {([1, 2] as Step[]).map((s, i) => (
-              <span key={s} className="flex items-center gap-2">
-                {i > 0 && <span aria-hidden="true">&rarr;</span>}
-                <span className={s === step ? 'text-foreground' : undefined}>{STEP_LABELS[s]}</span>
-              </span>
-            ))}
-          </div>
-        )}
 
         <OryForm>
           {renderNodes(defaultNodes)}
 
           <div className={stepClassName(step === 1)}>
+            {oidcNodes.length > 0 && (
+              <>
+                <div className="flex flex-col gap-3">{renderNodes(oidcNodes)}</div>
+                <OrDivider />
+              </>
+            )}
             <div>
               <h2 className="mb-4 text-lg font-semibold text-foreground">General information</h2>
               {renderNodes(generalInfoNodes)}
               {renderNodes(credentialNodes)}
             </div>
-            {oidcNodes.length > 0 && (
-              <div className="flex flex-col gap-3 border-t border-border/60 pt-4">
-                {renderNodes(oidcNodes)}
+            {billingDetailNodes.length > 0 && (
+              <div className="border-t border-border/60 pt-6">
+                <h2 className="mb-4 text-lg font-semibold text-foreground">{billingDetailsLabel}</h2>
+                {renderNodes(billingDetailNodes)}
               </div>
             )}
             {skipPlan ? (
@@ -125,8 +148,8 @@ export function RegistrationWizard({ accountType, onPlanSelect }: RegistrationWi
             ) : (
               <button
                 type="button"
-                onClick={() => setStep(2)}
-                className={cn(wizardButtonClassName(true), 'self-start')}
+                onClick={() => onStepChange(2)}
+                className={cn(wizardButtonClassName(true), 'self-center')}
               >
                 Next
               </button>
@@ -135,18 +158,17 @@ export function RegistrationWizard({ accountType, onPlanSelect }: RegistrationWi
 
           {!skipPlan && (
             <div className={stepClassName(step === 2)}>
-              <h2 className="text-lg font-semibold text-foreground">Choose a plan</h2>
+              <h2 className="text-center text-xl font-semibold text-foreground">Choose a plan</h2>
               <PlanStep accountType={accountType} selectedCode={selectedPlanCode} onSelect={handlePlanSelect} />
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setStep(1)} className={wizardButtonClassName(false)}>
-                  Back
-                </button>
-                {renderNodes(submitNodes)}
-              </div>
+              {/* No Back button here - the breadcrumb's "General info" step is already
+                  clickable and goes back to the same place (register-page.tsx's
+                  handleStepClick), so this would've been a second way to do the same
+                  thing. */}
+              <div className="flex justify-center">{renderNodes(submitNodes)}</div>
             </div>
           )}
         </OryForm>
-      </OryCardContent>
+      </div>
     </OryCard>
   )
 }

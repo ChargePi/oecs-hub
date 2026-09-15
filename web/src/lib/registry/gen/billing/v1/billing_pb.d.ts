@@ -39,6 +39,11 @@ export class Plan extends jspb.Message {
   getTier(): PlanTier;
   setTier(value: PlanTier): Plan;
 
+  getIncludedUnits(): number;
+  setIncludedUnits(value: number): Plan;
+  hasIncludedUnits(): boolean;
+  clearIncludedUnits(): Plan;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Plan.AsObject;
   static toObject(includeInstance: boolean, msg: Plan): Plan.AsObject;
@@ -56,7 +61,13 @@ export namespace Plan {
     interval: string;
     accountType: AccountType;
     tier: PlanTier;
+    includedUnits?: number;
   };
+
+  export enum IncludedUnitsCase {
+    _INCLUDED_UNITS_NOT_SET = 0,
+    INCLUDED_UNITS = 8,
+  }
 }
 
 export class GetPlansResponse extends jspb.Message {

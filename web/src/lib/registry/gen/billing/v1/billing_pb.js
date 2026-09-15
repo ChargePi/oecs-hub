@@ -400,7 +400,8 @@ amountCents: jspb.Message.getFieldWithDefault(msg, 3, 0),
 currency: jspb.Message.getFieldWithDefault(msg, 4, ""),
 interval: jspb.Message.getFieldWithDefault(msg, 5, ""),
 accountType: jspb.Message.getFieldWithDefault(msg, 6, 0),
-tier: jspb.Message.getFieldWithDefault(msg, 7, 0)
+tier: jspb.Message.getFieldWithDefault(msg, 7, 0),
+includedUnits: (f = jspb.Message.getOptionalFloatingPointField(msg, 8)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -464,6 +465,10 @@ proto.billing.v1.Plan.deserializeBinaryFromReader = function(msg, reader) {
     case 7:
       var value = /** @type {!proto.billing.v1.PlanTier} */ (reader.readEnum());
       msg.setTier(value);
+      break;
+    case 8:
+      var value = /** @type {number} */ (reader.readDouble());
+      msg.setIncludedUnits(value);
       break;
     default:
       reader.skipField();
@@ -540,6 +545,13 @@ proto.billing.v1.Plan.serializeBinaryToWriter = function(message, writer) {
   if (f !== 0.0) {
     writer.writeEnum(
       7,
+      f
+    );
+  }
+  f = /** @type {number} */ (jspb.Message.getField(message, 8));
+  if (f != null) {
+    writer.writeDouble(
+      8,
       f
     );
   }
@@ -669,6 +681,42 @@ proto.billing.v1.Plan.prototype.getTier = function() {
  */
 proto.billing.v1.Plan.prototype.setTier = function(value) {
   return jspb.Message.setProto3EnumField(this, 7, value);
+};
+
+
+/**
+ * optional double included_units = 8;
+ * @return {number}
+ */
+proto.billing.v1.Plan.prototype.getIncludedUnits = function() {
+  return /** @type {number} */ (jspb.Message.getFloatingPointFieldWithDefault(this, 8, 0.0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.billing.v1.Plan} returns this
+ */
+proto.billing.v1.Plan.prototype.setIncludedUnits = function(value) {
+  return jspb.Message.setField(this, 8, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.billing.v1.Plan} returns this
+ */
+proto.billing.v1.Plan.prototype.clearIncludedUnits = function() {
+  return jspb.Message.setField(this, 8, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.billing.v1.Plan.prototype.hasIncludedUnits = function() {
+  return jspb.Message.getField(this, 8) != null;
 };
 
 

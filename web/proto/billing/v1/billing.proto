@@ -43,6 +43,9 @@ message Plan {
   string interval = 5;
   AccountType account_type = 6;
   PlanTier tier = 7;
+  // The plan's free monthly allowance, unset if it has none (e.g. a paid,
+  // pay-per-use plan).
+  optional double included_units = 8;
 }
 
 message GetPlansResponse {

@@ -18,6 +18,7 @@ selfservice:
   default_browser_return_url: http://registry.localhost:8000/
   allowed_return_urls:
     - http://registry.localhost:8000/
+    - http://registry.localhost:8000/auth/register/complete
 
   methods:
     password:
@@ -60,6 +61,12 @@ selfservice:
       enable_legacy_one_step: true
       after:
         password:
+          # <Registration>'s built-in submit handler hard-redirects the browser here via
+          # Kratos's own `continue_with: redirect_browser_to` the instant registration
+          # succeeds - the frontend's onSuccess callback can't prevent or redirect that.
+          # This step exists so a paid signup lands on a page that gets it to Lago's
+          # payment portal, instead of straight into the app with no way to pay yet.
+          default_browser_return_url: http://registry.localhost:8000/auth/register/complete
           hooks:
             - hook: session
             - hook: web_hook
@@ -82,6 +89,7 @@ selfservice:
                     value: changeme-dev-only
                     in: header
         oidc:
+          default_browser_return_url: http://registry.localhost:8000/auth/register/complete
           hooks:
             - hook: session
             - hook: web_hook
