@@ -16,6 +16,7 @@ export function AddToComparisonButton({ variant }: { variant: ChargerVariant }) 
         <Button
           variant="ghost"
           size="icon-sm"
+          className="hover:bg-primary/10 hover:text-primary"
           disabled={!inComparison && isFull}
           onClick={() => toggle(variant.id)}
           aria-label={
