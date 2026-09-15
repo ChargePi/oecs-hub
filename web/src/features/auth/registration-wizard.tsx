@@ -160,16 +160,11 @@ export function RegistrationWizard({
             <div className={stepClassName(step === 2)}>
               <h2 className="text-center text-xl font-semibold text-foreground">Choose a plan</h2>
               <PlanStep accountType={accountType} selectedCode={selectedPlanCode} onSelect={handlePlanSelect} />
-              <div className="flex justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onStepChange(1)}
-                  className={wizardButtonClassName(false)}
-                >
-                  Back
-                </button>
-                {renderNodes(submitNodes)}
-              </div>
+              {/* No Back button here - the breadcrumb's "General info" step is already
+                  clickable and goes back to the same place (register-page.tsx's
+                  handleStepClick), so this would've been a second way to do the same
+                  thing. */}
+              <div className="flex justify-center">{renderNodes(submitNodes)}</div>
             </div>
           )}
         </OryForm>
