@@ -7,6 +7,13 @@ export function loginRedirect(pathname: string, search: string): string {
   return `/auth/login?return_to=${returnTo}`
 }
 
+/** Hard-navigates to login when an action fails because the session is no longer
+ *  valid - a full reload, not client-side navigation, so it also clears any
+ *  in-memory state tied to the dead session (same precedent as useLogout). */
+export function redirectToLogin(): void {
+  window.location.assign(loginRedirect(window.location.pathname, window.location.search))
+}
+
 export interface Identity {
   id: string
   email: string

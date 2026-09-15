@@ -13,7 +13,6 @@ import { useRecommendationsSidebarStore } from '@/stores/recommendations-sidebar
 import { makeDraftKey, useChatStreamStore } from '@/stores/chat-stream-store'
 import { ChatComposer } from './chat-composer'
 import { ChatEmptyState } from './chat-empty-state'
-import { ChatErrorPopup } from './chat-error-popup'
 import { ChatMessageList } from './chat-message-list'
 import { RecommendationsPanel } from './recommendations-panel'
 
@@ -154,13 +153,6 @@ export function ChatDashboardPage() {
             />
             <div className="border-t border-border p-3">
               <div className="mx-auto w-full max-w-2xl">
-                {entry.error && (
-                  <ChatErrorPopup
-                    key={entry.error}
-                    message={entry.error}
-                    onDismiss={() => useChatStreamStore.getState().clearError(key!)}
-                  />
-                )}
                 <ChatComposer onSend={handleSend} disabled={isStreaming} prefill={resendDraft} />
               </div>
             </div>

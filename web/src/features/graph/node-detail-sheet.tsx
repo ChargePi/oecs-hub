@@ -70,7 +70,7 @@ export function NodeDetailSheet({
 
         {selection?.kind === 'product' && (
           <>
-            <SheetHeader>
+            <SheetHeader className="border-b-0 p-0">
               <SheetTitle className="sr-only">{selection.product.series}</SheetTitle>
             </SheetHeader>
             <div className="overflow-y-auto p-4">
@@ -90,7 +90,7 @@ export function NodeDetailSheet({
 
         {selection?.kind === 'variant' && (
           <>
-            <SheetHeader>
+            <SheetHeader className="border-b-0 p-0">
               <SheetTitle className="sr-only">{selection.variant.model.name}</SheetTitle>
             </SheetHeader>
             <div className="overflow-y-auto p-4">

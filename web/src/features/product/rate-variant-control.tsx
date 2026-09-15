@@ -15,17 +15,16 @@ import { StarRatingInput } from '@/components/ui/star-rating-input'
 import { loginRedirect, useIdentity } from '@/lib/auth/use-identity'
 import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import { registryClient } from '@/lib/registry/client'
-
-type SubmitState = { status: 'idle' } | { status: 'submitting' } | { status: 'error'; message: string }
+import { useToastAction } from '@/lib/use-toast-action'
 
 export function RateVariantControl({ variantId }: { variantId: string }) {
   const { identity, isLoading } = useIdentity()
   const location = useLocation()
   const queryClient = useQueryClient()
+  const { run, isPending } = useToastAction()
 
   const [open, setOpen] = useState(false)
   const [scores, setScores] = useState<Record<string, number>>({})
-  const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' })
 
   if (isLoading) return null
 
@@ -53,7 +52,6 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
 
   function openSheet() {
     setScores({})
-    setSubmitState({ status: 'idle' })
     setOpen(true)
   }
 
@@ -61,21 +59,15 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
     const ratings = Object.entries(scores).map(([categoryName, score]) => ({ categoryName, score }))
     if (ratings.length === 0) return
 
-    setSubmitState({ status: 'submitting' })
-
-    try {
+    const result = await run(async () => {
       await registryClient.submitVariantRating(variantId, ratings)
       await queryClient.invalidateQueries({ queryKey: ['variant', variantId] })
-      setOpen(false)
-    } catch (err) {
-      setSubmitState({
-        status: 'error',
-        message: err instanceof Error ? err.message : 'Submission failed.',
-      })
-    }
+      return true
+    })
+    if (result) setOpen(false)
   }
 
-  const canSubmit = Object.keys(scores).length > 0 && submitState.status !== 'submitting'
+  const canSubmit = Object.keys(scores).length > 0 && !isPending
 
   return (
     <>
@@ -110,12 +102,8 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
               </div>
             ))}
 
-            {submitState.status === 'error' && (
-              <p className="text-sm text-destructive">{submitState.message}</p>
-            )}
-
             <Button onClick={handleSubmit} disabled={!canSubmit}>
-              {submitState.status === 'submitting' ? 'Submitting…' : 'Submit rating'}
+              {isPending ? 'Submitting…' : 'Submit rating'}
             </Button>
           </div>
         </SheetContent>
