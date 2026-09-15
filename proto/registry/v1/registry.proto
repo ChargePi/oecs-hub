@@ -43,6 +43,9 @@ enum SubmissionStatus {
   SUBMISSION_STATUS_SUBMITTED = 1;
   SUBMISSION_STATUS_VERIFIED = 2;
   SUBMISSION_STATUS_REJECTED = 3;
+  // A manufacturer withdrew their own pending submission - distinct from an admin
+  // rejection.
+  SUBMISSION_STATUS_CANCELLED = 4;
 }
 
 message Contact {

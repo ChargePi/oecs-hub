@@ -4,6 +4,7 @@ import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AuthStatus } from '@/features/auth/auth-status'
 import { SearchBar } from '@/features/explorer/search-bar'
+import { useIdentity } from '@/lib/auth/use-identity'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 
 const NAV_LINKS = [
@@ -14,6 +15,14 @@ const NAV_LINKS = [
 ]
 
 export function Header() {
+  const { identity } = useIdentity()
+  const navLinks = [
+    ...NAV_LINKS,
+    ...(identity?.userType === 'manufacturer'
+      ? [{ to: '/manufacturer/chargers', label: 'My chargers' }]
+      : []),
+  ]
+
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4 md:px-6">
@@ -30,7 +39,7 @@ export function Header() {
         </div>
 
         <nav className="flex shrink-0 items-center gap-6">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

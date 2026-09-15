@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	manufacturerv1 "github.com/ChargePi/oecs-hub/gen/proto/manufacturer/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
 	"github.com/ChargePi/oecs-hub/internal/account"
 	"github.com/ChargePi/oecs-hub/internal/auth"
@@ -164,6 +165,7 @@ var (
 
 			grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
 			registryv1.RegisterRegistryServiceServer(grpcServer, grpcHandler.NewHandler(chargerSvc, manufacturerSvc, graphClient, kratosAdmin, accountSvc))
+			manufacturerv1.RegisterManufacturerServiceServer(grpcServer, grpcHandler.NewManufacturerHandler(chargerSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service
 			// callers) and gRPC-Web (browsers, which can't speak native gRPC's HTTP/2 trailers).

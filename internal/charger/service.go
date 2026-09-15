@@ -90,6 +90,72 @@ func (s *Service) Submit(ctx context.Context, raw []byte, submitterIdentityID uu
 	return c, nil
 }
 
+// EditSpecification re-validates raw against the OECS schema and re-extracts search
+// fields, then overwrites id's spec - same validation path as Submit. Only takes effect
+// while id is still owned by submitterIdentityID and pending review (StatusSubmitted);
+// otherwise returns an error wrapping ErrNotFound. Status is left unchanged.
+func (s *Service) EditSpecification(ctx context.Context, id, submitterIdentityID uuid.UUID, raw []byte) (*Charger, error) {
+	ctx, span := tracer.Start(ctx, "charger.EditSpecification", trace.WithAttributes(idAttr(id)))
+	defer span.End()
+
+	spec, err := s.validator.Validate(raw)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("%w: %w", ErrInvalidSpec, err)
+	}
+
+	fields := extract(spec)
+	c := &Charger{
+		ManufacturerName:    spec.Manufacturer.Name,
+		ManufacturerCountry: spec.Manufacturer.Country,
+		Series:              spec.Model.Series,
+		ModelName:           spec.Model.Name,
+		PartNumber:          spec.Model.PartNumber,
+		ChargerType:         spec.Model.Type,
+		ModelStatus:         spec.Model.Status,
+		ConnectorTypes:      fields.connectorTypes,
+		Protocols:           fields.protocols,
+		MinPowerWatts:       fields.minPowerWatts,
+		MaxPowerWatts:       fields.maxPowerWatts,
+		ProductImageURL:     spec.Model.ProductImageURL,
+		SchemaVersion:       spec.Version,
+		Spec:                raw,
+	}
+
+	updated, err := s.repo.UpdateSpec(ctx, id, submitterIdentityID, c)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("update charger spec: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, id)
+
+	return updated, nil
+}
+
+// CancelSubmission withdraws id, but only while it's still owned by submitterIdentityID
+// and pending review (StatusSubmitted); otherwise returns an error wrapping ErrNotFound.
+func (s *Service) CancelSubmission(ctx context.Context, id, submitterIdentityID uuid.UUID) (*Charger, error) {
+	ctx, span := tracer.Start(ctx, "charger.CancelSubmission", trace.WithAttributes(idAttr(id)))
+	defer span.End()
+
+	updated, err := s.repo.CancelSubmission(ctx, id, submitterIdentityID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("cancel submission: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, id)
+
+	return updated, nil
+}
+
 // Get retrieves a verified charger by ID, cache-aside.
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (*Charger, error) {
 	ctx, span := tracer.Start(ctx, "charger.Get", trace.WithAttributes(idAttr(id)))

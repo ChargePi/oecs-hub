@@ -49,7 +49,7 @@ export interface ManufacturerSearchPage {
   totalSize: number
 }
 
-export type SubmissionStatus = 'unspecified' | 'submitted' | 'verified' | 'rejected'
+export type SubmissionStatus = 'unspecified' | 'submitted' | 'verified' | 'rejected' | 'cancelled'
 
 export interface SubmitChargerSpecResult {
   id: string
