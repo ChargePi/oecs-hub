@@ -1,5 +1,4 @@
-import { RpcError } from 'grpc-web'
-
+import { normalizeAndDispatch } from '@/lib/errors'
 import { BillingServiceClient } from '@/lib/registry/gen/billing/v1/BillingServiceClientPb'
 import {
   AccountType as ProtoAccountType,
@@ -30,12 +29,7 @@ const TIER_FROM_PROTO: Record<ProtoPlanTier, PlanTier | undefined> = {
 const client = new BillingServiceClient(BILLING_API_BASE, null, null)
 
 function mapError(err: unknown, context: string): never {
-  if (err instanceof RpcError) {
-    console.error(`billing request failed: ${context}`, err.code, err.message)
-    throw new Error(err.message)
-  }
-  console.error(`billing request failed: ${context}`, err)
-  throw err instanceof Error ? err : new Error(String(err))
+  normalizeAndDispatch(err, context, 'billing request failed')
 }
 
 export async function getUsage(): Promise<Usage> {

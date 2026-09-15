@@ -6,6 +6,7 @@ import { jsonDefaults } from 'monaco-editor/languages/features/json/register'
 
 import { monaco } from '@/lib/monaco-setup'
 import { registryClient } from '@/lib/registry/client'
+import { useToastAction } from '@/lib/use-toast-action'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -13,11 +14,7 @@ import acWallboxExample from './example-specs/ac-wallbox-full.json?raw'
 import dcFastChargerExample from './example-specs/dc-fast-charger-full.json?raw'
 import { useOecsJsonSchemas } from './use-oecs-json-schemas'
 
-type SubmitState =
-  | { status: 'idle' }
-  | { status: 'submitting' }
-  | { status: 'success'; id: string }
-  | { status: 'error'; message: string }
+type SubmitState = { status: 'idle' } | { status: 'success'; id: string } | { status: 'error'; message: string }
 
 export function SubmitChargerPage() {
   const { schema, error: schemasError } = useOecsJsonSchemas()
@@ -25,6 +22,7 @@ export function SubmitChargerPage() {
   const [errorCount, setErrorCount] = useState(0)
   const [submitState, setSubmitState] = useState<SubmitState>({ status: 'idle' })
   const [isDraggingFile, setIsDraggingFile] = useState(false)
+  const { run, isPending } = useToastAction()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragDepthRef = useRef(0)
 
@@ -92,24 +90,11 @@ export function SubmitChargerPage() {
       return
     }
 
-    setSubmitState({ status: 'submitting' })
-
-    try {
-      const result = await registryClient.submitChargerSpec(new TextEncoder().encode(value))
-      setSubmitState({ status: 'success', id: result.id })
-    } catch (err) {
-      setSubmitState({
-        status: 'error',
-        message: err instanceof Error ? err.message : 'Submission failed.',
-      })
-    }
+    const result = await run(() => registryClient.submitChargerSpec(new TextEncoder().encode(value)))
+    if (result) setSubmitState({ status: 'success', id: result.id })
   }
 
-  const canSubmit =
-    schemasLoaded &&
-    value.trim().length > 0 &&
-    errorCount === 0 &&
-    submitState.status !== 'submitting'
+  const canSubmit = schemasLoaded && value.trim().length > 0 && errorCount === 0 && !isPending
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-10 md:px-6">
@@ -185,7 +170,7 @@ export function SubmitChargerPage() {
                 : '')}
         </p>
         <Button onClick={handleSubmit} disabled={!canSubmit}>
-          {submitState.status === 'submitting' ? 'Submitting…' : 'Submit'}
+          {isPending ? 'Submitting…' : 'Submit'}
         </Button>
       </div>
 

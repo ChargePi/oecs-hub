@@ -2,22 +2,27 @@ import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { redirectToLogin } from '@/lib/auth/use-identity'
 import { getPaymentPortalUrl } from '@/lib/billing/client'
+import { AuthRequiredError, errorSeverity } from '@/lib/errors'
+import { toastError } from '@/stores/toast-store'
 
 export function PaymentMethodsSection() {
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   async function handleManagePaymentMethod() {
     setIsLoading(true)
-    setError(null)
 
     try {
       const url = await getPaymentPortalUrl()
       // New tab, not an iframe - keeps card entry entirely off our origin.
       window.open(url, '_blank', 'noopener,noreferrer')
-    } catch {
-      setError("Couldn't open the payment portal. Please try again shortly.")
+    } catch (err) {
+      if (err instanceof AuthRequiredError) {
+        redirectToLogin()
+        return
+      }
+      toastError("Couldn't open the payment portal. Please try again shortly.", undefined, errorSeverity(err))
     } finally {
       setIsLoading(false)
     }
@@ -36,7 +41,6 @@ export function PaymentMethodsSection() {
         <Button onClick={handleManagePaymentMethod} disabled={isLoading} className="self-start">
           {isLoading ? 'Opening…' : 'Manage payment method'}
         </Button>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </CardContent>
     </Card>
   )

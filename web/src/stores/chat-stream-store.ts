@@ -10,6 +10,8 @@ import type {
   SelectedChoice,
   TurnStatus,
 } from '@/lib/chat/types'
+import { GENERIC_ERROR_MESSAGE } from '@/lib/errors'
+import { toastError } from '@/stores/toast-store'
 import { useChatActivityStore } from './chat-activity-store'
 
 export type ChatStreamPhase = 'idle' | 'streaming' | 'error'
@@ -58,7 +60,6 @@ interface ChatStreamStoreState {
     selectedChoices?: SelectedChoice[],
     chargerIds?: string[],
   ) => void
-  clearError: (key: string) => void
 }
 
 // Cancel closures are imperative handles, not render-relevant data, so they live
@@ -131,20 +132,13 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
           useChatActivityStore.getState().stopStreaming(payload.conversationId)
           void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
         },
-        onError: (message) => {
+        onError: (message, severity) => {
           writeBoth({ phase: 'error', error: message })
           useChatActivityStore.getState().stopStreaming(key)
+          toastError(GENERIC_ERROR_MESSAGE, "Message couldn't be sent", severity)
         },
       },
     )
-  },
-
-  clearError: (key) => {
-    set((s) => {
-      const existing = s.entries[key]
-      if (!existing?.error) return s
-      return { entries: { ...s.entries, [key]: { ...existing, error: null } } }
-    })
   },
 }))
 

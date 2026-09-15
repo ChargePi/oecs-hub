@@ -1,6 +1,7 @@
-import { RpcError } from 'grpc-web'
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb'
 
+import { redirectToLogin } from '@/lib/auth/use-identity'
+import { errorSeverity, isAuthError, normalizeAndDispatch, toErrorMessage, type ToastSeverity } from '@/lib/errors'
 import { ConversationServiceClient } from '@/lib/registry/gen/conversation/v1/ConversationServiceClientPb'
 import {
   DeleteConversationsRequest,
@@ -165,12 +166,7 @@ function lastRecommendationFromMessages(messages: ChatMessage[]): {
 }
 
 function mapError(err: unknown, context: string): never {
-  if (err instanceof RpcError) {
-    console.error(`chat request failed: ${context}`, err.code, err.message)
-    throw new Error(err.message)
-  }
-  console.error(`chat request failed: ${context}`, err)
-  throw err instanceof Error ? err : new Error(String(err))
+  normalizeAndDispatch(err, context, 'chat request failed')
 }
 
 export async function listConversations(userId: string): Promise<ConversationSummary[]> {
@@ -255,7 +251,7 @@ export interface StreamHandlers {
   onMessages?: (messages: ChatMessage[]) => void
   onStatus?: (status: TurnStatus) => void
   onDone?: (payload: StreamDonePayload) => void
-  onError?: (message: string) => void
+  onError?: (message: string, severity: ToastSeverity) => void
 }
 
 const STATUS_POLL_INTERVAL_MS = 700
@@ -366,9 +362,11 @@ export function streamChat(
       })
     } catch (err) {
       if (cancelled) return
-      const message =
-        err instanceof RpcError ? err.message : err instanceof Error ? err.message : String(err)
-      handlers.onError?.(message)
+      if (isAuthError(err)) {
+        redirectToLogin()
+        return
+      }
+      handlers.onError?.(toErrorMessage(err, 'streamChat', 'chat request failed'), errorSeverity(err))
     }
   })()
 

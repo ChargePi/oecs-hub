@@ -1,4 +1,6 @@
 import { RpcError, StatusCode } from 'grpc-web'
+
+import { normalizeAndDispatch } from '@/lib/errors'
 import type {
   CategoryRating,
   ChargerType,
@@ -192,12 +194,7 @@ export function isNotFound(err: unknown): boolean {
 }
 
 export function mapGrpcError(err: unknown, context: string): never {
-  if (err instanceof RpcError) {
-    console.error(`registry request failed: ${context}`, StatusCode[err.code], err.message)
-    throw new Error(err.message)
-  }
-  console.error(`registry request failed: ${context}`, err)
-  throw err
+  normalizeAndDispatch(err, context, 'registry request failed')
 }
 
 /** Fetches every page of a paginated RPC by following next_page_token until it's empty. */
