@@ -98,7 +98,7 @@ export async function getPlans(): Promise<Plan[]> {
     const resp = await client.getPlans(new GetPlansRequest(), {})
     return resp
       .getPlansList()
-      .map((p) => {
+      .map((p): Plan | null => {
         const accountType = ACCOUNT_TYPE_FROM_PROTO[p.getAccountType()]
         const tier = TIER_FROM_PROTO[p.getTier()]
         if (!accountType || !tier) return null
@@ -111,6 +111,7 @@ export async function getPlans(): Promise<Plan[]> {
           interval: p.getInterval(),
           accountType,
           tier,
+          ...(p.hasIncludedUnits() ? { includedUnits: p.getIncludedUnits() } : {}),
         }
       })
       .filter((p): p is Plan => p !== null)

@@ -42,4 +42,7 @@ export interface Plan {
   interval: string
   accountType: PlanAccountType
   tier: PlanTier
+  // The plan's free monthly allowance, absent if it has none (e.g. a paid,
+  // pay-per-use plan).
+  includedUnits?: number
 }

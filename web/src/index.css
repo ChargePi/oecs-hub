@@ -156,6 +156,39 @@ body .oecs-settings-wide [data-testid='ory/card'] {
   padding: 0;
 }
 
+/* Same strip as .oecs-settings-wide above, applied to the registration wizard
+ * (register-page.tsx) instead: General info/Plan should float on the page exactly like
+ * the Account type step (AccountTypeSelector, which was never an Ory card to begin with)
+ * rather than being the only steps boxed in. Keeping the [data-testid='ory/card'] element
+ * itself (just stripping its chrome), not swapping out Card.Root, is deliberate - Card.Root
+ * isn't only presentational, it's also what wires up OryFormProvider (removing it outright
+ * crashes with "Cannot destructure property 'setValue' of null", confirmed empirically),
+ * and replacing it with a bare passthrough drops the `.ory-elements` class it carries -
+ * every button's color is a var() chain rooted there (see the `body .ory-elements` block
+ * above), so buttons silently lost their theme too when tried that way.
+ */
+body .oecs-auth-unboxed [data-testid='ory/card'] {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* Stripping the card's own chrome above isn't the whole story: DefaultCard also wraps
+ * it in a middle div hardcoding `sm:w-[480px] sm:max-w-[480px]` (the same fixed
+ * auth-card width called out in the .oecs-settings-wide rule above), and that survives
+ * untouched by a data-testid-scoped rule since it's an ancestor, not the card itself.
+ * Left alone, General info/Plan render 32px wider than Account type's own 448px
+ * (max-w-md) column - confirmed empirically via bounding boxes (416px vs 480px) - which
+ * is exactly why the two still looked out of sync even after the cards' own classes
+ * became byte-identical. Same fix as .oecs-settings-wide's: let this page's own
+ * max-w-md be what sets the width instead.
+ */
+.oecs-auth-unboxed .ory-elements > div {
+  width: 100%;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
 }
