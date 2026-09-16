@@ -37,10 +37,18 @@ export function errorSeverity(err: unknown): ToastSeverity {
 }
 
 export function isAuthError(err: unknown): boolean {
-  return (
-    err instanceof RpcError &&
-    (err.code === StatusCode.UNAUTHENTICATED || err.code === StatusCode.PERMISSION_DENIED)
-  )
+  if (!(err instanceof RpcError)) return false
+  if (err.code === StatusCode.UNAUTHENTICATED || err.code === StatusCode.PERMISSION_DENIED) {
+    return true
+  }
+
+  // Oathkeeper rejects a cookie_session-gated route with a plain 401 before the request
+  // ever reaches the gRPC backend - that response isn't grpc-web-framed, so grpc-web can't
+  // parse a StatusCode out of it and leaves `code` unset instead of UNAUTHENTICATED. Every
+  // call in this app goes through that same gateway (see manufacturer/client.ts's BASE_URL
+  // comment), and a real network/backend failure always resolves to a valid StatusCode, so
+  // an unset code is itself the signal that the session died.
+  return err.code == null
 }
 
 /** Logs a caught RPC error under `logPrefix` and returns its display message,
