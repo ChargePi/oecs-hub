@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type { VariantProps } from 'class-variance-authority'
 
@@ -24,6 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { redirectToLogin } from '@/lib/auth/use-identity'
+import { AuthRequiredError } from '@/lib/errors'
 import { cancelSubmission, getManufacturerChargers } from '@/lib/manufacturer/client'
 import type { ManufacturerCharger } from '@/lib/manufacturer/types'
 import type { SubmissionStatus } from '@/lib/registry/types'
@@ -46,7 +48,7 @@ export function SubmissionsTable({ onEdit }: { onEdit: (charger: ManufacturerCha
   const { run } = useToastAction()
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  const { data, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
+  const { data, isLoading, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteQuery({
       queryKey: ['manufacturer', 'chargers'],
       queryFn: ({ pageParam }) =>
@@ -54,6 +56,13 @@ export function SubmissionsTable({ onEdit }: { onEdit: (charger: ManufacturerCha
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     })
+
+  // RequireManufacturer only guards the initial route entry off a cached identity, so a
+  // session that dies after that (expiry, logout elsewhere) still reaches this query - send
+  // the user back to login instead of leaving them on a permanently empty table.
+  useEffect(() => {
+    if (error instanceof AuthRequiredError) redirectToLogin()
+  }, [error])
 
   if (isLoading) return <Skeleton className="h-48 w-full" />
 
