@@ -67,6 +67,28 @@ http:
       middlewares: ["oathkeeper-forwardauth"]
       service: backend-admin
 
+    admin-api:
+      # oecs-billing-service repo's admin-api, reached directly - same pattern as `billing`
+      # above (gRPC-Web, not raw gRPC like `admin`, so it gets a stripped artificial prefix).
+      rule: "Host(`registry.localhost`) && PathPrefix(`/admin-api`)"
+      entryPoints: ["web"]
+      middlewares: ["strip-admin-api", "oathkeeper-forwardauth"]
+      service: admin-api
+
+    admin-web:
+      # Must outrank the `web` catch-all below (priority 1) - `/admin` is a short prefix
+      # that PathPrefix(`/`) would otherwise shadow via first-match-wins router ordering.
+      rule: "Host(`registry.localhost`) && PathPrefix(`/admin`)"
+      entryPoints: ["web"]
+      priority: 2
+      # Stripped before forwarding: admin-web's own nginx/dist layout has no /admin
+      # subdirectory (files sit at the container's root), and the SPA is built with
+      # Vite's base set to /admin/ so the *browser* still requests everything under
+      # /admin - Traefik strips it back off for the backend, same split as admin-api's
+      # strip-admin-api middleware below.
+      middlewares: ["strip-admin"]
+      service: admin-web
+
     web:
       rule: "Host(`registry.localhost`) && PathPrefix(`/`)"
       entryPoints: ["web"]
@@ -121,6 +143,18 @@ http:
         servers:
           - url: "http://billing-service:50060"
 
+    admin-api:
+      # Same repo/network-join pattern as `billing` above (also oecs-billing-service, also
+      # joins "oecs-hub_default" for this purpose) - reach it by container name.
+      loadBalancer:
+        servers:
+          - url: "http://admin-api:50070"
+
+    admin-web:
+      loadBalancer:
+        servers:
+          - url: "http://admin-web:8080"
+
   middlewares:
     strip-ory:
       stripPrefix:
@@ -137,6 +171,14 @@ http:
     strip-billing-api:
       stripPrefix:
         prefixes: ["/billing-api"]
+
+    strip-admin-api:
+      stripPrefix:
+        prefixes: ["/admin-api"]
+
+    strip-admin:
+      stripPrefix:
+        prefixes: ["/admin"]
 
     oathkeeper-forwardauth:
       forwardAuth:

@@ -19,6 +19,10 @@ selfservice:
   allowed_return_urls:
     - http://registry.localhost:8000/
     - http://registry.localhost:8000/auth/register/complete
+    # admin-web (this same Kratos instance, served under /admin by Traefik) sends its own
+    # returnTo on logout so it lands back on its own login page instead of the public
+    # site's default_browser_return_url above.
+    - http://registry.localhost:8000/admin/auth/login
 
   methods:
     password:

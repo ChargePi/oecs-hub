@@ -170,6 +170,33 @@
   mutators:
     - handler: header
 
+- id: admin-api-service
+  upstream:
+    url: http://admin-api:50070
+  match:
+    # gRPC-Method-shaped, like registry-service-default above - matches AFTER Traefik's
+    # strip-admin-api middleware already ran (see this file's header comment), so no
+    # "/admin-api" prefix here.
+    url: "http://<.*>/adminapi.v1.AdminApiService/<.*>"
+    methods: ["POST"]
+  # Browser SPA session, unlike admin-service below (CLI/tooling bearer token) - admin-web
+  # is a logged-in browser app, not grpcurl/a Go client. Same Keto admin-relation
+  # authorizer as admin-service though - both gate on "is this identity an admin".
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: remote_json
+    config:
+      payload: |
+        {
+          "namespace": "Role",
+          "object": "admin",
+          "relation": "members",
+          "subject_id": "{{ print .Subject }}"
+        }
+  mutators:
+    - handler: header
+
 - id: admin-service
   upstream:
     url: http://backend:50052

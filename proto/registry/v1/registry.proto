@@ -46,6 +46,10 @@ enum SubmissionStatus {
   // A manufacturer withdrew their own pending submission - distinct from an admin
   // rejection.
   SUBMISSION_STATUS_CANCELLED = 4;
+  // An admin removed a previously verified (or otherwise reviewed) charger from the
+  // public registry - distinct from REJECTED (never approved) or CANCELLED
+  // (manufacturer-withdrawn). Excluded from public search/list/get, same as the others.
+  SUBMISSION_STATUS_ARCHIVED = 5;
 }
 
 message Contact {
