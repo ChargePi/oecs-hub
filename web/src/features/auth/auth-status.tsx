@@ -27,11 +27,17 @@ export function AuthStatus() {
     )
   }
 
+  const displayName =
+    identity.userType === 'manufacturer'
+      ? (identity.companyName ?? identity.name ?? identity.email)
+      : (identity.name ?? identity.email)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="rounded-full" aria-label="Account menu">
-          <CircleUserRound className="size-5" aria-hidden="true" />
+        <Button variant="ghost" size="sm" className="max-w-40 rounded-full sm:max-w-56">
+          <CircleUserRound className="size-5 shrink-0" aria-hidden="true" />
+          <span className="truncate">{displayName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

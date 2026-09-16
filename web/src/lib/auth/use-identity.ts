@@ -17,6 +17,7 @@ export function redirectToLogin(): void {
 export interface Identity {
   id: string
   email: string
+  name?: string
   userType: AccountType
   companyName?: string
 }
@@ -34,6 +35,7 @@ export function useIdentity(): { identity: Identity | null; isLoading: boolean }
     identity: {
       id: session.identity.id,
       email: traits.email,
+      name: traits.name,
       // schema_id, not a trait - see AccountType's own comment in ./types.
       userType: session.identity.schema_id as AccountType,
       companyName: 'company' in traits ? traits.company.name : undefined,
