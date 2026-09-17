@@ -149,6 +149,10 @@ services:
       - OECS_HUB_ADMIN_GRPC_ADDRESS=0.0.0.0:50052
       - OECS_HUB_AUTH_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
       - OECS_HUB_KRATOS_ADMIN_URL=http://kratos:4434
+      # oecs-billing-service runs from its own compose project and joins this network (see
+      # traefik/dynamic.yml) - so it isn't a depends_on, and project RPCs return
+      # Unavailable until it's up.
+      - OECS_HUB_BILLING_ADDRESS=billing-service:50060
     depends_on:
       - postgres
       - redis

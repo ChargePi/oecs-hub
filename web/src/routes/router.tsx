@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/app-shell'
 import { ExplorerLayout } from '@/components/layout/explorer-layout'
 import { ExplorerPage } from '@/features/explorer/explorer-page'
 import { CHAT_ENABLED } from '@/lib/chat/config'
-import { RequireAuth, RequireManufacturer } from './require-auth'
+import { RequireAuth } from './require-auth'
 
 const GraphPage = lazy(() =>
   import('@/features/graph/graph-page').then((m) => ({ default: m.GraphPage })),
@@ -56,10 +56,8 @@ const AuthErrorPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('@/features/account/profile-page').then((m) => ({ default: m.ProfilePage })),
 )
-const ManufacturerChargersPage = lazy(() =>
-  import('@/features/manufacturer/manufacturer-chargers-page').then((m) => ({
-    default: m.ManufacturerChargersPage,
-  })),
+const MyChargersPage = lazy(() =>
+  import('@/features/my-chargers/my-chargers-page').then((m) => ({ default: m.MyChargersPage })),
 )
 const PrivacyPage = lazy(() =>
   import('@/features/legal/privacy-page').then((m) => ({ default: m.PrivacyPage })),
@@ -117,13 +115,14 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
-      { path: 'submit-charger', element: <Navigate to="/manufacturer/chargers" replace /> },
+      { path: 'submit-charger', element: <Navigate to="/my-chargers" replace /> },
+      { path: 'manufacturer/chargers', element: <Navigate to="/my-chargers" replace /> },
       {
-        path: 'manufacturer/chargers',
+        path: 'my-chargers',
         element: (
-          <RequireManufacturer>
-            <ManufacturerChargersPage />
-          </RequireManufacturer>
+          <RequireAuth>
+            <MyChargersPage />
+          </RequireAuth>
         ),
       },
     ],

@@ -10,6 +10,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/pagination"
+	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -22,7 +23,6 @@ type ChargerService interface {
 	Get(ctx context.Context, id uuid.UUID) (*charger.Charger, error)
 	Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	GetMany(ctx context.Context, ids []uuid.UUID) ([]*charger.Charger, error)
-	SubmitRating(ctx context.Context, variantID, raterIdentityID uuid.UUID, inputs []charger.RatingInput) (charger.RatingsSummary, error)
 }
 
 // ManufacturerService is the subset of manufacturer.Service the public handler depends on.
@@ -54,10 +54,20 @@ type Handler struct {
 	graph        GraphService
 	kratos       KratosClient
 	account      AccountService
+	// ratings backs the deprecated SubmitVariantRating shim only; the rating write path
+	// itself belongs to userchargers.v1.RatingService now.
+	ratings UserRatingService
 }
 
-func NewHandler(charger ChargerService, manufacturer ManufacturerService, graph GraphService, kratos KratosClient, account AccountService) *Handler {
-	return &Handler{charger: charger, manufacturer: manufacturer, graph: graph, kratos: kratos, account: account}
+func NewHandler(charger ChargerService, manufacturer ManufacturerService, graph GraphService, kratos KratosClient, account AccountService, ratings UserRatingService) *Handler {
+	return &Handler{
+		charger:      charger,
+		manufacturer: manufacturer,
+		graph:        graph,
+		kratos:       kratos,
+		account:      account,
+		ratings:      ratings,
+	}
 }
 
 func (h *Handler) SearchChargers(ctx context.Context, req *registryv1.SearchChargersRequest) (*registryv1.SearchChargersResponse, error) {
@@ -296,14 +306,13 @@ func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitC
 	}, nil
 }
 
+// SubmitVariantRating is deprecated: userchargers.v1.RatingService.SubmitRating owns the
+// rating write path now. Kept as a thin delegating shim so clients generated before the
+// move keep working; remove once none are left.
 func (h *Handler) SubmitVariantRating(ctx context.Context, req *registryv1.SubmitVariantRatingRequest) (*registryv1.SubmitVariantRatingResponse, error) {
-	identity, err := auth.RequireIdentity(ctx)
+	identityID, err := requireIndividualIdentity(ctx)
 	if err != nil {
 		return nil, err
-	}
-
-	if identity.UserType != "individual" {
-		return nil, status.Error(codes.PermissionDenied, "only individual accounts can submit ratings")
 	}
 
 	variantID, err := uuid.Parse(req.GetVariantId())
@@ -315,26 +324,14 @@ func (h *Handler) SubmitVariantRating(ctx context.Context, req *registryv1.Submi
 		return nil, status.Error(codes.InvalidArgument, "ratings is required")
 	}
 
-	identityID, err := uuid.Parse(identity.ID)
-	if err != nil {
-		return nil, status.Error(codes.Internal, "invalid identity id from proxy")
-	}
-
-	inputs := make([]charger.RatingInput, len(req.GetRatings()))
+	inputs := make([]userchargers.RatingInput, len(req.GetRatings()))
 	for i, r := range req.GetRatings() {
-		inputs[i] = charger.RatingInput{CategoryName: r.GetCategoryName(), Score: int(r.GetScore())}
+		inputs[i] = userchargers.RatingInput{CategoryName: r.GetCategoryName(), Score: int(r.GetScore())}
 	}
 
-	summary, err := h.charger.SubmitRating(ctx, variantID, identityID, inputs)
+	summary, err := h.ratings.SubmitRating(ctx, variantID, identityID, inputs)
 	if err != nil {
-		switch {
-		case errors.Is(err, charger.ErrNotFound):
-			return nil, status.Error(codes.NotFound, "charger not found")
-		case errors.Is(err, charger.ErrInvalidCategory), errors.Is(err, charger.ErrInvalidScore):
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		default:
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		return nil, userChargersError(err)
 	}
 
 	return &registryv1.SubmitVariantRatingResponse{

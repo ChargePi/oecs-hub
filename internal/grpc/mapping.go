@@ -9,6 +9,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
+	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -148,7 +149,7 @@ func ratingsToProto(raw []byte) []*registryv1.CategoryRating {
 		return nil
 	}
 
-	var summary charger.RatingsSummary
+	var summary userchargers.RatingsSummary
 	if err := json.Unmarshal(raw, &summary); err != nil || len(summary) == 0 {
 		return nil
 	}
@@ -158,7 +159,7 @@ func ratingsToProto(raw []byte) []*registryv1.CategoryRating {
 
 // ratingsSummaryToProto converts an already-decoded RatingsSummary into the proto list,
 // sorted by category name for a stable response order.
-func ratingsSummaryToProto(summary charger.RatingsSummary) []*registryv1.CategoryRating {
+func ratingsSummaryToProto(summary userchargers.RatingsSummary) []*registryv1.CategoryRating {
 	names := make([]string, 0, len(summary))
 	for name := range summary {
 		names = append(names, name)

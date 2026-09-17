@@ -220,3 +220,55 @@
         }
   mutators:
     - handler: header
+
+- id: userchargers-favorite-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # userchargers.v1's three services are registered on the same public gRPC server as
+    # RegistryService (see cmd/app/main.go). Every RPC is self-service and
+    # individual-only - enumerated explicitly, same reasoning as registry-service-default
+    # above.
+    url: "http://<.*>/userchargers.v1.FavoriteService/<FavoriteCharger|ListFavorites>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required. Individual-vs-manufacturer eligibility
+  # isn't checked here (same known gap as registry-service-submit-variant-rating) - it's
+  # enforced in the Go handler instead.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: userchargers-project-service
+  upstream:
+    url: http://backend:50051
+  match:
+    url: "http://<.*>/userchargers.v1.ProjectService/<CreateProject|UpdateProject|DeleteProject|ListProjects|GetProject|ManageProjectChargers>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required. The paid-plan gate on projects is *not*
+  # here either: no authorizer can see a Lago plan, so internal/entitlement checks it in
+  # the Go handler and returns PermissionDenied.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: userchargers-rating-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # The rating write path moved here from registry-service-submit-variant-rating above,
+    # which stays as a deprecated shim for clients generated before the move.
+    url: "http://<.*>/userchargers.v1.RatingService/<SubmitRating|ListMyRatings>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header

@@ -22,21 +22,3 @@ export function RequireAuth({ children }: PropsWithChildren) {
 
   return children
 }
-
-export function RequireManufacturer({ children }: PropsWithChildren) {
-  const { identity, isLoading } = useIdentity()
-  const location = useLocation()
-
-  if (isLoading) return <GuardSkeleton />
-  if (!identity) return <Navigate to={loginRedirect(location.pathname, location.search)} replace />
-
-  if (identity.userType !== 'manufacturer') {
-    return (
-      <div className="mx-auto max-w-md py-16 text-center text-sm text-muted-foreground">
-        This page is only available to manufacturer accounts.
-      </div>
-    )
-  }
-
-  return children
-}

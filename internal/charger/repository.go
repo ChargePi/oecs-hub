@@ -67,11 +67,6 @@ type Repository interface {
 	// otherwise, same ambiguity as UpdateSpec. Used by the manufacturer self-service
 	// CancelSubmission RPC.
 	CancelSubmission(ctx context.Context, id, submitterIdentityID uuid.UUID) (*Charger, error)
-	// UpsertRatings records raterIdentityID's score for each input category against
-	// variantID, overwriting any prior score of theirs in the same category, then returns
-	// the recomputed aggregate across all raters. Returns ErrNotFound if variantID doesn't
-	// exist or isn't verified.
-	UpsertRatings(ctx context.Context, variantID, raterIdentityID uuid.UUID, inputs []RatingInput) (RatingsSummary, error)
 }
 
 type Cache interface {

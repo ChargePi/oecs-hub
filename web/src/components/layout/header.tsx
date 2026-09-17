@@ -18,9 +18,7 @@ export function Header() {
   const { identity } = useIdentity()
   const navLinks = [
     ...NAV_LINKS,
-    ...(identity?.userType === 'manufacturer'
-      ? [{ to: '/manufacturer/chargers', label: 'My chargers' }]
-      : []),
+    ...(identity ? [{ to: '/my-chargers', label: 'My chargers' }] : []),
   ]
 
   return (

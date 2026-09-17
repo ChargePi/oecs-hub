@@ -1,4 +1,4 @@
-import type { CategoryRating, ChargerVariant, Manufacturer, Product } from '@/lib/oecs/types'
+import type { ChargerVariant, Manufacturer, Product } from '@/lib/oecs/types'
 
 export interface ManufacturerSummary extends Manufacturer {
   productCount: number
@@ -56,16 +56,6 @@ export interface SubmitChargerSpecResult {
   status: SubmissionStatus
 }
 
-export interface SubmitVariantRatingInput {
-  categoryName: string
-  score: number
-}
-
-export interface SubmitVariantRatingResult {
-  variantId: string
-  ratings: CategoryRating[]
-}
-
 /**
  * Everything the UI needs to read OECS registry data through. Backed today by
  * MockRegistryClient (in-memory fixtures); a real HTTP/gRPC implementation of this same
@@ -95,15 +85,6 @@ export interface RegistryClient {
    * can't) pass an identity here.
    */
   submitChargerSpec(spec: Uint8Array): Promise<SubmitChargerSpecResult>
-  /**
-   * Submits an individual account's per-category scores for a charger variant. The server
-   * derives the rater from the authenticated session, same as submitChargerSpec, and rejects
-   * the call unless it's an individual (not manufacturer) account.
-   */
-  submitVariantRating(
-    variantId: string,
-    ratings: SubmitVariantRatingInput[],
-  ): Promise<SubmitVariantRatingResult>
   /**
    * Permanently deletes the authenticated caller's own account. There is no id parameter -
    * the target is always derived server-side from the session.

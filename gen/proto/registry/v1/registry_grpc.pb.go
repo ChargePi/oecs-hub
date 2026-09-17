@@ -38,6 +38,9 @@ type RegistryServiceClient interface {
 	GetCharger(ctx context.Context, in *GetChargerRequest, opts ...grpc.CallOption) (*GetChargerResponse, error)
 	GetManufacturer(ctx context.Context, in *GetManufacturerRequest, opts ...grpc.CallOption) (*GetManufacturerResponse, error)
 	SubmitChargerSpec(ctx context.Context, in *SubmitChargerSpecRequest, opts ...grpc.CallOption) (*SubmitChargerSpecResponse, error)
+	// Deprecated: use userchargers.v1.RatingService.SubmitRating, which owns the rating
+	// write path now. Kept as a delegating shim for clients generated before the move;
+	// remove once none are left.
 	SubmitVariantRating(ctx context.Context, in *SubmitVariantRatingRequest, opts ...grpc.CallOption) (*SubmitVariantRatingResponse, error)
 	// DeleteAccount deletes the authenticated caller's own account.
 	DeleteAccount(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -130,6 +133,9 @@ type RegistryServiceServer interface {
 	GetCharger(context.Context, *GetChargerRequest) (*GetChargerResponse, error)
 	GetManufacturer(context.Context, *GetManufacturerRequest) (*GetManufacturerResponse, error)
 	SubmitChargerSpec(context.Context, *SubmitChargerSpecRequest) (*SubmitChargerSpecResponse, error)
+	// Deprecated: use userchargers.v1.RatingService.SubmitRating, which owns the rating
+	// write path now. Kept as a delegating shim for clients generated before the move;
+	// remove once none are left.
 	SubmitVariantRating(context.Context, *SubmitVariantRatingRequest) (*SubmitVariantRatingResponse, error)
 	// DeleteAccount deletes the authenticated caller's own account.
 	DeleteAccount(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
