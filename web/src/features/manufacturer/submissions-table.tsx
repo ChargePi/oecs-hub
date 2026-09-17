@@ -57,7 +57,7 @@ export function SubmissionsTable({ onEdit }: { onEdit: (charger: ManufacturerCha
       getNextPageParam: (lastPage) => lastPage.nextPageToken || undefined,
     })
 
-  // RequireManufacturer only guards the initial route entry off a cached identity, so a
+  // RequireAuth only guards the initial route entry off a cached identity, so a
   // session that dies after that (expiry, logout elsewhere) still reaches this query - send
   // the user back to login instead of leaving them on a permanently empty table.
   useEffect(() => {

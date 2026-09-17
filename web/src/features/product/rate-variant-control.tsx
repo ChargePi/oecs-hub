@@ -14,8 +14,8 @@ import {
 import { StarRatingInput } from '@/components/ui/star-rating-input'
 import { loginRedirect, useIdentity } from '@/lib/auth/use-identity'
 import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
-import { registryClient } from '@/lib/registry/client'
 import { useToastAction } from '@/lib/use-toast-action'
+import { submitRating } from '@/lib/user-chargers/client'
 
 export function RateVariantControl({ variantId }: { variantId: string }) {
   const { identity, isLoading } = useIdentity()
@@ -60,7 +60,7 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
     if (ratings.length === 0) return
 
     const result = await run(async () => {
-      await registryClient.submitVariantRating(variantId, ratings)
+      await submitRating(variantId, ratings)
       await queryClient.invalidateQueries({ queryKey: ['variant', variantId] })
       return true
     })
@@ -71,7 +71,7 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
 
   return (
     <>
-      <Button variant="outline" size="sm" className="w-fit" onClick={openSheet}>
+      <Button variant="outline" size="sm" className="self-center" onClick={openSheet}>
         <Star className="size-4" />
         Rate this charger
       </Button>
@@ -94,9 +94,7 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
                 </div>
                 <StarRatingInput
                   value={scores[category.name] ?? 0}
-                  onChange={(score) =>
-                    setScores((prev) => ({ ...prev, [category.name]: score }))
-                  }
+                  onChange={(score) => setScores((prev) => ({ ...prev, [category.name]: score }))}
                   aria-label={category.label}
                 />
               </div>

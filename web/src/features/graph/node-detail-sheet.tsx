@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { ChargerVariant, Manufacturer, Product } from '@/lib/oecs/types'
 import { registryClient } from '@/lib/registry/client'
 import { AddToComparisonButton } from '@/features/product/add-to-comparison-button'
+import { FavoriteButton } from '@/features/product/favorite-button'
 import { ManufacturerCard } from '@/features/product/manufacturer-card'
 import { ManufacturerLogo } from '@/features/product/manufacturer-logo'
 import { ProductDetail } from '@/features/product/product-detail'
@@ -43,9 +44,12 @@ export function NodeDetailSheet({
   const { data: fullVariant, isLoading } = useFullVariant(stub)
 
   const headerActions =
-    (selection?.kind === 'product' || selection?.kind === 'variant') && fullVariant
-      ? <AddToComparisonButton variant={fullVariant} />
-      : undefined
+    (selection?.kind === 'product' || selection?.kind === 'variant') && fullVariant ? (
+      <>
+        <FavoriteButton variant={fullVariant} />
+        <AddToComparisonButton variant={fullVariant} />
+      </>
+    ) : undefined
 
   return (
     <Sheet open={selection != null} onOpenChange={(open) => !open && onSelectionChange(null)}>

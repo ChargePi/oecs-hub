@@ -199,6 +199,9 @@ service RegistryService {
   rpc GetCharger(GetChargerRequest) returns (GetChargerResponse);
   rpc GetManufacturer(GetManufacturerRequest) returns (GetManufacturerResponse);
   rpc SubmitChargerSpec(SubmitChargerSpecRequest) returns (SubmitChargerSpecResponse);
+  // Deprecated: use userchargers.v1.RatingService.SubmitRating, which owns the rating
+  // write path now. Kept as a delegating shim for clients generated before the move;
+  // remove once none are left.
   rpc SubmitVariantRating(SubmitVariantRatingRequest) returns (SubmitVariantRatingResponse);
   // DeleteAccount deletes the authenticated caller's own account.
   rpc DeleteAccount(google.protobuf.Empty) returns (google.protobuf.Empty);

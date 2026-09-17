@@ -52,6 +52,17 @@ type KratosConfiguration struct {
 	AdminURL string `json:"adminUrl" mapstructure:"adminUrl" validate:"required" yaml:"adminUrl"`
 }
 
+// BillingConfiguration points at oecs-billing-service's gRPC port - the only source of
+// plan tiers, since there is no local plans table. Reached directly by container name
+// rather than through Traefik/Oathkeeper: this is a service-to-service call that forwards
+// the caller's identity headers itself, see internal/entitlement.
+type BillingConfiguration struct {
+	Address string `json:"address" mapstructure:"address" validate:"required" yaml:"address"`
+	// TierCacheTTL is the window in which a plan change isn't visible yet, so it is kept
+	// short.
+	TierCacheTTL time.Duration `json:"tierCacheTtl" mapstructure:"tierCacheTtl" yaml:"tierCacheTtl"`
+}
+
 type Configuration struct {
 	Database      DatabaseConfiguration  `json:"database"      mapstructure:"database"      validate:"required" yaml:"database"`
 	Redis         RedisConfiguration     `json:"redis"         mapstructure:"redis"         validate:"required" yaml:"redis"`
@@ -61,4 +72,5 @@ type Configuration struct {
 	AdminGRPC     AdminGRPCConfiguration `json:"adminGrpc"     mapstructure:"adminGrpc"     validate:"required" yaml:"adminGrpc"`
 	Auth          AuthConfiguration      `json:"auth"          mapstructure:"auth"          validate:"required" yaml:"auth"`
 	Kratos        KratosConfiguration    `json:"kratos"        mapstructure:"kratos"        validate:"required" yaml:"kratos"`
+	Billing       BillingConfiguration   `json:"billing"       mapstructure:"billing"       validate:"required" yaml:"billing"`
 }

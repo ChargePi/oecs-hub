@@ -4,6 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Skeleton } from '@/components/ui/skeleton'
 import type { ChargePointCandidate } from '@/lib/chat/types'
 import { registryClient } from '@/lib/registry/client'
+import { FavoriteButton } from '@/features/product/favorite-button'
 import { ProductDetail } from '@/features/product/product-detail'
 
 /** A chat ChargePointCandidate.id is the same ID space as a registry ChargerVariant.id
@@ -29,7 +30,7 @@ export function ItemDetailSheet({
 
   return (
     <Sheet open={candidate != null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent>
+      <SheetContent headerActions={variant ? <FavoriteButton variant={variant} /> : undefined}>
         {candidate && (
           <>
             <SheetHeader>
@@ -44,8 +45,8 @@ export function ItemDetailSheet({
                 <ProductDetail variant={variant} />
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Full spec unavailable for this charger — it may have been removed from
-                  the registry.
+                  Full spec unavailable for this charger — it may have been removed from the
+                  registry.
                 </p>
               )}
             </div>

@@ -11,11 +11,14 @@ import (
 	"strings"
 	"syscall"
 
+	billingv1 "github.com/ChargePi/oecs-hub/gen/proto/billing/v1"
 	manufacturerv1 "github.com/ChargePi/oecs-hub/gen/proto/manufacturer/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
+	userchargersv1 "github.com/ChargePi/oecs-hub/gen/proto/userchargers/v1"
 	"github.com/ChargePi/oecs-hub/internal/account"
 	"github.com/ChargePi/oecs-hub/internal/auth"
 	"github.com/ChargePi/oecs-hub/internal/charger"
+	"github.com/ChargePi/oecs-hub/internal/entitlement"
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	grpcHandler "github.com/ChargePi/oecs-hub/internal/grpc"
 	"github.com/ChargePi/oecs-hub/internal/grpc/adminserver"
@@ -25,6 +28,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
 	redisStorage "github.com/ChargePi/oecs-hub/internal/storage/redis"
+	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -42,6 +46,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
@@ -140,6 +145,32 @@ var (
 			kratosAdmin := kratos.NewAdminClient(cfg.Kratos.AdminURL)
 			accountSvc := account.NewService(kratos.NewSDKClient(cfg.Kratos.AdminURL))
 
+			// oecs-billing-service is the only source of plan tiers - there is no local
+			// plans table. grpc.NewClient doesn't dial here, so a billing service that is
+			// down doesn't hold up startup; it surfaces per-request instead.
+			billingConn, err := grpc.NewClient(cfg.Billing.Address,
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			)
+			if err != nil {
+				logger.Fatal("failed to create billing client", zap.Error(err))
+			}
+
+			defer func() {
+				if err := billingConn.Close(); err != nil {
+					logger.Error("failed to close billing client", zap.Error(err))
+				}
+			}()
+
+			entitlementSvc := entitlement.NewService(
+				billingv1.NewBillingServiceClient(billingConn),
+				redisStorage.NewTierCache(redisClient, cfg.Billing.TierCacheTTL),
+				cfg.Auth.GatewaySecret,
+			)
+
+			userChargersRepo := postgresStorage.NewUserChargersRepository(db)
+			userChargersSvc := userchargers.NewService(userChargersRepo, chargerSvc, chargerCache, entitlementSvc)
+
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv)
@@ -164,8 +195,11 @@ var (
 			)
 
 			grpc_health_v1.RegisterHealthServer(grpcServer, health.NewServer())
-			registryv1.RegisterRegistryServiceServer(grpcServer, grpcHandler.NewHandler(chargerSvc, manufacturerSvc, graphClient, kratosAdmin, accountSvc))
+			registryv1.RegisterRegistryServiceServer(grpcServer, grpcHandler.NewHandler(chargerSvc, manufacturerSvc, graphClient, kratosAdmin, accountSvc, userChargersSvc))
 			manufacturerv1.RegisterManufacturerServiceServer(grpcServer, grpcHandler.NewManufacturerHandler(chargerSvc))
+			userchargersv1.RegisterFavoriteServiceServer(grpcServer, grpcHandler.NewFavoriteHandler(userChargersSvc))
+			userchargersv1.RegisterProjectServiceServer(grpcServer, grpcHandler.NewProjectHandler(userChargersSvc))
+			userchargersv1.RegisterRatingServiceServer(grpcServer, grpcHandler.NewRatingHandler(userChargersSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service
 			// callers) and gRPC-Web (browsers, which can't speak native gRPC's HTTP/2 trailers).
@@ -247,6 +281,8 @@ func setDefaults() {
 	viper.SetDefault("redis.db", 0)
 	viper.SetDefault("redis.cacheTtl", "1h")
 	viper.SetDefault("memgraph.address", "bolt://localhost:7687")
+	viper.SetDefault("billing.address", "billing-service:50060")
+	viper.SetDefault("billing.tierCacheTtl", "5m")
 
 	_ = viper.BindEnv("database.dsn", "OECS_HUB_DATABASE_DSN")
 	_ = viper.BindEnv("redis.address", "OECS_HUB_REDIS_ADDRESS")
@@ -261,6 +297,8 @@ func setDefaults() {
 	_ = viper.BindEnv("adminGrpc.address", "OECS_HUB_ADMIN_GRPC_ADDRESS")
 	_ = viper.BindEnv("auth.gatewaySecret", "OECS_HUB_AUTH_GATEWAY_SECRET")
 	_ = viper.BindEnv("kratos.adminUrl", "OECS_HUB_KRATOS_ADMIN_URL")
+	_ = viper.BindEnv("billing.address", "OECS_HUB_BILLING_ADDRESS")
+	_ = viper.BindEnv("billing.tierCacheTtl", "OECS_HUB_BILLING_TIERCACHETTL")
 }
 
 // getConfiguration gets the configuration from cache or file.

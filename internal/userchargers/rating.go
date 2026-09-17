@@ -1,4 +1,4 @@
-package charger
+package userchargers
 
 import (
 	"errors"
