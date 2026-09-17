@@ -117,6 +117,8 @@ func submissionStatusToProto(s charger.Status) registryv1.SubmissionStatus {
 		return registryv1.SubmissionStatus_SUBMISSION_STATUS_REJECTED
 	case charger.StatusCancelled:
 		return registryv1.SubmissionStatus_SUBMISSION_STATUS_CANCELLED
+	case charger.StatusArchived:
+		return registryv1.SubmissionStatus_SUBMISSION_STATUS_ARCHIVED
 	default:
 		return registryv1.SubmissionStatus_SUBMISSION_STATUS_UNSPECIFIED
 	}
@@ -132,6 +134,8 @@ func submissionStatusToDomain(s registryv1.SubmissionStatus) charger.Status {
 		return charger.StatusRejected
 	case registryv1.SubmissionStatus_SUBMISSION_STATUS_CANCELLED:
 		return charger.StatusCancelled
+	case registryv1.SubmissionStatus_SUBMISSION_STATUS_ARCHIVED:
+		return charger.StatusArchived
 	default:
 		return ""
 	}

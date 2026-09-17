@@ -119,7 +119,7 @@ func (h *AdminHandler) SearchSchemas(ctx context.Context, req *adminv1.SearchSch
 }
 
 // UpdateSchemaStatus applies an admin decision. status must be
-// SUBMISSION_STATUS_VERIFIED or SUBMISSION_STATUS_REJECTED.
+// SUBMISSION_STATUS_VERIFIED, SUBMISSION_STATUS_REJECTED, or SUBMISSION_STATUS_ARCHIVED.
 func (h *AdminHandler) UpdateSchemaStatus(ctx context.Context, req *adminv1.UpdateSchemaStatusRequest) (*adminv1.UpdateSchemaStatusResponse, error) {
 	id, err := uuid.Parse(req.GetId())
 	if err != nil {
@@ -127,8 +127,9 @@ func (h *AdminHandler) UpdateSchemaStatus(ctx context.Context, req *adminv1.Upda
 	}
 
 	if req.GetStatus() != registryv1.SubmissionStatus_SUBMISSION_STATUS_VERIFIED &&
-		req.GetStatus() != registryv1.SubmissionStatus_SUBMISSION_STATUS_REJECTED {
-		return nil, status.Error(codes.InvalidArgument, "status must be SUBMISSION_STATUS_VERIFIED or SUBMISSION_STATUS_REJECTED")
+		req.GetStatus() != registryv1.SubmissionStatus_SUBMISSION_STATUS_REJECTED &&
+		req.GetStatus() != registryv1.SubmissionStatus_SUBMISSION_STATUS_ARCHIVED {
+		return nil, status.Error(codes.InvalidArgument, "status must be SUBMISSION_STATUS_VERIFIED, SUBMISSION_STATUS_REJECTED, or SUBMISSION_STATUS_ARCHIVED")
 	}
 
 	c, err := h.charger.ChangeStatus(ctx, id, submissionStatusToDomain(req.GetStatus()))

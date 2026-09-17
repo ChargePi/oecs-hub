@@ -16,6 +16,10 @@ const (
 	// distinct from an admin StatusRejected decision. Only reachable from
 	// StatusSubmitted - see Service.CancelSubmission.
 	StatusCancelled Status = "cancelled"
+	// StatusArchived is an admin-initiated removal of a previously reviewed charger from
+	// the public registry, distinct from StatusRejected (never approved) or
+	// StatusCancelled (manufacturer-withdrawn). Only reachable via AdminService.
+	StatusArchived Status = "archived"
 )
 
 type Charger struct {
