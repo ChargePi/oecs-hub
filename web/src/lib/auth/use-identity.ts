@@ -25,9 +25,13 @@ export interface Identity {
 // Thin projection of useSession() for call sites that only care about "am I logged in,
 // and as what" - not the full Kratos Session shape (AAL, authenticated_at, devices, ...).
 export function useIdentity(): { identity: Identity | null; isLoading: boolean } {
-  const { data: session, isLoading } = useSession()
+  const { data: session, isLoading, isError } = useSession()
 
-  if (!session?.identity) return { identity: null, isLoading }
+  // isError (exhausted retries on a real fetch failure) reads as "don't know yet", same as
+  // isLoading - NOT as "no session". Only a resolved query with no session data means that.
+  // Collapsing the two would make RequireAuth bounce a still-logged-in user to /auth/login
+  // over a transient backend/proxy failure that has nothing to do with their session.
+  if (!session?.identity) return { identity: null, isLoading: isLoading || isError }
 
   const traits = session.identity.traits as Traits
 
