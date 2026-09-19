@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	ory "github.com/ory/client-go"
-
 	"github.com/google/uuid"
+	ory "github.com/ory/client-go"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // SDKClient wraps Kratos's official Go SDK, used for admin API write operations.
@@ -18,6 +18,7 @@ type SDKClient struct {
 func NewSDKClient(baseURL string) *SDKClient {
 	cfg := ory.NewConfiguration()
 	cfg.Servers = ory.ServerConfigurations{{URL: baseURL}}
+	cfg.HTTPClient = &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
 	return &SDKClient{api: ory.NewAPIClient(cfg)}
 }
