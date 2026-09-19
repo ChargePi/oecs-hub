@@ -6,10 +6,11 @@ package keto
 import (
 	"context"
 	"fmt"
-
-	ketoclient "github.com/ory/keto-client-go"
+	"net/http"
 
 	"github.com/google/uuid"
+	ketoclient "github.com/ory/keto-client-go"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // Client wraps Keto's relationship write API.
@@ -20,6 +21,7 @@ type Client struct {
 func NewClient(writeURL string) *Client {
 	cfg := ketoclient.NewConfiguration()
 	cfg.Servers = ketoclient.ServerConfigurations{{URL: writeURL}}
+	cfg.HTTPClient = &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 
 	return &Client{api: ketoclient.NewAPIClient(cfg)}
 }

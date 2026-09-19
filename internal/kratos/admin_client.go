@@ -26,12 +26,16 @@ func NewAdminClient(baseURL string) *AdminClient {
 	return &AdminClient{baseURL: baseURL, http: http.DefaultClient}
 }
 
+type Traits struct {
+	Company Company `json:"company"`
+}
+
+type Company struct {
+	Name string `json:"name"`
+}
+
 type identity struct {
-	Traits struct {
-		Company struct {
-			Name string `json:"name"`
-		} `json:"company"`
-	} `json:"traits"`
+	Traits Traits `json:"traits"`
 }
 
 // CompanyName returns the identity's traits.company.name (identity.manufacturer.schema.json).
