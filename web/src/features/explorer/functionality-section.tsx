@@ -37,7 +37,7 @@ export function FunctionalitySection() {
       <div className="mx-auto max-w-5xl px-4 py-16 md:px-6 md:py-24">
         <Reveal>
           <h2 className="text-center text-2xl font-semibold tracking-tight">
-            Browse, compare, decide
+            Explore, compare, decide
           </h2>
           <p className="mt-2 text-center text-muted-foreground">
             Three steps to a charger decision you can defend.
@@ -53,7 +53,7 @@ export function FunctionalitySection() {
               <StepCard
                 icon={Search}
                 title="Browse"
-                body="Explore every manufacturer, product line and variant in the registry as a searchable, browsable graph."
+                body="Explore manufacturers, product lines and charger variants. The comparator helps you decide."
               />
             </a>
           </Reveal>
@@ -65,7 +65,7 @@ export function FunctionalitySection() {
               <StepCard
                 icon={GitCompare}
                 title="Compare"
-                body="Shortlist chargers side by side on power, connectors, protocols and price — the same view manufacturers see when reviewing submissions."
+                body="Compare chargers side by side on power, connectors, protocols and price to get the best fit for your needs."
               />
             </Link>
           </Reveal>
@@ -73,7 +73,7 @@ export function FunctionalitySection() {
             <StepCard
               icon={ShieldCheck}
               title="Decide"
-              body="Every spec is validated against the open OECS schema and reviewed before publishing, so the numbers you compare are ones you can trust."
+              body="Every charger specification is validated against the OECS schema and reviewed before publishing, so the numbers you compare are ones you can trust."
             />
           </Reveal>
 
@@ -86,7 +86,7 @@ export function FunctionalitySection() {
                 <StepCard
                   icon={Sparkles}
                   title="Ask the assistant"
-                  body="Describe what you need — power level, connector, budget — and get a shortlist back."
+                  body="Overwhelmed by the selection? Ask the assistant to help you find the best charger for your use case. Compare, discover and decide with confidence."
                 />
               </Link>
             ) : (
@@ -101,8 +101,7 @@ export function FunctionalitySection() {
                   </div>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  Describe what you need — power level, connector, budget — and get a shortlist
-                  back. Coming soon.
+                  Ask the assistant to help you find the best charger for your use case. Coming soon.
                 </CardContent>
               </Card>
             )}

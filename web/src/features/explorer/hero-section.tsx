@@ -13,7 +13,7 @@ export function HeroSection() {
       </Reveal>
       <Reveal delay={100}>
         <p className="mt-4 max-w-xl text-center text-muted-foreground">
-          An OECS-backed charger registry. Explore manufacturers, find chargers that suit your use
+          The OECS Hub is a charger registry and comparator. Explore manufacturers, find chargers that suit your use
           case, and compare them to get the best one.
         </p>
       </Reveal>
