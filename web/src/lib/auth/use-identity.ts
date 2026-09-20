@@ -1,3 +1,6 @@
+import { ResponseError } from '@ory/client-fetch'
+
+import { frontendApi } from './client'
 import { useSession } from './use-session'
 import type { AccountType, Traits } from './types'
 
@@ -12,6 +15,23 @@ export function loginRedirect(pathname: string, search: string): string {
  *  in-memory state tied to the dead session (same precedent as useLogout). */
 export function redirectToLogin(): void {
   window.location.assign(loginRedirect(window.location.pathname, window.location.search))
+}
+
+/** For failures that only *look* like a dead session (isAuthError's unset-code and
+ *  PERMISSION_DENIED heuristics also match gateway hiccups and real authorization
+ *  errors): asks Kratos, and hard-navigates to login only on a genuine 401. Resolves to
+ *  whether it redirected, so the caller knows whether to surface the error instead. */
+export async function redirectToLoginIfSessionDead(): Promise<boolean> {
+  try {
+    await frontendApi.toSession()
+    return false
+  } catch (err) {
+    if (err instanceof ResponseError && err.response.status === 401) {
+      redirectToLogin()
+      return true
+    }
+    return false
+  }
 }
 
 export interface Identity {

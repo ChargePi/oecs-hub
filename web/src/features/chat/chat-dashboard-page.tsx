@@ -132,11 +132,11 @@ export function ChatDashboardPage() {
   }
 
   const isStreaming = entry?.phase === 'streaming'
-  // Includes an errored first message on a brand-new conversation (no conversationId,
-  // no messages ever landed) - otherwise the failure has nowhere to render and silently
-  // reverts to the empty-state prompt as if nothing was sent.
+  // Streaming counts too: the optimistic user message is already in entry.messages, but
+  // an in-flight first send has no conversationId yet. A failed first send drops back to
+  // the empty state (the toast reports it), since its optimistic message is stripped.
   const hasActiveConversation =
-    !!entry && (entry.conversationId != null || entry.messages.length > 0 || entry.error != null)
+    !!entry && (entry.conversationId != null || entry.messages.length > 0 || isStreaming)
 
   return (
     <div className="flex min-h-0 flex-1">

@@ -36,6 +36,20 @@ const EMPTY_ENTRY: ChatStreamEntry = {
   error: null,
 }
 
+const OPTIMISTIC_ID_PREFIX = 'optimistic:'
+
+/** The user's just-sent message, shown before the server's echo arrives - replaced
+ *  wholesale when onMessages/onDone deliver the real message list. */
+function makeOptimisticMessage(message: string, selectedChoices?: SelectedChoice[]): ChatMessage {
+  return {
+    id: `${OPTIMISTIC_ID_PREFIX}${crypto.randomUUID()}`,
+    role: 'MESSAGE_ROLE_USER',
+    content: message,
+    metadata: selectedChoices?.length ? { selected_choices: selectedChoices } : undefined,
+    createdAt: new Date().toISOString(),
+  }
+}
+
 /** Placeholder key for a conversation with no server-assigned id yet. */
 function makeDraftKey(): string {
   return `draft:${crypto.randomUUID()}`
@@ -97,7 +111,15 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
 
     const prior = get().entries[key] ?? EMPTY_ENTRY
     set((s) => ({
-      entries: { ...s.entries, [key]: { ...prior, phase: 'streaming', error: null } },
+      entries: {
+        ...s.entries,
+        [key]: {
+          ...prior,
+          messages: [...prior.messages, makeOptimisticMessage(message, selectedChoices)],
+          phase: 'streaming',
+          error: null,
+        },
+      },
     }))
     useChatActivityStore.getState().startStreaming(key)
 
@@ -106,8 +128,10 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
       set((s) => {
         const merged = { ...(s.entries[key] ?? EMPTY_ENTRY), ...patch }
         const entries = { ...s.entries, [key]: merged }
-        if (patch.conversationId && patch.conversationId !== key) {
-          entries[patch.conversationId] = merged
+        // Every write, not just the one that first carries the id: the page switches to
+        // watching the real id mid-turn, so status/error updates must reach it too.
+        if (merged.conversationId && merged.conversationId !== key) {
+          entries[merged.conversationId] = merged
         }
         return { entries }
       })
@@ -116,7 +140,7 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
     cancelers[key] = streamChat(
       { conversationId: isDraftKey(key) ? '' : key, userId, message, selectedChoices, chargerIds },
       {
-        onMessages: (messages) => writeBoth({ messages }),
+        onMessages: (messages, conversationId) => writeBoth({ messages, conversationId }),
         onStatus: (status) => writeBoth({ status }),
         onDone: (payload) => {
           writeBoth({
@@ -133,7 +157,13 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
           void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
         },
         onError: (message, severity) => {
-          writeBoth({ phase: 'error', error: message })
+          // Drops the never-confirmed optimistic message so a retry doesn't duplicate it.
+          const current = get().entries[key]
+          writeBoth({
+            phase: 'error',
+            error: message,
+            messages: (current?.messages ?? []).filter((m) => !m.id.startsWith(OPTIMISTIC_ID_PREFIX)),
+          })
           useChatActivityStore.getState().stopStreaming(key)
           toastError(GENERIC_ERROR_MESSAGE, "Message couldn't be sent", severity)
         },

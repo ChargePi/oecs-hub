@@ -1,6 +1,6 @@
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb'
 
-import { redirectToLogin } from '@/lib/auth/use-identity'
+import { redirectToLoginIfSessionDead } from '@/lib/auth/use-identity'
 import { errorSeverity, isAuthError, normalizeAndDispatch, toErrorMessage, type ToastSeverity } from '@/lib/errors'
 import { ConversationServiceClient } from '@/lib/registry/gen/conversation/v1/ConversationServiceClientPb'
 import {
@@ -248,7 +248,7 @@ function buildOutgoingMetadata(params: {
 }
 
 export interface StreamHandlers {
-  onMessages?: (messages: ChatMessage[]) => void
+  onMessages?: (messages: ChatMessage[], conversationId: string) => void
   onStatus?: (status: TurnStatus) => void
   onDone?: (payload: StreamDonePayload) => void
   onError?: (message: string, severity: ToastSeverity) => void
@@ -313,7 +313,7 @@ export function streamChat(
       if (!conv) throw new Error('upsert conversation: empty response')
 
       const conversationId = conv.getId()
-      handlers.onMessages?.(conv.getMessagesList().map(messageFromProto))
+      handlers.onMessages?.(conv.getMessagesList().map(messageFromProto), conversationId)
 
       const deadline = Date.now() + STATUS_POLL_TIMEOUT_MS
       let lastStatus: TurnStatus | null = null
@@ -362,10 +362,10 @@ export function streamChat(
       })
     } catch (err) {
       if (cancelled) return
-      if (isAuthError(err)) {
-        redirectToLogin()
-        return
-      }
+      // Only a confirmed-dead session redirects (a hard reload); anything else that merely
+      // looks auth-shaped falls through to a normal error instead of bouncing via /auth/login.
+      if (isAuthError(err) && (await redirectToLoginIfSessionDead())) return
+      if (cancelled) return
       handlers.onError?.(toErrorMessage(err, 'streamChat', 'chat request failed'), errorSeverity(err))
     }
   })()
