@@ -42,19 +42,21 @@ services:
       - memgraph:/var/lib/memgraph
 
   traefik:
-    image: traefik:v3.3
+    image: traefik:v3.6
     container_name: oecs-hub-traefik
     hostname: traefik
     restart: unless-stopped
     command:
-      - --providers.file.filename=/etc/traefik/dynamic.yml
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=oecs-hub_default
       - --entrypoints.web.address=:80
       - --api.insecure=true
     ports:
       - "8000:80"
       - "8091:8080"
     volumes:
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
   kratos-migrate:
     image: oryd/kratos:v25.4.0
@@ -78,6 +80,16 @@ services:
       - OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET=${OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET:-}
     volumes:
       - ./kratos:/etc/config/kratos:ro
+    labels:
+      - traefik.enable=true
+      # Kratos serves at bare root; base_url only shapes the links it generates, so /ory
+      # is stripped before forwarding.
+      - traefik.http.routers.kratos.rule=Host(`registry.localhost`) && PathPrefix(`/ory`)
+      - traefik.http.routers.kratos.entrypoints=web
+      - traefik.http.routers.kratos.middlewares=strip-ory
+      - traefik.http.routers.kratos.service=kratos
+      - traefik.http.services.kratos.loadbalancer.server.port=4433
+      - traefik.http.middlewares.strip-ory.stripprefix.prefixes=/ory
     ports:
       - "4433:4433"
       # Admin API - dev-only, unauthenticated (see internal/kratos/admin_client.go).
@@ -150,9 +162,32 @@ services:
       - OECS_HUB_AUTH_GATEWAY_SECRET=${OECS_HUB_GATEWAY_SECRET:-changeme-dev-only}
       - OECS_HUB_KRATOS_ADMIN_URL=http://kratos:4434
       # oecs-billing-service runs from its own compose project and joins this network (see
-      # traefik/dynamic.yml) - so it isn't a depends_on, and project RPCs return
+      # oecs-billing-service's compose file) - so it isn't a depends_on, and project RPCs return
       # Unavailable until it's up.
       - OECS_HUB_BILLING_ADDRESS=billing-service:50060
+    labels:
+      - traefik.enable=true
+      # Shared forwardAuth middleware referenced by every protected router, including
+      # those labelled in oecs-billing-service's and oecs-recommendation-agent's composes.
+      - traefik.http.middlewares.oathkeeper-forwardauth.forwardauth.address=http://oathkeeper:4456/decisions
+      - traefik.http.middlewares.oathkeeper-forwardauth.forwardauth.authresponseheaders=X-User-Id,X-User-Email,X-User-Type,X-Gateway-Secret
+      # Public gRPC-Web API; /api is stripped since the handler expects the bare
+      # "/<package>.<Service>/<Method>" path.
+      - traefik.http.routers.backend.rule=Host(`registry.localhost`) && PathPrefix(`/api`)
+      - traefik.http.routers.backend.entrypoints=web
+      - traefik.http.routers.backend.middlewares=strip-api,oathkeeper-forwardauth
+      - traefik.http.routers.backend.service=backend
+      - traefik.http.services.backend.loadbalancer.server.port=50051
+      - traefik.http.middlewares.strip-api.stripprefix.prefixes=/api
+      # AdminService is native gRPC (no artificial prefix - clients call the literal
+      # "/admin.v1.AdminService/<Method>"), forwarded unmodified. h2c: its bare grpc.Server
+      # only speaks HTTP/2 framing.
+      - traefik.http.routers.backend-admin.rule=Host(`registry.localhost`) && PathPrefix(`/admin.v1.AdminService`)
+      - traefik.http.routers.backend-admin.entrypoints=web
+      - traefik.http.routers.backend-admin.middlewares=oathkeeper-forwardauth
+      - traefik.http.routers.backend-admin.service=backend-admin
+      - traefik.http.services.backend-admin.loadbalancer.server.port=50052
+      - traefik.http.services.backend-admin.loadbalancer.server.scheme=h2c
     depends_on:
       - postgres
       - redis
@@ -173,6 +208,14 @@ services:
       - KRATOS_URL=http://kratos:4433
     volumes:
       - ../../web/public/chat-prompts:/usr/share/nginx/html/chat-prompts:ro
+    labels:
+      - traefik.enable=true
+      # Catch-all SPA; priority 1 keeps every more specific router above it.
+      - traefik.http.routers.web.rule=Host(`registry.localhost`) && PathPrefix(`/`)
+      - traefik.http.routers.web.entrypoints=web
+      - traefik.http.routers.web.priority=1
+      - traefik.http.routers.web.service=web
+      - traefik.http.services.web.loadbalancer.server.port=8080
     depends_on:
       - backend
       - kratos
