@@ -3,6 +3,7 @@ import { Heart } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { canUseUserChargers } from '@/lib/auth/account-type'
 import { useIdentity } from '@/lib/auth/use-identity'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { useToastAction } from '@/lib/use-toast-action'
@@ -30,7 +31,7 @@ export function FavoriteButton({ variant }: { variant: ChargerVariant }) {
   const queryClient = useQueryClient()
   const { run, isPending } = useToastAction()
 
-  const enabled = identity?.userType === 'individual'
+  const enabled = identity ? canUseUserChargers(identity.userType) : false
   const { data: favoriteIds } = useFavoriteIds(enabled)
 
   if (!enabled) return null

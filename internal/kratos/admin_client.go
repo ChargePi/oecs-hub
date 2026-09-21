@@ -38,7 +38,7 @@ type identity struct {
 	Traits Traits `json:"traits"`
 }
 
-// CompanyName returns the identity's traits.company.name (identity.manufacturer.schema.json).
+// CompanyName returns the identity's traits.company.name (identity.manufacturer/business.schema.json).
 // Individual accounts have no company trait, so a missing value is returned as "" rather
 // than an error.
 func (c *AdminClient) CompanyName(ctx context.Context, identityID uuid.UUID) (string, error) {

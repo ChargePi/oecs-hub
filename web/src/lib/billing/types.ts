@@ -31,7 +31,7 @@ export interface InvoicesPage {
   totalSize: number
 }
 
-export type PlanAccountType = 'individual' | 'manufacturer'
+export type PlanAccountType = 'individual' | 'manufacturer' | 'business'
 export type PlanTier = 'free' | 'paid'
 
 export interface Plan {

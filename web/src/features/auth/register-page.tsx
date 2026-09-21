@@ -43,7 +43,7 @@ export function RegisterPage() {
   const isResuming = flowId !== null && pending?.flowId === flowId
 
   const [accountType, setAccountType] = useState<AccountType>(
-    isResuming && pending ? pending.accountType : 'manufacturer',
+    isResuming && pending ? pending.accountType : 'individual',
   )
   // Once true, never goes back to false - gates flow creation for good, so the flow
   // stays alive (just CSS-hidden, see `view` below) when the user clicks back to

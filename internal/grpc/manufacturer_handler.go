@@ -44,7 +44,7 @@ func requireManufacturerIdentity(ctx context.Context) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 
-	if identity.UserType != "manufacturer" {
+	if identity.UserType != auth.UserTypeManufacturer {
 		return uuid.Nil, status.Error(codes.PermissionDenied, "only manufacturer accounts can access this API")
 	}
 

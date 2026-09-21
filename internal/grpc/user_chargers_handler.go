@@ -72,17 +72,17 @@ func NewRatingHandler(ratings UserRatingService) *RatingHandler {
 	return &RatingHandler{ratings: ratings}
 }
 
-// requireIndividualIdentity resolves the authenticated caller and rejects anyone who isn't
-// an individual account, returning their identity ID for scoping. The mirror of
+// requireUserChargersIdentity resolves the authenticated caller and rejects anyone who isn't
+// an individual or business account, returning their identity ID for scoping. The mirror of
 // requireManufacturerIdentity - like it, eligibility isn't checked at the Oathkeeper edge.
-func requireIndividualIdentity(ctx context.Context) (uuid.UUID, error) {
+func requireUserChargersIdentity(ctx context.Context) (uuid.UUID, error) {
 	identity, err := auth.RequireIdentity(ctx)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	if identity.UserType != "individual" {
-		return uuid.Nil, status.Error(codes.PermissionDenied, "only individual accounts can access this API")
+	if !identity.HasUserChargers() {
+		return uuid.Nil, status.Error(codes.PermissionDenied, "only individual and business accounts can access this API")
 	}
 
 	identityID, err := uuid.Parse(identity.ID)
@@ -120,7 +120,7 @@ func userChargersError(err error) error {
 }
 
 func (h *FavoriteHandler) FavoriteCharger(ctx context.Context, req *userchargersv1.FavoriteChargerRequest) (*userchargersv1.FavoriteChargerResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (h *FavoriteHandler) FavoriteCharger(ctx context.Context, req *userchargers
 }
 
 func (h *FavoriteHandler) ListFavorites(ctx context.Context, req *userchargersv1.ListFavoritesRequest) (*userchargersv1.ListFavoritesResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (h *FavoriteHandler) ListFavorites(ctx context.Context, req *userchargersv1
 }
 
 func (h *ProjectHandler) CreateProject(ctx context.Context, req *userchargersv1.CreateProjectRequest) (*userchargersv1.CreateProjectResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (h *ProjectHandler) CreateProject(ctx context.Context, req *userchargersv1.
 }
 
 func (h *ProjectHandler) UpdateProject(ctx context.Context, req *userchargersv1.UpdateProjectRequest) (*userchargersv1.UpdateProjectResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (h *ProjectHandler) UpdateProject(ctx context.Context, req *userchargersv1.
 }
 
 func (h *ProjectHandler) DeleteProject(ctx context.Context, req *userchargersv1.DeleteProjectRequest) (*emptypb.Empty, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +246,7 @@ func (h *ProjectHandler) DeleteProject(ctx context.Context, req *userchargersv1.
 }
 
 func (h *ProjectHandler) ListProjects(ctx context.Context, req *userchargersv1.ListProjectsRequest) (*userchargersv1.ListProjectsResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (h *ProjectHandler) ListProjects(ctx context.Context, req *userchargersv1.L
 }
 
 func (h *ProjectHandler) GetProject(ctx context.Context, req *userchargersv1.GetProjectRequest) (*userchargersv1.GetProjectResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +298,7 @@ func (h *ProjectHandler) GetProject(ctx context.Context, req *userchargersv1.Get
 }
 
 func (h *ProjectHandler) ManageProjectChargers(ctx context.Context, req *userchargersv1.ManageProjectChargersRequest) (*userchargersv1.ManageProjectChargersResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +336,7 @@ func (h *ProjectHandler) ManageProjectChargers(ctx context.Context, req *usercha
 }
 
 func (h *RatingHandler) SubmitRating(ctx context.Context, req *userchargersv1.SubmitRatingRequest) (*userchargersv1.SubmitRatingResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +367,7 @@ func (h *RatingHandler) SubmitRating(ctx context.Context, req *userchargersv1.Su
 }
 
 func (h *RatingHandler) ListMyRatings(ctx context.Context, req *userchargersv1.ListMyRatingsRequest) (*userchargersv1.ListMyRatingsResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}

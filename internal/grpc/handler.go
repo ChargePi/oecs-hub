@@ -277,6 +277,10 @@ func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitC
 		return nil, err
 	}
 
+	if identity.UserType != auth.UserTypeManufacturer {
+		return nil, status.Error(codes.PermissionDenied, "only manufacturer accounts can submit charger specs")
+	}
+
 	if len(req.GetSpec()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "spec is required")
 	}
@@ -310,7 +314,7 @@ func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitC
 // rating write path now. Kept as a thin delegating shim so clients generated before the
 // move keep working; remove once none are left.
 func (h *Handler) SubmitVariantRating(ctx context.Context, req *registryv1.SubmitVariantRatingRequest) (*registryv1.SubmitVariantRatingResponse, error) {
-	identityID, err := requireIndividualIdentity(ctx)
+	identityID, err := requireUserChargersIdentity(ctx)
 	if err != nil {
 		return nil, err
 	}

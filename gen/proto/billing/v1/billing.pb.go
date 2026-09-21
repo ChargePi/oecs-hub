@@ -28,6 +28,7 @@ const (
 	AccountType_ACCOUNT_TYPE_UNSPECIFIED  AccountType = 0
 	AccountType_ACCOUNT_TYPE_INDIVIDUAL   AccountType = 1
 	AccountType_ACCOUNT_TYPE_MANUFACTURER AccountType = 2
+	AccountType_ACCOUNT_TYPE_BUSINESS     AccountType = 3
 )
 
 // Enum value maps for AccountType.
@@ -36,11 +37,13 @@ var (
 		0: "ACCOUNT_TYPE_UNSPECIFIED",
 		1: "ACCOUNT_TYPE_INDIVIDUAL",
 		2: "ACCOUNT_TYPE_MANUFACTURER",
+		3: "ACCOUNT_TYPE_BUSINESS",
 	}
 	AccountType_value = map[string]int32{
 		"ACCOUNT_TYPE_UNSPECIFIED":  0,
 		"ACCOUNT_TYPE_INDIVIDUAL":   1,
 		"ACCOUNT_TYPE_MANUFACTURER": 2,
+		"ACCOUNT_TYPE_BUSINESS":     3,
 	}
 )
 
@@ -834,11 +837,12 @@ const file_billing_v1_billing_proto_rawDesc = "" +
 	"total_size\x18\x03 \x01(\x03R\ttotalSize\"\x1c\n" +
 	"\x1aGetPaymentPortalUrlRequest\"/\n" +
 	"\x1bGetPaymentPortalUrlResponse\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url*g\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url*\x82\x01\n" +
 	"\vAccountType\x12\x1c\n" +
 	"\x18ACCOUNT_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17ACCOUNT_TYPE_INDIVIDUAL\x10\x01\x12\x1d\n" +
-	"\x19ACCOUNT_TYPE_MANUFACTURER\x10\x02*M\n" +
+	"\x19ACCOUNT_TYPE_MANUFACTURER\x10\x02\x12\x19\n" +
+	"\x15ACCOUNT_TYPE_BUSINESS\x10\x03*M\n" +
 	"\bPlanTier\x12\x19\n" +
 	"\x15PLAN_TIER_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0ePLAN_TIER_FREE\x10\x01\x12\x12\n" +

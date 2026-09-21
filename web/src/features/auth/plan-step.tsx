@@ -41,9 +41,14 @@ function usageLine(plan: Plan): string {
 // there's no backend "features" field to draw from, so this bullet is limited to
 // something this app can actually back up.
 function accountLine(accountType: AccountType): string {
-  return accountType === 'manufacturer'
-    ? 'List your charger models and manage your company profile'
-    : 'Explore, compare, and rate chargers'
+  switch (accountType) {
+    case 'manufacturer':
+      return 'List your charger models and manage your company profile'
+    case 'business':
+      return 'Compare chargers, track projects, and rate them'
+    default:
+      return 'Explore, compare, and rate chargers'
+  }
 }
 
 // Tailwind's built-in `animate-ping` scales up to 200% via its `ping` keyframe - fine

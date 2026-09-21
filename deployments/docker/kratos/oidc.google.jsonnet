@@ -2,7 +2,7 @@
 // left unset so Kratos's native "complete missing required traits" step runs for OIDC
 // signups too, same as email/password registration. Schema selection (identitySchema on
 // the registration flow) happens before this mapper runs - see
-// identity.manufacturer.schema.json / identity.individual.schema.json.
+// identity.{manufacturer,business,individual}.schema.json.
 local claims = std.extVar('claims');
 
 {

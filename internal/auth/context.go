@@ -5,12 +5,25 @@ package auth
 
 import "context"
 
+// Account types - the Kratos identity schema id, forwarded as X-User-Type.
+const (
+	UserTypeManufacturer = "manufacturer"
+	UserTypeIndividual   = "individual"
+	UserTypeBusiness     = "business"
+	UserTypeAdmin        = "admin"
+)
+
 // Identity is the caller identity forwarded by Oathkeeper's header mutator once it has
 // verified a Kratos session.
 type Identity struct {
 	ID       string
 	Email    string
 	UserType string
+}
+
+// HasUserChargers reports whether the account type gets favorites, projects and ratings.
+func (i *Identity) HasUserChargers() bool {
+	return i.UserType == UserTypeIndividual || i.UserType == UserTypeBusiness
 }
 
 type identityContextKey struct{}
