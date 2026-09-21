@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { StarRatingInput } from '@/components/ui/star-rating-input'
+import { canUseUserChargers } from '@/lib/auth/account-type'
 import { loginRedirect, useIdentity } from '@/lib/auth/use-identity'
 import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import { useToastAction } from '@/lib/use-toast-action'
@@ -42,10 +43,10 @@ export function RateVariantControl({ variantId }: { variantId: string }) {
     )
   }
 
-  if (identity.userType !== 'individual') {
+  if (!canUseUserChargers(identity.userType)) {
     return (
       <p className="text-sm text-muted-foreground">
-        Rating a charger is only available to individual accounts.
+        Rating a charger is only available to individual and business accounts.
       </p>
     )
   }

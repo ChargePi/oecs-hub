@@ -1,7 +1,7 @@
 {
-  "$id": "https://oecs.dev/schema/identity/manufacturer.schema.json",
+  "$id": "https://oecs.dev/schema/identity/business.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "OECS Hub manufacturer identity",
+  "title": "OECS Hub business identity",
   "type": "object",
   "properties": {
     "traits": {

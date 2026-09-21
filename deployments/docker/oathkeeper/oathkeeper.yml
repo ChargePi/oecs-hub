@@ -32,7 +32,7 @@ authenticators:
       check_session_url: http://kratos:4433/sessions/whoami
       preserve_path: true
       # identity (not identity.traits): the header mutator below needs schema_id
-      # alongside traits - manufacturer/individual are separate Kratos schemas, not a
+      # alongside traits - manufacturer/business/individual are separate Kratos schemas, not a
       # traits.userType field. See identity.manufacturer.schema.json /
       # identity.individual.schema.json.
       extra_from: identity
@@ -46,7 +46,7 @@ authenticators:
       check_session_url: http://kratos:4433/sessions/whoami
       preserve_path: true
       # identity (not identity.traits): the header mutator below needs schema_id
-      # alongside traits - manufacturer/individual are separate Kratos schemas, not a
+      # alongside traits - manufacturer/business/individual are separate Kratos schemas, not a
       # traits.userType field. See identity.manufacturer.schema.json /
       # identity.individual.schema.json.
       extra_from: identity
@@ -91,7 +91,7 @@ mutators:
         # missing key is a nil-pointer template error, not just an empty string, in Go's
         # text/template. `with` skips the body instead of erroring when its value is nil.
         X-User-Email: "{{ with .Extra }}{{ .traits.email }}{{ end }}"
-        # schema_id ("manufacturer"/"individual"), not a traits field - the account type
+        # schema_id ("manufacturer"/"business"/"individual"), not a traits field - the account type
         # is which Kratos identity schema this identity was created under, not a value
         # inside traits. See identity.manufacturer.schema.json / identity.individual.schema.json.
         X-User-Type: "{{ with .Extra }}{{ .schema_id }}{{ end }}"

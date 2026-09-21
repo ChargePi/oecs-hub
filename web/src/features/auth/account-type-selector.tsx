@@ -1,4 +1,4 @@
-import { Building2, User } from 'lucide-react'
+import { Briefcase, Building2, User } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import type { AccountType } from '@/lib/auth/types'
@@ -12,16 +12,22 @@ interface AccountTypeOption {
 
 const OPTIONS: readonly AccountTypeOption[] = [
   {
-    value: 'manufacturer',
-    label: 'Manufacturer',
-    description: 'For charger brands. List your models and manage your company profile.',
-    icon: Building2,
-  },
-  {
     value: 'individual',
     label: 'Individual',
     description: 'Explore, compare, and rate chargers.',
     icon: User,
+  },
+  {
+    value: 'business',
+    label: 'Business',
+    description: 'For companies. Compare chargers, track projects, and rate them.',
+    icon: Briefcase,
+  },
+  {
+    value: 'manufacturer',
+    label: 'Manufacturer',
+    description: 'For charger brands. List your models and manage your company profile.',
+    icon: Building2,
   },
 ]
 
@@ -31,11 +37,11 @@ interface AccountTypeSelectorProps {
 }
 
 // Drives which Kratos identity schema register-page.tsx creates the flow against
-// (identitySchema) - manufacturer and individual are separate schemas, not a trait, so
+// (identitySchema) - manufacturer, business and individual are separate schemas, not a trait, so
 // picking a value here means fetching a whole new flow, not just filtering nodes.
 export function AccountTypeSelector({ value, onChange }: AccountTypeSelectorProps) {
   return (
-    <div className="grid grid-cols-2 gap-2" role="group" aria-label="Account type">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="Account type">
       {OPTIONS.map((option) => {
         const selected = option.value === value
         const Icon = option.icon

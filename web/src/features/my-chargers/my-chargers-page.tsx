@@ -1,11 +1,13 @@
 import { Skeleton } from '@/components/ui/skeleton'
+import { canSubmitSpecs } from '@/lib/auth/account-type'
 import { useIdentity } from '@/lib/auth/use-identity'
 import { ManufacturerChargersPage } from '@/features/manufacturer/manufacturer-chargers-page'
 import { IndividualChargersPage } from './individual-chargers-page'
 
 /**
- * The route both account types land on - RequireAuth already guarantees a session by the
- * time this renders, so the only branch left is which segment set to show.
+ * The route every account type lands on - RequireAuth already guarantees a session by the
+ * time this renders, so the only branch left is which segment set to show: manufacturers manage their submissions, everyone else (individual and
+ * business) gets favorites, projects and ratings.
  */
 export function MyChargersPage() {
   const { identity, isLoading } = useIdentity()
@@ -19,7 +21,7 @@ export function MyChargersPage() {
     )
   }
 
-  return identity.userType === 'manufacturer' ? (
+  return canSubmitSpecs(identity.userType) ? (
     <ManufacturerChargersPage />
   ) : (
     <IndividualChargersPage />

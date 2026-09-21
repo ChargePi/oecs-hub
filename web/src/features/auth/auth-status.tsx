@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { canSubmitSpecs, hasCompanyProfile } from '@/lib/auth/account-type'
 import { useIdentity } from '@/lib/auth/use-identity'
 import { useLogout } from '@/lib/auth/use-logout'
 
@@ -27,10 +28,9 @@ export function AuthStatus() {
     )
   }
 
-  const displayName =
-    identity.userType === 'manufacturer'
-      ? (identity.companyName ?? identity.name ?? identity.email)
-      : (identity.name ?? identity.email)
+  const displayName = hasCompanyProfile(identity.userType)
+    ? (identity.companyName ?? identity.name ?? identity.email)
+    : (identity.name ?? identity.email)
 
   return (
     <DropdownMenu>
@@ -51,7 +51,7 @@ export function AuthStatus() {
             Profile
           </Link>
         </DropdownMenuItem>
-        {identity.userType === 'manufacturer' && (
+        {canSubmitSpecs(identity.userType) && (
           <DropdownMenuItem asChild>
             <Link to="/submit-charger">
               <Upload />

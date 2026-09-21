@@ -2537,7 +2537,8 @@ proto.billing.v1.GetPaymentPortalUrlResponse.prototype.setUrl = function(value) 
 proto.billing.v1.AccountType = {
   ACCOUNT_TYPE_UNSPECIFIED: 0,
   ACCOUNT_TYPE_INDIVIDUAL: 1,
-  ACCOUNT_TYPE_MANUFACTURER: 2
+  ACCOUNT_TYPE_MANUFACTURER: 2,
+  ACCOUNT_TYPE_BUSINESS: 3
 };
 
 /**

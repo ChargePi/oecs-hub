@@ -16,6 +16,7 @@ const ACCOUNT_TYPE_FROM_PROTO: Record<ProtoAccountType, PlanAccountType | undefi
   [ProtoAccountType.ACCOUNT_TYPE_UNSPECIFIED]: undefined,
   [ProtoAccountType.ACCOUNT_TYPE_INDIVIDUAL]: 'individual',
   [ProtoAccountType.ACCOUNT_TYPE_MANUFACTURER]: 'manufacturer',
+  [ProtoAccountType.ACCOUNT_TYPE_BUSINESS]: 'business',
 }
 
 const TIER_FROM_PROTO: Record<ProtoPlanTier, PlanTier | undefined> = {

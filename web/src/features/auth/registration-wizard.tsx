@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { FlowType } from '@ory/client-fetch'
 import type { UiNode } from '@ory/client-fetch'
-import { Node, OryCard, OryCardValidationMessages, OryForm, useOryFlow } from '@ory/elements-react'
+import {
+  isUiNodeInput,
+  Node,
+  OryCard,
+  OryCardValidationMessages,
+  OryForm,
+  useOryFlow,
+} from '@ory/elements-react'
 
 import { BILLING_ENABLED } from '@/lib/billing/config'
 import type { PlanTier } from '@/lib/billing/types'
+import { hasCompanyProfile } from '@/lib/auth/account-type'
 import type { AccountType } from '@/lib/auth/types'
 import { cn } from '@/lib/utils'
 import { PlanStep } from './plan-step'
@@ -34,6 +42,20 @@ interface RegistrationWizardProps {
 // the author class wins over `[hidden]`, so it'd stay visible. Toggle the class instead.
 function stepClassName(active: boolean): string {
   return active ? 'flex flex-col gap-8' : 'hidden'
+}
+
+// The Ory form is noValidate and step 1 is CSS-hidden once on step 2, so a required field
+// left empty would only surface as a Kratos error nobody can see. Check before advancing.
+function firstMissingRequiredField(nodes: UiNode[]): string | undefined {
+  for (const node of nodes) {
+    if (!isUiNodeInput(node) || !node.attributes.required) continue
+    const el = document.querySelector<HTMLInputElement>(`input[name="${node.attributes.name}"]`)
+    if (el && !el.value.trim()) {
+      el.focus()
+      return node.attributes.name
+    }
+  }
+  return undefined
 }
 
 function OrDivider() {
@@ -78,6 +100,7 @@ export function RegistrationWizard({
 }: RegistrationWizardProps) {
   const flowContainer = useOryFlow()
   const [selectedPlanCode, setSelectedPlanCode] = useState<string | null>(null)
+  const [missingRequired, setMissingRequired] = useState(false)
 
   if (flowContainer.flowType !== FlowType.Registration) return null
 
@@ -92,7 +115,7 @@ export function RegistrationWizard({
   // "Mailing address", not "Billing address": the breadcrumb already has a "Billing"
   // step (payment/Lago portal, register-complete-page.tsx) - reusing the word here for
   // an unrelated mailing address is exactly the duplication that got flagged.
-  const billingDetailsLabel = accountType === 'manufacturer' ? 'Company details' : 'Mailing address'
+  const billingDetailsLabel = hasCompanyProfile(accountType) ? 'Company details' : 'Mailing address'
 
   const skipPlan = !BILLING_ENABLED
 
@@ -104,6 +127,16 @@ export function RegistrationWizard({
         ))}
       </div>
     )
+  }
+
+  function handleNext() {
+    const missing = firstMissingRequiredField([
+      ...generalInfoNodes,
+      ...credentialNodes,
+      ...billingDetailNodes,
+    ])
+    setMissingRequired(missing !== undefined)
+    if (missing === undefined) onStepChange(2)
   }
 
   function handlePlanSelect(code: string, tier: PlanTier) {
@@ -146,13 +179,20 @@ export function RegistrationWizard({
             {skipPlan ? (
               renderNodes(submitNodes)
             ) : (
-              <button
-                type="button"
-                onClick={() => onStepChange(2)}
-                className={cn(wizardButtonClassName(true), 'self-center')}
-              >
-                Next
-              </button>
+              <>
+                {missingRequired && (
+                  <p role="alert" className="text-center text-sm text-destructive">
+                    Please fill in all required fields.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className={cn(wizardButtonClassName(true), 'self-center')}
+                >
+                  Next
+                </button>
+              </>
             )}
           </div>
 
