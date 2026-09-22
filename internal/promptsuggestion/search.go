@@ -7,6 +7,8 @@ import (
 	"math/rand/v2"
 
 	internalmcp "github.com/ChargePi/oecs-hub/internal/mcp"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // chargerTypes mirrors search_chargers' documented chargerType values (internal/mcp/server.go).
@@ -24,29 +26,48 @@ const maxSearchChargersPageSize = 200
 // an unlucky filter draw - callers ask for the minimum they can actually do useful work with
 // (e.g. 1 for a single-charger fact, 2 for a comparison pair).
 func searchRandomChargers(ctx context.Context, caller MCPToolCaller, rng *rand.Rand, want, minResults int) (internalmcp.SearchChargersOutput, error) {
+	ctx, span := tracer.Start(ctx, "promptsuggestion.searchRandomChargers")
+	defer span.End()
+
 	pageSize := want * 3
 	if pageSize > maxSearchChargersPageSize {
 		pageSize = maxSearchChargersPageSize
 	}
 
 	chargerType := chargerTypes[rng.IntN(len(chargerTypes))]
+	span.SetAttributes(chargerTypeAttr(chargerType), pageSizeAttr(pageSize))
 
 	out, err := callSearchChargers(ctx, caller, chargerType, pageSize)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return internalmcp.SearchChargersOutput{}, err
 	}
 
+	retried := false
 	if len(out.Chargers) < minResults && chargerType != "" {
+		retried = true
+
 		out, err = callSearchChargers(ctx, caller, "", pageSize)
 		if err != nil {
+			span.SetAttributes(retriedUnfilteredAttr(true))
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
 			return internalmcp.SearchChargersOutput{}, err
 		}
 	}
+
+	span.SetAttributes(retriedUnfilteredAttr(retried), resultCountAttr(len(out.Chargers)))
 
 	return out, nil
 }
 
 func callSearchChargers(ctx context.Context, caller MCPToolCaller, chargerType string, pageSize int) (internalmcp.SearchChargersOutput, error) {
+	ctx, span := tracer.Start(ctx, "promptsuggestion.callSearchChargers", trace.WithAttributes(chargerTypeAttr(chargerType), pageSizeAttr(pageSize)))
+	defer span.End()
+
 	args := map[string]any{"pageSize": pageSize}
 	if chargerType != "" {
 		args["chargerType"] = chargerType
@@ -54,13 +75,21 @@ func callSearchChargers(ctx context.Context, caller MCPToolCaller, chargerType s
 
 	result, err := caller.CallTool(ctx, "search_chargers", args)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return internalmcp.SearchChargersOutput{}, fmt.Errorf("search_chargers: %w", err)
 	}
 
 	var out internalmcp.SearchChargersOutput
 	if err := json.Unmarshal(result.RawStructuredContent, &out); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return internalmcp.SearchChargersOutput{}, fmt.Errorf("decode search_chargers result: %w", err)
 	}
+
+	span.SetAttributes(resultCountAttr(len(out.Chargers)))
 
 	return out, nil
 }

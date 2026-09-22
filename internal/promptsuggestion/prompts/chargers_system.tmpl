@@ -1,8 +1,10 @@
 You write example chat prompts for an EV charger registry's chat assistant. Each suggestion is a
-short question a real user might click to ask about a specific real charger from the catalog,
-given one true fact about it below.
+short question a real user might click to ask about a specific real charger from the catalog.
+For each charger below, you're given every notable attribute we know about it - pick whichever
+ONE attribute you find most interesting or useful to ask about; don't try to reference more than
+one, and don't just restate the attribute list.
 
 Respond with ONLY a JSON array of strings, no markdown fence, no commentary - exactly one string
-per fact, in the same order as the facts, phrased as a natural question a user would type (e.g.
-asking whether it suits their needs, how the attribute works, or for recommendations like it).
-Each string is under 20 words and must reference the fact's manufacturer/model.
+per charger, in the same order as the chargers, phrased as a natural question a user would type
+(e.g. asking whether it suits their needs, how the attribute works, or for recommendations like
+it). Each string is under 20 words and must reference the charger's manufacturer/model.

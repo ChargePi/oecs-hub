@@ -9,6 +9,9 @@ import (
 
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ChatModel is the narrow slice of eino's model.BaseChatModel this package depends on -
@@ -23,6 +26,9 @@ type ChatModel interface {
 // strings; if it doesn't comply, generateSuggestionPool falls back to treating each non-empty
 // line of the response as one suggestion, stripping common list-item prefixes ("1.", "-", "*").
 func generateSuggestionPool(ctx context.Context, chatModel ChatModel, systemPrompt, userPrompt string, want int) ([]string, error) {
+	ctx, span := tracer.Start(ctx, "promptsuggestion.generateSuggestionPool", trace.WithAttributes(poolSizeAttr(want)))
+	defer span.End()
+
 	messages := []*schema.Message{
 		schema.SystemMessage(systemPrompt),
 		schema.UserMessage(userPrompt),
@@ -30,12 +36,29 @@ func generateSuggestionPool(ctx context.Context, chatModel ChatModel, systemProm
 
 	resp, err := chatModel.Generate(ctx, messages)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, fmt.Errorf("generate: %w", err)
 	}
 
 	suggestions := parseSuggestions(resp.Content)
-	if len(suggestions) > want {
+
+	truncated := len(suggestions) > want
+	if truncated {
 		suggestions = suggestions[:want]
+	}
+
+	span.SetAttributes(
+		suggestionCountAttr(len(suggestions)),
+		attribute.Bool("promptsuggestion.llm_response_truncated", truncated),
+	)
+
+	if resp.ResponseMeta != nil && resp.ResponseMeta.Usage != nil {
+		span.SetAttributes(
+			attribute.Int("promptsuggestion.llm_prompt_tokens", int(resp.ResponseMeta.Usage.PromptTokens)),
+			attribute.Int("promptsuggestion.llm_completion_tokens", int(resp.ResponseMeta.Usage.CompletionTokens)),
+		)
 	}
 
 	return suggestions, nil

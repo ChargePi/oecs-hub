@@ -7,6 +7,8 @@ import (
 	"math/rand/v2"
 	"sync"
 
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -36,27 +38,45 @@ type Config struct {
 // singleflight, so a burst of requests right after eviction triggers one regeneration, not one
 // per request.
 type Service struct {
-	chatModel ChatModel
-	mcpCaller MCPToolCaller
-	cache     Cache
-	cfg       Config
+	cache      Cache
+	cfg        Config
+	generators map[Topic]Generator
 
 	sf singleflight.Group
 }
 
+// NewService wires one Generator per topic - general is LLM-only (ModeKnowledge); chargers and
+// comparison are MCP-catalog-grounded (ModeCatalogSingle/ModeCatalogPair), differing only in
+// how many real chargers ground each pool item. See GeneratorConfig.
 func NewService(chatModel ChatModel, mcpCaller MCPToolCaller, cache Cache, cfg Config) *Service {
-	return &Service{chatModel: chatModel, mcpCaller: mcpCaller, cache: cache, cfg: cfg}
+	generators := map[Topic]Generator{
+		TopicGeneral:    NewGenerator(chatModel, nil, GeneratorConfig{Topic: TopicGeneral, Mode: ModeKnowledge, PoolSize: cfg.PoolSize}),
+		TopicChargers:   NewGenerator(chatModel, mcpCaller, GeneratorConfig{Topic: TopicChargers, Mode: ModeCatalogSingle, PoolSize: cfg.PoolSize}),
+		TopicComparison: NewGenerator(chatModel, mcpCaller, GeneratorConfig{Topic: TopicComparison, Mode: ModeCatalogPair, PoolSize: cfg.PoolSize}),
+	}
+
+	return &Service{cache: cache, cfg: cfg, generators: generators}
 }
 
 // GetPool returns topic's cached pool, regenerating it first on a miss.
 func (s *Service) GetPool(ctx context.Context, topic Topic) ([]Suggestion, error) {
+	ctx, span := tracer.Start(ctx, "promptsuggestion.GetPool", trace.WithAttributes(topicAttr(topic)))
+	defer span.End()
+
 	if pool, hit, err := s.cache.Get(ctx, topic); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, fmt.Errorf("get cached pool for %s: %w", topic, err)
 	} else if hit {
+		span.SetAttributes(cacheHitAttr(true), poolSizeAttr(len(pool)))
+
 		return pool, nil
 	}
 
-	pool, err, _ := s.sf.Do(string(topic), func() (any, error) {
+	span.SetAttributes(cacheHitAttr(false))
+
+	pool, err, shared := s.sf.Do(string(topic), func() (any, error) {
 		pool, err := s.regenerate(ctx, topic)
 		if err != nil {
 			return nil, err
@@ -68,7 +88,13 @@ func (s *Service) GetPool(ctx context.Context, topic Topic) ([]Suggestion, error
 
 		return pool, nil
 	})
+
+	span.SetAttributes(singleflightSharedAttr(shared))
+
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
 		return nil, err
 	}
 
@@ -84,6 +110,9 @@ func (s *Service) GetPool(ctx context.Context, topic Topic) ([]Suggestion, error
 // (e.g. the gRPC handler, which already skips missing topics) should keep using the map even
 // when err is non-nil.
 func (s *Service) ListAll(ctx context.Context) (map[Topic][]Suggestion, error) {
+	ctx, span := tracer.Start(ctx, "promptsuggestion.ListAll")
+	defer span.End()
+
 	result := make(map[Topic][]Suggestion, len(Topics))
 
 	var (
@@ -114,7 +143,15 @@ func (s *Service) ListAll(ctx context.Context) (map[Topic][]Suggestion, error) {
 
 	wg.Wait()
 
-	return result, errors.Join(errs...)
+	span.SetAttributes(failedTopicsAttr(len(errs)))
+
+	err := errors.Join(errs...)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	return result, err
 }
 
 // Sample randomly picks up to s.cfg.ReturnCount suggestions, without replacement, from pool -
@@ -135,16 +172,10 @@ func (s *Service) Sample(pool []Suggestion) []Suggestion {
 }
 
 func (s *Service) regenerate(ctx context.Context, topic Topic) ([]Suggestion, error) {
-	rng := rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64()))
-
-	switch topic {
-	case TopicGeneral:
-		return generateGeneral(ctx, s.chatModel, s.cfg.PoolSize)
-	case TopicChargers:
-		return generateChargers(ctx, s.chatModel, s.mcpCaller, rng, s.cfg.PoolSize)
-	case TopicComparison:
-		return generateComparison(ctx, s.chatModel, s.mcpCaller, rng, s.cfg.PoolSize)
-	default:
+	gen, ok := s.generators[topic]
+	if !ok {
 		return nil, fmt.Errorf("unknown topic %q", topic)
 	}
+
+	return gen.Generate(ctx)
 }

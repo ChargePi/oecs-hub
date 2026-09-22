@@ -2,7 +2,6 @@ package promptsuggestion
 
 import (
 	"encoding/json"
-	"math/rand/v2"
 	"testing"
 
 	internalmcp "github.com/ChargePi/oecs-hub/internal/mcp"
@@ -52,52 +51,42 @@ func chargerSummary(t *testing.T, manufacturer, model, connectorType, protocolNa
 	return internalmcp.ChargerSummaryOutput{ManufacturerName: manufacturer, Spec: generic}
 }
 
-func TestExtractFact(t *testing.T) {
-	rng := rand.New(rand.NewPCG(1, 2))
+func TestExtractFacts(t *testing.T) {
+	t.Run("collects every notable attribute, not just one", func(t *testing.T) {
+		c := chargerSummary(t, "Acme", "ChargeMax 350", "CCS2_Combo2", "OCPP", "aluminum")
 
-	t.Run("picks a candidate attribute when one is present", func(t *testing.T) {
-		c := chargerSummary(t, "Acme", "ChargeMax 350", "CCS2_Combo2", "", "")
-
-		fact, ok := extractFact(c, rng)
+		facts, ok := extractFacts(c)
 		if !ok {
-			t.Fatal("expected a fact")
+			t.Fatal("expected facts")
 		}
 
-		if fact.ManufacturerName != "Acme" || fact.ModelName != "ChargeMax 350" {
-			t.Fatalf("unexpected names: %+v", fact)
+		if facts.ManufacturerName != "Acme" || facts.ModelName != "ChargeMax 350" {
+			t.Fatalf("unexpected names: %+v", facts)
 		}
 
-		if fact.Attribute == "" {
-			t.Fatal("expected a non-empty attribute")
+		if len(facts.Attributes) != 3 {
+			t.Fatalf("expected 3 attributes (connector, protocol, housing), got %d: %v", len(facts.Attributes), facts.Attributes)
 		}
 	})
 
-	t.Run("no candidate attributes returns false", func(t *testing.T) {
+	t.Run("no attributes still returns a usable name with an empty list", func(t *testing.T) {
 		c := chargerSummary(t, "Acme", "ChargeMax 350", "", "", "")
 
-		if _, ok := extractFact(c, rng); ok {
-			t.Fatal("expected no fact for a spec with no notable attributes")
+		facts, ok := extractFacts(c)
+		if !ok {
+			t.Fatal("expected facts (name alone is enough)")
+		}
+
+		if len(facts.Attributes) != 0 {
+			t.Fatalf("expected no attributes, got %v", facts.Attributes)
 		}
 	})
-}
-
-func TestExtractName(t *testing.T) {
-	c := chargerSummary(t, "Acme", "ChargeMax 350", "", "", "")
-
-	name, ok := extractName(c)
-	if !ok {
-		t.Fatal("expected a name")
-	}
-
-	if name.ManufacturerName != "Acme" || name.ModelName != "ChargeMax 350" {
-		t.Fatalf("unexpected name: %+v", name)
-	}
 
 	t.Run("missing model name returns false", func(t *testing.T) {
 		empty := internalmcp.ChargerSummaryOutput{ManufacturerName: "Acme", Spec: map[string]any{}}
 
-		if _, ok := extractName(empty); ok {
-			t.Fatal("expected no name when spec has no model name")
+		if _, ok := extractFacts(empty); ok {
+			t.Fatal("expected no facts when spec has no model name")
 		}
 	})
 }

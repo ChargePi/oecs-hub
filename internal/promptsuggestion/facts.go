@@ -3,21 +3,23 @@ package promptsuggestion
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand/v2"
 
 	internalmcp "github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 )
 
-// chargerFact is one concrete, real fact about a charger - grounding text handed to the LLM so
-// the suggestion it writes references something that actually exists in the catalog, not an
-// invented attribute.
-type chargerFact struct {
+// chargerFacts is everything notable this package can find about one real charger - grounding
+// handed to the LLM so it picks which attribute(s), if any, are worth building a suggestion
+// around, rather than this package pre-selecting one itself.
+type chargerFacts struct {
 	ManufacturerName string
 	ModelName        string
-	// Attribute is a short human-readable fact, e.g. "a CCS2_Combo2 connector",
-	// "OCPP 2.0.1 support", "an aluminum housing".
-	Attribute string
+	// Attributes are every notable fact found (connector types, protocol+version, housing
+	// material, ...), in no particular order - the prompt instructs the LLM to pick
+	// whichever it finds most interesting, not to restate all of them. May be empty (e.g. a
+	// minimal submission); callers decide whether a name-only charger is still useful to
+	// them (generateChargers isn't, generateComparison is).
+	Attributes []string
 }
 
 // decodeSpec re-marshals c.Spec (decoded generically by internal/mcp's chargerToOutput) into the
@@ -38,37 +40,20 @@ func decodeSpec(c internalmcp.ChargerSummaryOutput) (oecsspec.Charger, bool) {
 	return spec, true
 }
 
-// chargerName is just enough to name a charger in a suggestion - used by the comparison
-// generator, which doesn't need a specific attribute, only two chargers' names.
-type chargerName struct {
-	ManufacturerName string
-	ModelName        string
-}
-
-func extractName(c internalmcp.ChargerSummaryOutput) (chargerName, bool) {
+// extractFacts decodes c's spec and collects every notable connector/protocol/housing
+// attribute it can find - returns false only if c has no usable name (nothing to call it by
+// at all), never because it lacks attributes.
+func extractFacts(c internalmcp.ChargerSummaryOutput) (chargerFacts, bool) {
 	spec, ok := decodeSpec(c)
 	if !ok || spec.Model.Name == "" {
-		return chargerName{}, false
+		return chargerFacts{}, false
 	}
 
-	return chargerName{ManufacturerName: c.ManufacturerName, ModelName: spec.Model.Name}, true
-}
-
-// extractFact decodes c's spec and picks one random notable attribute from whichever of
-// connector type, protocol, or housing material are present - returns false if c's spec has
-// none of them (e.g. a minimal/incomplete submission), so callers can skip it rather than hand
-// the LLM an empty fact.
-func extractFact(c internalmcp.ChargerSummaryOutput, rng *rand.Rand) (chargerFact, bool) {
-	spec, ok := decodeSpec(c)
-	if !ok {
-		return chargerFact{}, false
-	}
-
-	var candidates []string
+	var attrs []string
 
 	for _, conn := range spec.Hardware.Connectors {
 		if conn.Type != "" {
-			candidates = append(candidates, fmt.Sprintf("a %s connector", conn.Type))
+			attrs = append(attrs, fmt.Sprintf("a %s connector", conn.Type))
 		}
 	}
 
@@ -80,25 +65,17 @@ func extractFact(c internalmcp.ChargerSummaryOutput, rng *rand.Rand) (chargerFac
 			}
 			if name != "" && name != "other" {
 				if p.Version != "" {
-					candidates = append(candidates, fmt.Sprintf("%s %s support", name, p.Version))
+					attrs = append(attrs, fmt.Sprintf("%s %s support", name, p.Version))
 				} else {
-					candidates = append(candidates, fmt.Sprintf("%s support", name))
+					attrs = append(attrs, fmt.Sprintf("%s support", name))
 				}
 			}
 		}
 	}
 
 	if spec.Hardware.Housing != nil && spec.Hardware.Housing.Material != "" {
-		candidates = append(candidates, fmt.Sprintf("a %s housing", spec.Hardware.Housing.Material))
+		attrs = append(attrs, fmt.Sprintf("a %s housing", spec.Hardware.Housing.Material))
 	}
 
-	if len(candidates) == 0 {
-		return chargerFact{}, false
-	}
-
-	return chargerFact{
-		ManufacturerName: c.ManufacturerName,
-		ModelName:        spec.Model.Name,
-		Attribute:        candidates[rng.IntN(len(candidates))],
-	}, true
+	return chargerFacts{ManufacturerName: c.ManufacturerName, ModelName: spec.Model.Name, Attributes: attrs}, true
 }

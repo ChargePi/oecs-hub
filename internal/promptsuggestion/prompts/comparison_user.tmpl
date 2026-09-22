@@ -1,3 +1,4 @@
 Pairs:
-{{range .Pairs}}- {{.A.ManufacturerName}} {{.A.ModelName}} vs {{.B.ManufacturerName}} {{.B.ModelName}}
+{{range .Groups}}{{$a := index . 0}}{{$b := index . 1}}- A: {{$a.ManufacturerName}} {{$a.ModelName}}, known attributes: {{if $a.Attributes}}{{range $i, $x := $a.Attributes}}{{if $i}}, {{end}}{{$x}}{{end}}{{else}}(none known){{end}}
+  B: {{$b.ManufacturerName}} {{$b.ModelName}}, known attributes: {{if $b.Attributes}}{{range $i, $x := $b.Attributes}}{{if $i}}, {{end}}{{$x}}{{end}}{{else}}(none known){{end}}
 {{end}}
