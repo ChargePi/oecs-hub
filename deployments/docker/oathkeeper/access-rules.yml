@@ -115,6 +115,23 @@
   mutators:
     - handler: header
 
+- id: prompts-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # prompts.v1.PromptSuggestionsService is registered on the same public gRPC server as
+    # RegistryService (see cmd/app/main.go). Public, like registry-service-default above -
+    # there's nothing caller-specific about suggested prompts.
+    url: "http://<.*>/prompts.v1.PromptSuggestionsService/<ListPromptSuggestions>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+    - handler: anonymous
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: conversation-service
   upstream:
     url: http://host.docker.internal:50051

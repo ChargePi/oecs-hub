@@ -13,6 +13,7 @@ import (
 
 	billingv1 "github.com/ChargePi/oecs-hub/gen/proto/billing/v1"
 	manufacturerv1 "github.com/ChargePi/oecs-hub/gen/proto/manufacturer/v1"
+	promptsv1 "github.com/ChargePi/oecs-hub/gen/proto/prompts/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
 	userchargersv1 "github.com/ChargePi/oecs-hub/gen/proto/userchargers/v1"
 	"github.com/ChargePi/oecs-hub/internal/account"
@@ -26,9 +27,11 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
+	"github.com/ChargePi/oecs-hub/internal/promptsuggestion"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
 	redisStorage "github.com/ChargePi/oecs-hub/internal/storage/redis"
 	"github.com/ChargePi/oecs-hub/internal/userchargers"
+	"github.com/cloudwego/eino-ext/components/model/openai"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -175,6 +178,37 @@ var (
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv)
 
+			// promptsuggestion calls search_chargers as a genuine MCP tool call, in-process
+			// against mcpSrv above (no network hop) - must be created after RegisterTools.
+			mcpToolCaller, err := promptsuggestion.NewInProcessMCPCaller(ctx, mcpSrv)
+			if err != nil {
+				logger.Fatal("failed to create in-process MCP client", zap.Error(err))
+			}
+
+			llmClient, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
+				APIKey:  cfg.Bifrost.APIKey,
+				Model:   cfg.Bifrost.Model,
+				BaseURL: cfg.Bifrost.BaseURL,
+			})
+			if err != nil {
+				logger.Fatal("failed to create LLM chat model", zap.Error(err))
+			}
+
+			suggestionCache := redisStorage.NewPromptSuggestionCache(redisClient, cfg.PromptSuggestions.RefreshInterval)
+			suggestionSvc := promptsuggestion.NewService(llmClient, mcpToolCaller, suggestionCache, promptsuggestion.Config{
+				PoolSize:    cfg.PromptSuggestions.PoolSize,
+				ReturnCount: cfg.PromptSuggestions.ReturnCount,
+			})
+
+			// Best-effort cache warm-up so the first real request isn't the one paying LLM
+			// latency - not a recurring job; GetPool's own on-miss path is what keeps pools
+			// fresh over the service's lifetime.
+			go func() {
+				if _, err := suggestionSvc.ListAll(context.Background()); err != nil {
+					logger.Warn("failed to warm up prompt suggestion cache", zap.Error(err))
+				}
+			}()
+
 			recoveryHandler := func(p any) error {
 				logger.Error("recovered from panic", zap.Any("panic", p), zap.String("stack", string(debug.Stack())))
 
@@ -200,6 +234,7 @@ var (
 			userchargersv1.RegisterFavoriteServiceServer(grpcServer, grpcHandler.NewFavoriteHandler(userChargersSvc))
 			userchargersv1.RegisterProjectServiceServer(grpcServer, grpcHandler.NewProjectHandler(userChargersSvc))
 			userchargersv1.RegisterRatingServiceServer(grpcServer, grpcHandler.NewRatingHandler(userChargersSvc))
+			promptsv1.RegisterPromptSuggestionsServiceServer(grpcServer, grpcHandler.NewPromptSuggestionHandler(suggestionSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service
 			// callers) and gRPC-Web (browsers, which can't speak native gRPC's HTTP/2 trailers).
@@ -283,6 +318,11 @@ func setDefaults() {
 	viper.SetDefault("memgraph.address", "bolt://localhost:7687")
 	viper.SetDefault("billing.address", "billing-service:50060")
 	viper.SetDefault("billing.tierCacheTtl", "5m")
+	viper.SetDefault("bifrost.baseUrl", "http://bifrost:8080/v1")
+	viper.SetDefault("bifrost.model", "gemini/gemini-3.1-flash-lite")
+	viper.SetDefault("promptSuggestions.refreshInterval", "30m")
+	viper.SetDefault("promptSuggestions.poolSize", 10)
+	viper.SetDefault("promptSuggestions.returnCount", 1)
 
 	_ = viper.BindEnv("database.dsn", "OECS_HUB_DATABASE_DSN")
 	_ = viper.BindEnv("redis.address", "OECS_HUB_REDIS_ADDRESS")
@@ -299,6 +339,12 @@ func setDefaults() {
 	_ = viper.BindEnv("kratos.adminUrl", "OECS_HUB_KRATOS_ADMIN_URL")
 	_ = viper.BindEnv("billing.address", "OECS_HUB_BILLING_ADDRESS")
 	_ = viper.BindEnv("billing.tierCacheTtl", "OECS_HUB_BILLING_TIERCACHETTL")
+	_ = viper.BindEnv("bifrost.baseUrl", "OECS_HUB_BIFROST_BASEURL")
+	_ = viper.BindEnv("bifrost.apiKey", "OECS_HUB_BIFROST_APIKEY")
+	_ = viper.BindEnv("bifrost.model", "OECS_HUB_BIFROST_MODEL")
+	_ = viper.BindEnv("promptSuggestions.refreshInterval", "OECS_HUB_PROMPTSUGGESTIONS_REFRESHINTERVAL")
+	_ = viper.BindEnv("promptSuggestions.poolSize", "OECS_HUB_PROMPTSUGGESTIONS_POOLSIZE")
+	_ = viper.BindEnv("promptSuggestions.returnCount", "OECS_HUB_PROMPTSUGGESTIONS_RETURNCOUNT")
 }
 
 // getConfiguration gets the configuration from cache or file.
