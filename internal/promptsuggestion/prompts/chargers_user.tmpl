@@ -1,0 +1,3 @@
+Chargers:
+{{range .Groups}}{{$c := index . 0}}- {{$c.ManufacturerName}} {{$c.ModelName}}, known attributes: {{if $c.Attributes}}{{range $i, $a := $c.Attributes}}{{if $i}}, {{end}}{{$a}}{{end}}{{else}}(none known){{end}}
+{{end}}

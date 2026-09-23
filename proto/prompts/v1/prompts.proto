@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package prompts.v1;
+
+// prompts.v1 serves example chat prompts for the chat empty state, grouped into
+// three topics: general EV knowledge, chargers (grounded in real catalog data via the
+// search_chargers MCP tool), and comparison (also catalog-grounded, comparing two chargers).
+// Suggestions are LLM-generated and cached in pools per topic on the server; this is a public,
+// unauthenticated read path - there is nothing caller-specific about it.
+
+enum PromptTopic {
+  PROMPT_TOPIC_UNSPECIFIED = 0;
+  PROMPT_TOPIC_GENERAL = 1;
+  PROMPT_TOPIC_CHARGERS = 2;
+  PROMPT_TOPIC_COMPARISON = 3;
+}
+
+message PromptSuggestion {
+  PromptTopic topic = 1;
+  string text = 2;
+}
+
+message ListPromptSuggestionsRequest {
+  // Empty (or containing only PROMPT_TOPIC_UNSPECIFIED) returns suggestions for all three
+  // topics; otherwise only the listed topics are returned. Duplicates are harmless.
+  repeated PromptTopic topics = 1;
+}
+
+message ListPromptSuggestionsResponse {
+  repeated PromptSuggestion suggestions = 1;
+}
+
+service PromptSuggestionsService {
+  rpc ListPromptSuggestions(ListPromptSuggestionsRequest) returns (ListPromptSuggestionsResponse);
+}

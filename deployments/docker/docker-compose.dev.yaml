@@ -206,8 +206,6 @@ services:
     environment:
       - BACKEND_URL=http://backend:50051
       - KRATOS_URL=http://kratos:4433
-    volumes:
-      - ../../web/public/chat-prompts:/usr/share/nginx/html/chat-prompts:ro
     labels:
       - traefik.enable=true
       # Catch-all SPA; priority 1 keeps every more specific router above it.

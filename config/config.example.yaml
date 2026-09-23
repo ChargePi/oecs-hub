@@ -42,3 +42,20 @@ observability:
   logging: {}
   profiling:
     enabled: false
+
+# Bifrost is an OpenAI-API-compatible LLM proxy deployed by the sibling
+# oecs-recommendation-agent repo on this service's own docker network (oecs-hub_default) -
+# reused here for prompt suggestions rather than adding a second LLM proxy.
+bifrost:
+  baseUrl: "http://bifrost:8080/v1"
+  apiKey: ""
+  model: "gemini/gemini-3.1-flash-lite"
+
+# Configures internal/promptsuggestion.Service - the chat empty state's suggested-prompt chips.
+promptSuggestions:
+  # How long a topic's cached pool stays fresh before the next request regenerates it.
+  refreshInterval: 30m
+  # How many distinct suggestions are generated and cached per topic on each regeneration.
+  poolSize: 10
+  # How many of a topic's cached pool are randomly sampled and returned per request.
+  returnCount: 1
