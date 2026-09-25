@@ -103,6 +103,43 @@ export OECS_HUB_KETO_WRITE_URL="http://localhost:4467"
 go run ./cmd/admin-cli --email admin@example.com --name Ada --surname Admin
 ```
 
+### 6. Support chat (Chatwoot, optional)
+
+The dev stack runs Chatwoot at http://chatwoot.localhost:8000 (also on `localhost:3100` for host
+tools). The widget stays hidden until it's provisioned. Its identity API (`supportchat.v1`) is served
+by oecs-billing-service, whose `provision chatwoot` CLI sets Chatwoot up.
+
+1. Open Chatwoot and complete onboarding (creates the super admin).
+2. In the super admin console (`/super_admin`) create a **Platform App** and copy its token.
+3. From oecs-billing-service:
+
+```sh
+OECS_BILLING_CHATWOOT_URL=http://localhost:3100 OECS_BILLING_CHATWOOT_PLATFORM_TOKEN=<token> \
+  go run ./cmd/provision chatwoot --file deployments/provisioning/chatwoot.example.yaml
+```
+
+4. Map the fields of its `provisioned chatwoot` log line onto the stacks and recreate them:
+
+```sh
+# oecs-registry: kratos (contact hook) and web
+export OECS_HUB_CHATWOOT_ACCOUNT_ID=<accountId>
+export OECS_HUB_CHATWOOT_KRATOS_API_TOKEN=<kratosApiToken>
+export OECS_HUB_CHATWOOT_WEBSITE_TOKEN=<websiteToken>
+docker compose -f deployments/docker/docker-compose.dev.yaml up -d kratos web
+# oecs-billing-service
+export OECS_BILLING_SUPPORTCHAT_HMAC_TOKEN=<hmacToken>
+```
+
+The CLI is idempotent; rerunning it logs the same tokens. Each Kratos registration creates a matching
+Chatwoot contact (`deployments/docker/kratos/chatwoot_contact_hook.jsonnet`).
+
+The postgres image is `pgvector/pgvector:pg16-trixie`. On a data volume created before Chatwoot was added,
+run the Chatwoot block of `deployments/docker/postgres/init/001-create-service-users.sql` manually
+(`psql -h localhost -p 5434 -U oecs -d postgres`).
+
+For `pnpm dev`, set `VITE_CHATWOOT_BASE_URL=http://chatwoot.localhost:8000` and
+`VITE_CHATWOOT_WEBSITE_TOKEN` in `web/.env.local`.
+
 ### Tests & linting
 
 ```sh

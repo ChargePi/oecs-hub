@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package supportchat.v1;
+
+// supportchat.v1 backs the Chatwoot support widget's identity validation: the HMAC token
+// stays server-side, the browser only receives the hash for the caller's own identity.
+
+message GetIdentityRequest {}
+
+message GetIdentityResponse {
+  // Kratos identity ID, passed to $chatwoot.setUser as the contact identifier.
+  string identifier = 1;
+  // Hex HMAC-SHA256 of identifier, keyed with the inbox's HMAC token.
+  string identifier_hash = 2;
+  // "free" or "paid"; empty when Lago couldn't be reached or the customer isn't provisioned.
+  string plan_tier = 3;
+}
+
+service SupportChatService {
+  rpc GetIdentity(GetIdentityRequest) returns (GetIdentityResponse);
+}

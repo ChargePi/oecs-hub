@@ -132,6 +132,21 @@
   mutators:
     - handler: header
 
+- id: support-chat-service
+  upstream:
+    url: http://host.docker.internal:50060
+  match:
+    # oecs-billing-service (same server/route as billing-service below) signs the caller's
+    # own identity for the Chatwoot widget - session required.
+    url: "http://<.*>/supportchat.v1.SupportChatService/<GetIdentity>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: conversation-service
   upstream:
     url: http://host.docker.internal:50051

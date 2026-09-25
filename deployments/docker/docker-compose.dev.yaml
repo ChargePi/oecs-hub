@@ -3,10 +3,37 @@
 # there. Without this, Compose derives the project name from the directory basename
 # ("docker") and containers/volumes collide across repos.
 name: oecs-hub
+
+# Shared by chatwoot-migrate/-web/-worker.
+x-chatwoot-env: &chatwoot-env
+  RAILS_ENV: production
+  NODE_ENV: production
+  INSTALLATION_ENV: docker
+  FRONTEND_URL: http://chatwoot.localhost:8000
+  SECRET_KEY_BASE: changeme-dev-only-changeme-dev-only-changeme-dev-only-changeme-dev-only
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: chatwoot
+  POSTGRES_USERNAME: chatwoot
+  POSTGRES_PASSWORD: chatwoot
+  REDIS_URL: redis://redis:6379/5
+  ACTIVE_STORAGE_SERVICE: local
+  ENABLE_ACCOUNT_SIGNUP: "false"
+  # Every browser reaches Chatwoot from the same IP here; the widget throttle (5 new
+  # visitors/hour/IP) would hide the widget after a few page loads.
+  ENABLE_RACK_ATTACK_WIDGET_API: "false"
+  RAILS_LOG_TO_STDOUT: "true"
+  MAILER_SENDER_EMAIL: OECS Support <support@registry.localhost>
+  SMTP_ADDRESS: mailslurper
+  SMTP_PORT: "1025"
+  SMTP_ENABLE_STARTTLS_AUTO: "true"
+  SMTP_OPENSSL_VERIFY_MODE: none
+
 services:
 
   postgres:
-    image: postgres:16
+    # pgvector build of postgres:16 on trixie (matches its glibc/collations) - Chatwoot needs the vector extension.
+    image: pgvector/pgvector:pg16-trixie
     container_name: oecs-hub-postgres
     hostname: postgres
     restart: unless-stopped
@@ -74,10 +101,21 @@ services:
     container_name: oecs-hub-kratos
     hostname: kratos
     restart: unless-stopped
-    command: serve --dev --config /etc/config/kratos/kratos.yml
+    # Kratos doesn't expand env vars in its config, and env overrides of single hook entries
+    # wipe the rest of the array - so the Chatwoot hook's two values are substituted here.
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        sed -e "s|__CHATWOOT_ACCOUNT_ID__|$${OECS_HUB_CHATWOOT_ACCOUNT_ID}|g"
+        -e "s|__CHATWOOT_KRATOS_API_TOKEN__|$${OECS_HUB_CHATWOOT_KRATOS_API_TOKEN}|g"
+        /etc/config/kratos/kratos.yml > /tmp/kratos.yml
+        && exec kratos serve --dev --config /tmp/kratos.yml
     environment:
       - OECS_HUB_KRATOS_GOOGLE_CLIENT_ID=${OECS_HUB_KRATOS_GOOGLE_CLIENT_ID:-}
       - OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET=${OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET:-}
+      # From `oecs-billing-provision chatwoot`; until set, the contact hook just fails (ignored).
+      - OECS_HUB_CHATWOOT_ACCOUNT_ID=${OECS_HUB_CHATWOOT_ACCOUNT_ID:-1}
+      - OECS_HUB_CHATWOOT_KRATOS_API_TOKEN=${OECS_HUB_CHATWOOT_KRATOS_API_TOKEN:-}
     volumes:
       - ./kratos:/etc/config/kratos:ro
     labels:
@@ -206,6 +244,9 @@ services:
     environment:
       - BACKEND_URL=http://backend:50051
       - KRATOS_URL=http://kratos:4433
+      # Widget stays hidden until the token from `oecs-billing-provision chatwoot` is set.
+      - CHATWOOT_BASE_URL=http://chatwoot.localhost:8000
+      - CHATWOOT_WEBSITE_TOKEN=${OECS_HUB_CHATWOOT_WEBSITE_TOKEN:-}
     labels:
       - traefik.enable=true
       # Catch-all SPA; priority 1 keeps every more specific router above it.
@@ -218,7 +259,52 @@ services:
       - backend
       - kratos
 
+  chatwoot-migrate:
+    image: chatwoot/chatwoot:v4.15.1
+    container_name: oecs-hub-chatwoot-migrate
+    command: bundle exec rails db:chatwoot_prepare
+    environment: *chatwoot-env
+    depends_on:
+      - postgres
+      - redis
+
+  chatwoot-web:
+    image: chatwoot/chatwoot:v4.15.1
+    container_name: oecs-hub-chatwoot-web
+    hostname: chatwoot-web
+    restart: unless-stopped
+    entrypoint: docker/entrypoints/rails.sh
+    command: bundle exec rails s -p 3000 -b 0.0.0.0
+    environment: *chatwoot-env
+    volumes:
+      - chatwoot-storage:/app/storage
+    ports:
+      # For host-run tools (oecs-billing-provision chatwoot), like kratos' 4434.
+      - "3100:3000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.chatwoot.rule=Host(`chatwoot.localhost`)
+      - traefik.http.routers.chatwoot.entrypoints=web
+      - traefik.http.routers.chatwoot.service=chatwoot
+      - traefik.http.services.chatwoot.loadbalancer.server.port=3000
+    depends_on:
+      chatwoot-migrate:
+        condition: service_completed_successfully
+
+  chatwoot-worker:
+    image: chatwoot/chatwoot:v4.15.1
+    container_name: oecs-hub-chatwoot-worker
+    restart: unless-stopped
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    environment: *chatwoot-env
+    volumes:
+      - chatwoot-storage:/app/storage
+    depends_on:
+      chatwoot-migrate:
+        condition: service_completed_successfully
+
 volumes:
   postgres:
   redis:
   memgraph:
+  chatwoot-storage:
