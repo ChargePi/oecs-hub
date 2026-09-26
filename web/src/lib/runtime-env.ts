@@ -1,5 +1,3 @@
-// Per-environment config, set by /env.js at container start (see nginx.conf.template).
-// Falls back to VITE_* for `pnpm dev`, where public/env.js leaves it empty.
 interface RuntimeEnv {
   chatwootBaseUrl?: string
   chatwootWebsiteToken?: string

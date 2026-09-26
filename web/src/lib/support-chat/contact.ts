@@ -2,9 +2,6 @@ import type { Session } from '@ory/client-fetch'
 
 import type { ChatwootUser } from './chatwoot'
 
-// Mirrors deployments/docker/kratos/chatwoot_contact_hook.jsonnet (the signup-time copy) -
-// keep attribute keys in sync with it and oecs-billing-service's
-// deployments/provisioning/chatwoot.example.yaml (contact attribute definitions).
 interface Address {
   name?: string
   streetAddress?: string

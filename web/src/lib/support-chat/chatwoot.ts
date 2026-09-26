@@ -1,4 +1,3 @@
-// Minimal typing of the Chatwoot website SDK (<base>/packs/js/sdk.js).
 export interface ChatwootUser {
   email?: string
   name?: string
@@ -25,7 +24,6 @@ declare global {
   }
 }
 
-/** Clears the widget's contact/conversation - call on logout. No-op when not loaded. */
 export function resetSupportChat(): void {
   window.$chatwoot?.reset()
 }

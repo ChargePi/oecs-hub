@@ -104,8 +104,6 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Runtime config for the SPA (see src/lib/runtime-env.ts) - rendered from env at container
-    # start, so one image serves every environment. Shadows public/env.js (the dev fallback).
     location = /env.js {
         default_type application/javascript;
         add_header Cache-Control "no-cache";

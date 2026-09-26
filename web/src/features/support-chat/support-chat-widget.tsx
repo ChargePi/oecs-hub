@@ -11,12 +11,10 @@ import { resetSupportChat, type ChatwootColorScheme } from '@/lib/support-chat/c
 import { buildChatwootContact } from '@/lib/support-chat/contact'
 import { useSupportChatIdentity } from '@/lib/support-chat/use-support-chat-identity'
 
-// Bubble would overlap the AI assistant's composer and the auth forms.
 const HIDDEN_PATH_PREFIXES = ['/chat', '/auth']
 
 let sdkRequested = false
 
-// Follows the app's own `dark` class on <html> (see index.html / index.css).
 function appColorScheme(): ChatwootColorScheme {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
 }
@@ -61,7 +59,6 @@ function ChatwootBridge() {
   }, [])
 
   useEffect(() => {
-    // Wait for a settled session - a transient fetch failure isn't a logout.
     if (!ready || !isSuccess) return
 
     if (!session?.identity) {
@@ -70,8 +67,6 @@ function ChatwootBridge() {
       return
     }
 
-    // Only a backend-signed identity - Chatwoot rejects an unsigned setUser when the
-    // inbox enforces identity validation.
     const id = session.identity.id
     if (!chatIdentity || chatIdentity.identifier !== id) return
     if (identifiedAs.current === id) return

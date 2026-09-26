@@ -1,6 +1,5 @@
 import { runtimeEnv } from '@/lib/runtime-env'
 
-// Chatwoot support widget - unrelated to lib/chat (the AI assistant).
 export const CHATWOOT_BASE_URL = runtimeEnv.chatwootBaseUrl.replace(/\/+$/, '')
 export const CHATWOOT_WEBSITE_TOKEN = runtimeEnv.chatwootWebsiteToken
 

@@ -1,7 +1,3 @@
-// Fire-and-forget registration webhook body: Chatwoot contact (POST /api/v1/accounts/:id/contacts).
-// identifier = Kratos identity ID, the same value the support widget passes to setUser.
-// Attribute keys match web/src/lib/support-chat/contact.ts and oecs-billing-service's
-// deployments/provisioning/chatwoot.example.yaml.
 function(ctx)
   local identity = ctx.identity;
   local traits = std.get(identity, 'traits', {});

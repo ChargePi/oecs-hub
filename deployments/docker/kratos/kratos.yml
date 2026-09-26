@@ -94,8 +94,6 @@ selfservice:
                     in: header
             - hook: web_hook
               config:
-                # Creates the Chatwoot contact up front (identifier = identity ID, matching
-                # the support widget's setUser). Fire-and-forget like the billing hook.
                 url: http://chatwoot-web:3000/api/v1/accounts/__CHATWOOT_ACCOUNT_ID__/contacts
                 method: POST
                 body: file:///etc/config/kratos/chatwoot_contact_hook.jsonnet
@@ -105,8 +103,6 @@ selfservice:
                   type: api_key
                   config:
                     name: api_access_token
-                    # Kratos Sync agent's token from `oecs-billing-provision chatwoot`. This and
-                    # __CHATWOOT_ACCOUNT_ID__ are substituted at container start (compose).
                     value: __CHATWOOT_KRATOS_API_TOKEN__
                     in: header
         oidc:
@@ -132,8 +128,6 @@ selfservice:
                     in: header
             - hook: web_hook
               config:
-                # Creates the Chatwoot contact up front (identifier = identity ID, matching
-                # the support widget's setUser). Fire-and-forget like the billing hook.
                 url: http://chatwoot-web:3000/api/v1/accounts/__CHATWOOT_ACCOUNT_ID__/contacts
                 method: POST
                 body: file:///etc/config/kratos/chatwoot_contact_hook.jsonnet
@@ -143,8 +137,6 @@ selfservice:
                   type: api_key
                   config:
                     name: api_access_token
-                    # Kratos Sync agent's token from `oecs-billing-provision chatwoot`. This and
-                    # __CHATWOOT_ACCOUNT_ID__ are substituted at container start (compose).
                     value: __CHATWOOT_KRATOS_API_TOKEN__
                     in: header
     login:

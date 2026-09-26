@@ -4,7 +4,6 @@
 # ("docker") and containers/volumes collide across repos.
 name: oecs-hub
 
-# Shared by chatwoot-migrate/-web/-worker.
 x-chatwoot-env: &chatwoot-env
   RAILS_ENV: production
   NODE_ENV: production
@@ -19,8 +18,6 @@ x-chatwoot-env: &chatwoot-env
   REDIS_URL: redis://redis:6379/5
   ACTIVE_STORAGE_SERVICE: local
   ENABLE_ACCOUNT_SIGNUP: "false"
-  # Every browser reaches Chatwoot from the same IP here; the widget throttle (5 new
-  # visitors/hour/IP) would hide the widget after a few page loads.
   ENABLE_RACK_ATTACK_WIDGET_API: "false"
   RAILS_LOG_TO_STDOUT: "true"
   MAILER_SENDER_EMAIL: OECS Support <support@registry.localhost>
@@ -32,7 +29,6 @@ x-chatwoot-env: &chatwoot-env
 services:
 
   postgres:
-    # pgvector build of postgres:16 on trixie (matches its glibc/collations) - Chatwoot needs the vector extension.
     image: pgvector/pgvector:pg16-trixie
     container_name: oecs-hub-postgres
     hostname: postgres
@@ -101,8 +97,6 @@ services:
     container_name: oecs-hub-kratos
     hostname: kratos
     restart: unless-stopped
-    # Kratos doesn't expand env vars in its config, and env overrides of single hook entries
-    # wipe the rest of the array - so the Chatwoot hook's two values are substituted here.
     entrypoint: ["sh", "-c"]
     command:
       - >-
@@ -113,7 +107,6 @@ services:
     environment:
       - OECS_HUB_KRATOS_GOOGLE_CLIENT_ID=${OECS_HUB_KRATOS_GOOGLE_CLIENT_ID:-}
       - OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET=${OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET:-}
-      # From `oecs-billing-provision chatwoot`; until set, the contact hook just fails (ignored).
       - OECS_HUB_CHATWOOT_ACCOUNT_ID=${OECS_HUB_CHATWOOT_ACCOUNT_ID:-1}
       - OECS_HUB_CHATWOOT_KRATOS_API_TOKEN=${OECS_HUB_CHATWOOT_KRATOS_API_TOKEN:-}
     volumes:
@@ -244,7 +237,6 @@ services:
     environment:
       - BACKEND_URL=http://backend:50051
       - KRATOS_URL=http://kratos:4433
-      # Widget stays hidden until the token from `oecs-billing-provision chatwoot` is set.
       - CHATWOOT_BASE_URL=http://chatwoot.localhost:8000
       - CHATWOOT_WEBSITE_TOKEN=${OECS_HUB_CHATWOOT_WEBSITE_TOKEN:-}
     labels:
@@ -279,7 +271,6 @@ services:
     volumes:
       - chatwoot-storage:/app/storage
     ports:
-      # For host-run tools (oecs-billing-provision chatwoot), like kratos' 4434.
       - "3100:3000"
     labels:
       - traefik.enable=true

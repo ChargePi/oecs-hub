@@ -9,8 +9,6 @@ CREATE DATABASE kratos OWNER kratos;
 CREATE USER keto WITH PASSWORD 'keto';
 CREATE DATABASE keto OWNER keto;
 
--- Chatwoot: extensions its schema enables are created here as superuser (the chatwoot
--- role can't create untrusted ones like vector/pg_stat_statements).
 CREATE USER chatwoot WITH PASSWORD 'chatwoot';
 CREATE DATABASE chatwoot OWNER chatwoot;
 \connect chatwoot
