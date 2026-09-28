@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AdminService_SearchSchemas_FullMethodName      = "/admin.v1.AdminService/SearchSchemas"
 	AdminService_UpdateSchemaStatus_FullMethodName = "/admin.v1.AdminService/UpdateSchemaStatus"
+	AdminService_UpdateSchemaSpec_FullMethodName   = "/admin.v1.AdminService/UpdateSchemaSpec"
 	AdminService_CreateManufacturer_FullMethodName = "/admin.v1.AdminService/CreateManufacturer"
 )
 
@@ -30,6 +31,7 @@ const (
 type AdminServiceClient interface {
 	SearchSchemas(ctx context.Context, in *SearchSchemasRequest, opts ...grpc.CallOption) (*SearchSchemasResponse, error)
 	UpdateSchemaStatus(ctx context.Context, in *UpdateSchemaStatusRequest, opts ...grpc.CallOption) (*UpdateSchemaStatusResponse, error)
+	UpdateSchemaSpec(ctx context.Context, in *UpdateSchemaSpecRequest, opts ...grpc.CallOption) (*UpdateSchemaSpecResponse, error)
 	CreateManufacturer(ctx context.Context, in *CreateManufacturerRequest, opts ...grpc.CallOption) (*CreateManufacturerResponse, error)
 }
 
@@ -61,6 +63,16 @@ func (c *adminServiceClient) UpdateSchemaStatus(ctx context.Context, in *UpdateS
 	return out, nil
 }
 
+func (c *adminServiceClient) UpdateSchemaSpec(ctx context.Context, in *UpdateSchemaSpecRequest, opts ...grpc.CallOption) (*UpdateSchemaSpecResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateSchemaSpecResponse)
+	err := c.cc.Invoke(ctx, AdminService_UpdateSchemaSpec_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *adminServiceClient) CreateManufacturer(ctx context.Context, in *CreateManufacturerRequest, opts ...grpc.CallOption) (*CreateManufacturerResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateManufacturerResponse)
@@ -77,6 +89,7 @@ func (c *adminServiceClient) CreateManufacturer(ctx context.Context, in *CreateM
 type AdminServiceServer interface {
 	SearchSchemas(context.Context, *SearchSchemasRequest) (*SearchSchemasResponse, error)
 	UpdateSchemaStatus(context.Context, *UpdateSchemaStatusRequest) (*UpdateSchemaStatusResponse, error)
+	UpdateSchemaSpec(context.Context, *UpdateSchemaSpecRequest) (*UpdateSchemaSpecResponse, error)
 	CreateManufacturer(context.Context, *CreateManufacturerRequest) (*CreateManufacturerResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
@@ -93,6 +106,9 @@ func (UnimplementedAdminServiceServer) SearchSchemas(context.Context, *SearchSch
 }
 func (UnimplementedAdminServiceServer) UpdateSchemaStatus(context.Context, *UpdateSchemaStatusRequest) (*UpdateSchemaStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateSchemaStatus not implemented")
+}
+func (UnimplementedAdminServiceServer) UpdateSchemaSpec(context.Context, *UpdateSchemaSpecRequest) (*UpdateSchemaSpecResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateSchemaSpec not implemented")
 }
 func (UnimplementedAdminServiceServer) CreateManufacturer(context.Context, *CreateManufacturerRequest) (*CreateManufacturerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateManufacturer not implemented")
@@ -154,6 +170,24 @@ func _AdminService_UpdateSchemaStatus_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_UpdateSchemaSpec_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSchemaSpecRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).UpdateSchemaSpec(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_UpdateSchemaSpec_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).UpdateSchemaSpec(ctx, req.(*UpdateSchemaSpecRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AdminService_CreateManufacturer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateManufacturerRequest)
 	if err := dec(in); err != nil {
@@ -186,6 +220,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateSchemaStatus",
 			Handler:    _AdminService_UpdateSchemaStatus_Handler,
+		},
+		{
+			MethodName: "UpdateSchemaSpec",
+			Handler:    _AdminService_UpdateSchemaSpec_Handler,
 		},
 		{
 			MethodName: "CreateManufacturer",

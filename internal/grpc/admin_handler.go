@@ -18,6 +18,7 @@ import (
 type AdminChargerService interface {
 	Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	ChangeStatus(ctx context.Context, id uuid.UUID, status charger.Status) (*charger.Charger, error)
+	AdminEditSpecification(ctx context.Context, id uuid.UUID, raw []byte) (*charger.Charger, error)
 }
 
 // AdminManufacturerService is the subset of manufacturer.Service the admin handler
@@ -146,6 +147,34 @@ func (h *AdminHandler) UpdateSchemaStatus(ctx context.Context, req *adminv1.Upda
 	}
 
 	return &adminv1.UpdateSchemaStatusResponse{Variant: chargerToProto(c)}, nil
+}
+
+// UpdateSchemaSpec overwrites a submission's spec with a corrected one, regardless of
+// its status. The spec is re-validated against the OECS schema; status is unchanged.
+func (h *AdminHandler) UpdateSchemaSpec(ctx context.Context, req *adminv1.UpdateSchemaSpecRequest) (*adminv1.UpdateSchemaSpecResponse, error) {
+	id, err := uuid.Parse(req.GetId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+
+	if len(req.GetSpec()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "spec is required")
+	}
+
+	c, err := h.charger.AdminEditSpecification(ctx, id, req.GetSpec())
+	if err != nil {
+		if errors.Is(err, charger.ErrInvalidSpec) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		if errors.Is(err, charger.ErrNotFound) {
+			return nil, status.Error(codes.NotFound, "charger not found")
+		}
+
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &adminv1.UpdateSchemaSpecResponse{Variant: chargerToProto(c)}, nil
 }
 
 func (h *AdminHandler) CreateManufacturer(ctx context.Context, req *adminv1.CreateManufacturerRequest) (*adminv1.CreateManufacturerResponse, error) {

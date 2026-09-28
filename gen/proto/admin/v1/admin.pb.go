@@ -302,6 +302,104 @@ func (x *UpdateSchemaStatusResponse) GetVariant() *v1.ChargerVariant {
 	return nil
 }
 
+type UpdateSchemaSpecRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// spec is the raw OECS charger spec JSON; it is re-validated and search fields are
+	// re-extracted from it. Status is left unchanged.
+	Spec          []byte `protobuf:"bytes,2,opt,name=spec,proto3" json:"spec,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateSchemaSpecRequest) Reset() {
+	*x = UpdateSchemaSpecRequest{}
+	mi := &file_admin_v1_admin_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSchemaSpecRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSchemaSpecRequest) ProtoMessage() {}
+
+func (x *UpdateSchemaSpecRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateSchemaSpecRequest.ProtoReflect.Descriptor instead.
+func (*UpdateSchemaSpecRequest) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpdateSchemaSpecRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UpdateSchemaSpecRequest) GetSpec() []byte {
+	if x != nil {
+		return x.Spec
+	}
+	return nil
+}
+
+type UpdateSchemaSpecResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Variant       *v1.ChargerVariant     `protobuf:"bytes,1,opt,name=variant,proto3" json:"variant,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateSchemaSpecResponse) Reset() {
+	*x = UpdateSchemaSpecResponse{}
+	mi := &file_admin_v1_admin_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateSchemaSpecResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateSchemaSpecResponse) ProtoMessage() {}
+
+func (x *UpdateSchemaSpecResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateSchemaSpecResponse.ProtoReflect.Descriptor instead.
+func (*UpdateSchemaSpecResponse) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UpdateSchemaSpecResponse) GetVariant() *v1.ChargerVariant {
+	if x != nil {
+		return x.Variant
+	}
+	return nil
+}
+
 type CreateManufacturerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -313,7 +411,7 @@ type CreateManufacturerRequest struct {
 
 func (x *CreateManufacturerRequest) Reset() {
 	*x = CreateManufacturerRequest{}
-	mi := &file_admin_v1_admin_proto_msgTypes[4]
+	mi := &file_admin_v1_admin_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -325,7 +423,7 @@ func (x *CreateManufacturerRequest) String() string {
 func (*CreateManufacturerRequest) ProtoMessage() {}
 
 func (x *CreateManufacturerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[4]
+	mi := &file_admin_v1_admin_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -338,7 +436,7 @@ func (x *CreateManufacturerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateManufacturerRequest.ProtoReflect.Descriptor instead.
 func (*CreateManufacturerRequest) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{4}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateManufacturerRequest) GetName() string {
@@ -371,7 +469,7 @@ type CreateManufacturerResponse struct {
 
 func (x *CreateManufacturerResponse) Reset() {
 	*x = CreateManufacturerResponse{}
-	mi := &file_admin_v1_admin_proto_msgTypes[5]
+	mi := &file_admin_v1_admin_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -383,7 +481,7 @@ func (x *CreateManufacturerResponse) String() string {
 func (*CreateManufacturerResponse) ProtoMessage() {}
 
 func (x *CreateManufacturerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_v1_admin_proto_msgTypes[5]
+	mi := &file_admin_v1_admin_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -396,7 +494,7 @@ func (x *CreateManufacturerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateManufacturerResponse.ProtoReflect.Descriptor instead.
 func (*CreateManufacturerResponse) Descriptor() ([]byte, []int) {
-	return file_admin_v1_admin_proto_rawDescGZIP(), []int{5}
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CreateManufacturerResponse) GetManufacturer() *v1.Manufacturer {
@@ -442,6 +540,11 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x1d.registry.v1.SubmissionStatusR\x06status\"S\n" +
 	"\x1aUpdateSchemaStatusResponse\x125\n" +
+	"\avariant\x18\x01 \x01(\v2\x1b.registry.v1.ChargerVariantR\avariant\"=\n" +
+	"\x17UpdateSchemaSpecRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04spec\x18\x02 \x01(\fR\x04spec\"Q\n" +
+	"\x18UpdateSchemaSpecResponse\x125\n" +
 	"\avariant\x18\x01 \x01(\v2\x1b.registry.v1.ChargerVariantR\avariant\"\x8a\x01\n" +
 	"\x19CreateManufacturerRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1d\n" +
@@ -450,10 +553,11 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\n" +
 	"\b_country\"[\n" +
 	"\x1aCreateManufacturerResponse\x12=\n" +
-	"\fmanufacturer\x18\x01 \x01(\v2\x19.registry.v1.ManufacturerR\fmanufacturer2\xa2\x02\n" +
+	"\fmanufacturer\x18\x01 \x01(\v2\x19.registry.v1.ManufacturerR\fmanufacturer2\xfd\x02\n" +
 	"\fAdminService\x12P\n" +
 	"\rSearchSchemas\x12\x1e.admin.v1.SearchSchemasRequest\x1a\x1f.admin.v1.SearchSchemasResponse\x12_\n" +
-	"\x12UpdateSchemaStatus\x12#.admin.v1.UpdateSchemaStatusRequest\x1a$.admin.v1.UpdateSchemaStatusResponse\x12_\n" +
+	"\x12UpdateSchemaStatus\x12#.admin.v1.UpdateSchemaStatusRequest\x1a$.admin.v1.UpdateSchemaStatusResponse\x12Y\n" +
+	"\x10UpdateSchemaSpec\x12!.admin.v1.UpdateSchemaSpecRequest\x1a\".admin.v1.UpdateSchemaSpecResponse\x12_\n" +
 	"\x12CreateManufacturer\x12#.admin.v1.CreateManufacturerRequest\x1a$.admin.v1.CreateManufacturerResponseB\x94\x01\n" +
 	"\fcom.admin.v1B\n" +
 	"AdminProtoP\x01Z7github.com/ChargePi/oecs-hub/gen/proto/admin/v1;adminv1\xa2\x02\x03AXX\xaa\x02\bAdmin.V1\xca\x02\bAdmin\\V1\xe2\x02\x14Admin\\V1\\GPBMetadata\xea\x02\tAdmin::V1b\x06proto3"
@@ -470,41 +574,46 @@ func file_admin_v1_admin_proto_rawDescGZIP() []byte {
 	return file_admin_v1_admin_proto_rawDescData
 }
 
-var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_admin_v1_admin_proto_goTypes = []any{
 	(*SearchSchemasRequest)(nil),       // 0: admin.v1.SearchSchemasRequest
 	(*SearchSchemasResponse)(nil),      // 1: admin.v1.SearchSchemasResponse
 	(*UpdateSchemaStatusRequest)(nil),  // 2: admin.v1.UpdateSchemaStatusRequest
 	(*UpdateSchemaStatusResponse)(nil), // 3: admin.v1.UpdateSchemaStatusResponse
-	(*CreateManufacturerRequest)(nil),  // 4: admin.v1.CreateManufacturerRequest
-	(*CreateManufacturerResponse)(nil), // 5: admin.v1.CreateManufacturerResponse
-	(v1.ChargerType)(0),                // 6: registry.v1.ChargerType
-	(v1.ConnectorType)(0),              // 7: registry.v1.ConnectorType
-	(v1.SubmissionStatus)(0),           // 8: registry.v1.SubmissionStatus
-	(*v1.ChargerVariant)(nil),          // 9: registry.v1.ChargerVariant
-	(*v1.Contact)(nil),                 // 10: registry.v1.Contact
-	(*v1.Manufacturer)(nil),            // 11: registry.v1.Manufacturer
+	(*UpdateSchemaSpecRequest)(nil),    // 4: admin.v1.UpdateSchemaSpecRequest
+	(*UpdateSchemaSpecResponse)(nil),   // 5: admin.v1.UpdateSchemaSpecResponse
+	(*CreateManufacturerRequest)(nil),  // 6: admin.v1.CreateManufacturerRequest
+	(*CreateManufacturerResponse)(nil), // 7: admin.v1.CreateManufacturerResponse
+	(v1.ChargerType)(0),                // 8: registry.v1.ChargerType
+	(v1.ConnectorType)(0),              // 9: registry.v1.ConnectorType
+	(v1.SubmissionStatus)(0),           // 10: registry.v1.SubmissionStatus
+	(*v1.ChargerVariant)(nil),          // 11: registry.v1.ChargerVariant
+	(*v1.Contact)(nil),                 // 12: registry.v1.Contact
+	(*v1.Manufacturer)(nil),            // 13: registry.v1.Manufacturer
 }
 var file_admin_v1_admin_proto_depIdxs = []int32{
-	6,  // 0: admin.v1.SearchSchemasRequest.charger_type:type_name -> registry.v1.ChargerType
-	7,  // 1: admin.v1.SearchSchemasRequest.connector_types:type_name -> registry.v1.ConnectorType
-	8,  // 2: admin.v1.SearchSchemasRequest.status:type_name -> registry.v1.SubmissionStatus
-	9,  // 3: admin.v1.SearchSchemasResponse.variants:type_name -> registry.v1.ChargerVariant
-	8,  // 4: admin.v1.UpdateSchemaStatusRequest.status:type_name -> registry.v1.SubmissionStatus
-	9,  // 5: admin.v1.UpdateSchemaStatusResponse.variant:type_name -> registry.v1.ChargerVariant
-	10, // 6: admin.v1.CreateManufacturerRequest.contact:type_name -> registry.v1.Contact
-	11, // 7: admin.v1.CreateManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
-	0,  // 8: admin.v1.AdminService.SearchSchemas:input_type -> admin.v1.SearchSchemasRequest
-	2,  // 9: admin.v1.AdminService.UpdateSchemaStatus:input_type -> admin.v1.UpdateSchemaStatusRequest
-	4,  // 10: admin.v1.AdminService.CreateManufacturer:input_type -> admin.v1.CreateManufacturerRequest
-	1,  // 11: admin.v1.AdminService.SearchSchemas:output_type -> admin.v1.SearchSchemasResponse
-	3,  // 12: admin.v1.AdminService.UpdateSchemaStatus:output_type -> admin.v1.UpdateSchemaStatusResponse
-	5,  // 13: admin.v1.AdminService.CreateManufacturer:output_type -> admin.v1.CreateManufacturerResponse
-	11, // [11:14] is the sub-list for method output_type
-	8,  // [8:11] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	8,  // 0: admin.v1.SearchSchemasRequest.charger_type:type_name -> registry.v1.ChargerType
+	9,  // 1: admin.v1.SearchSchemasRequest.connector_types:type_name -> registry.v1.ConnectorType
+	10, // 2: admin.v1.SearchSchemasRequest.status:type_name -> registry.v1.SubmissionStatus
+	11, // 3: admin.v1.SearchSchemasResponse.variants:type_name -> registry.v1.ChargerVariant
+	10, // 4: admin.v1.UpdateSchemaStatusRequest.status:type_name -> registry.v1.SubmissionStatus
+	11, // 5: admin.v1.UpdateSchemaStatusResponse.variant:type_name -> registry.v1.ChargerVariant
+	11, // 6: admin.v1.UpdateSchemaSpecResponse.variant:type_name -> registry.v1.ChargerVariant
+	12, // 7: admin.v1.CreateManufacturerRequest.contact:type_name -> registry.v1.Contact
+	13, // 8: admin.v1.CreateManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
+	0,  // 9: admin.v1.AdminService.SearchSchemas:input_type -> admin.v1.SearchSchemasRequest
+	2,  // 10: admin.v1.AdminService.UpdateSchemaStatus:input_type -> admin.v1.UpdateSchemaStatusRequest
+	4,  // 11: admin.v1.AdminService.UpdateSchemaSpec:input_type -> admin.v1.UpdateSchemaSpecRequest
+	6,  // 12: admin.v1.AdminService.CreateManufacturer:input_type -> admin.v1.CreateManufacturerRequest
+	1,  // 13: admin.v1.AdminService.SearchSchemas:output_type -> admin.v1.SearchSchemasResponse
+	3,  // 14: admin.v1.AdminService.UpdateSchemaStatus:output_type -> admin.v1.UpdateSchemaStatusResponse
+	5,  // 15: admin.v1.AdminService.UpdateSchemaSpec:output_type -> admin.v1.UpdateSchemaSpecResponse
+	7,  // 16: admin.v1.AdminService.CreateManufacturer:output_type -> admin.v1.CreateManufacturerResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_admin_v1_admin_proto_init() }
@@ -513,14 +622,14 @@ func file_admin_v1_admin_proto_init() {
 		return
 	}
 	file_admin_v1_admin_proto_msgTypes[0].OneofWrappers = []any{}
-	file_admin_v1_admin_proto_msgTypes[4].OneofWrappers = []any{}
+	file_admin_v1_admin_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_admin_v1_admin_proto_rawDesc), len(file_admin_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

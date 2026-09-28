@@ -193,7 +193,7 @@
     # gRPC-Method-shaped, like registry-service-default above - matches AFTER Traefik's
     # strip-admin-api middleware already ran (see this file's header comment), so no
     # "/admin-api" prefix here.
-    url: "http://<.*>/adminapi.v1.AdminApiService/<.*>"
+    url: "http://<.*>/adminapi.v1.AdminApiService/<GetDashboardStats|SearchChargers|UpdateChargerStatus|UpdateChargerSpec>"
     methods: ["POST"]
   # Browser SPA session, unlike admin-service below (CLI/tooling bearer token) - admin-web
   # is a logged-in browser app, not grpcurl/a Go client. Same Keto admin-relation
@@ -217,7 +217,7 @@
   upstream:
     url: http://backend:50052
   match:
-    url: "http://<.*>/admin.v1.AdminService/<.*>"
+    url: "http://<.*>/admin.v1.AdminService/<SearchSchemas|UpdateSchemaStatus|UpdateSchemaSpec|CreateManufacturer>"
     methods: ["POST"]
   # Operators/tooling, not a browser - bearer token from Kratos's API-flow login, not a
   # cookie. Authorization is a Keto admin-relation check, not "allow" - see
