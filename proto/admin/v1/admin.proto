@@ -33,6 +33,17 @@ message UpdateSchemaStatusResponse {
   registry.v1.ChargerVariant variant = 1;
 }
 
+message UpdateSchemaSpecRequest {
+  string id = 1;
+  // spec is the raw OECS charger spec JSON; it is re-validated and search fields are
+  // re-extracted from it. Status is left unchanged.
+  bytes spec = 2;
+}
+
+message UpdateSchemaSpecResponse {
+  registry.v1.ChargerVariant variant = 1;
+}
+
 message CreateManufacturerRequest {
   string name = 1;
   optional string country = 2;
@@ -46,5 +57,6 @@ message CreateManufacturerResponse {
 service AdminService {
   rpc SearchSchemas(SearchSchemasRequest) returns (SearchSchemasResponse);
   rpc UpdateSchemaStatus(UpdateSchemaStatusRequest) returns (UpdateSchemaStatusResponse);
+  rpc UpdateSchemaSpec(UpdateSchemaSpecRequest) returns (UpdateSchemaSpecResponse);
   rpc CreateManufacturer(CreateManufacturerRequest) returns (CreateManufacturerResponse);
 }

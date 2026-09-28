@@ -98,16 +98,79 @@ func (s *Service) EditSpecification(ctx context.Context, id, submitterIdentityID
 	ctx, span := tracer.Start(ctx, "charger.EditSpecification", trace.WithAttributes(idAttr(id)))
 	defer span.End()
 
-	spec, err := s.validator.Validate(raw)
+	c, err := s.buildFromSpec(raw)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
+		return nil, err
+	}
+
+	updated, err := s.repo.UpdateSpec(ctx, id, submitterIdentityID, c)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("update charger spec: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, id)
+
+	return updated, nil
+}
+
+// AdminEditSpecification re-validates raw against the OECS schema and re-extracts
+// search fields, then overwrites id's spec regardless of owner or status - an admin
+// correction. Status and manufacturer linkage are left unchanged; if id is verified,
+// its Memgraph projection is refreshed. Returns an error wrapping ErrInvalidSpec if
+// validation fails, or ErrNotFound if id doesn't exist.
+func (s *Service) AdminEditSpecification(ctx context.Context, id uuid.UUID, raw []byte) (*Charger, error) {
+	ctx, span := tracer.Start(ctx, "charger.AdminEditSpecification", trace.WithAttributes(idAttr(id)))
+	defer span.End()
+
+	c, err := s.buildFromSpec(raw)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, err
+	}
+
+	updated, err := s.repo.AdminUpdateSpec(ctx, id, c)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("update charger spec: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, id)
+
+	if updated.Status == StatusVerified && updated.ManufacturerID != nil {
+		err := s.graph.UpsertVariant(ctx, *updated.ManufacturerID, updated)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
+			return nil, fmt.Errorf("upsert variant graph node: %w", err)
+		}
+	}
+
+	return updated, nil
+}
+
+// buildFromSpec validates raw against the OECS schema and returns a Charger carrying
+// raw and the search fields extracted from it. Returns an error wrapping ErrInvalidSpec
+// if validation fails.
+func (s *Service) buildFromSpec(raw []byte) (*Charger, error) {
+	spec, err := s.validator.Validate(raw)
+	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidSpec, err)
 	}
 
 	fields := extract(spec)
-	c := &Charger{
+
+	return &Charger{
 		ManufacturerName:    spec.Manufacturer.Name,
 		ManufacturerCountry: spec.Manufacturer.Country,
 		Series:              spec.Model.Series,
@@ -122,19 +185,7 @@ func (s *Service) EditSpecification(ctx context.Context, id, submitterIdentityID
 		ProductImageURL:     spec.Model.ProductImageURL,
 		SchemaVersion:       spec.Version,
 		Spec:                raw,
-	}
-
-	updated, err := s.repo.UpdateSpec(ctx, id, submitterIdentityID, c)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		return nil, fmt.Errorf("update charger spec: %w", err)
-	}
-
-	_ = s.cache.Delete(ctx, id)
-
-	return updated, nil
+	}, nil
 }
 
 // CancelSubmission withdraws id, but only while it's still owned by submitterIdentityID

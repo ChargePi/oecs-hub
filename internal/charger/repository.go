@@ -62,6 +62,10 @@ type Repository interface {
 	// matching UpdateStatus's terseness) - used by the manufacturer self-service
 	// EditSpecification RPC.
 	UpdateSpec(ctx context.Context, id, submitterIdentityID uuid.UUID, c *Charger) (*Charger, error)
+	// AdminUpdateSpec overwrites id's spec and extracted fields with c's regardless of
+	// owner or status. Returns ErrNotFound if id doesn't exist. Used by the admin
+	// UpdateSchemaSpec RPC.
+	AdminUpdateSpec(ctx context.Context, id uuid.UUID, c *Charger) (*Charger, error)
 	// CancelSubmission sets id's Status to StatusCancelled, but only while id is still
 	// owned by submitterIdentityID and has Status == StatusSubmitted. Returns ErrNotFound
 	// otherwise, same ambiguity as UpdateSpec. Used by the manufacturer self-service

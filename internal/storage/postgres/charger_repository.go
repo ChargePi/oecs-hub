@@ -181,6 +181,20 @@ func (r *ChargerRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 // UpdateSpec overwrites id's spec and extracted fields with c's, scoped to rows still
 // owned by submitterIdentityID and pending review.
 func (r *ChargerRepository) UpdateSpec(ctx context.Context, id, submitterIdentityID uuid.UUID, c *charger.Charger) (*charger.Charger, error) {
+	return r.updateSpec(ctx, id, c, func(db *gorm.DB) *gorm.DB {
+		return db.Where("submitted_by_identity_id = ? AND status = ?", submitterIdentityID, string(charger.StatusSubmitted))
+	})
+}
+
+// AdminUpdateSpec overwrites id's spec and extracted fields with c's regardless of
+// owner or status.
+func (r *ChargerRepository) AdminUpdateSpec(ctx context.Context, id uuid.UUID, c *charger.Charger) (*charger.Charger, error) {
+	return r.updateSpec(ctx, id, c)
+}
+
+// updateSpec overwrites id's spec and extracted fields with c's, further narrowed by
+// scopes. Returns charger.ErrNotFound if no row matched.
+func (r *ChargerRepository) updateSpec(ctx context.Context, id uuid.UUID, c *charger.Charger, scopes ...func(*gorm.DB) *gorm.DB) (*charger.Charger, error) {
 	entity := chargerToEntity(c)
 
 	updates := map[string]any{
@@ -202,7 +216,8 @@ func (r *ChargerRepository) UpdateSpec(ctx context.Context, id, submitterIdentit
 	}
 
 	result := r.db.WithContext(ctx).Model(&chargerVariantEntity{}).
-		Where("id = ? AND submitted_by_identity_id = ? AND status = ?", id, submitterIdentityID, string(charger.StatusSubmitted)).
+		Where("id = ?", id).
+		Scopes(scopes...).
 		Updates(updates)
 	if result.Error != nil {
 		return nil, fmt.Errorf("update charger spec: %w", result.Error)
