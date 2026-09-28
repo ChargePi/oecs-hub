@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package supportchat.v1;
+
+message GetIdentityRequest {}
+
+message GetIdentityResponse {
+  string identifier = 1;
+  string identifier_hash = 2;
+  string plan_tier = 3;
+}
+
+service SupportChatService {
+  rpc GetIdentity(GetIdentityRequest) returns (GetIdentityResponse);
+}

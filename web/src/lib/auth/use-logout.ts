@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react'
 
+import { resetSupportChat } from '@/lib/support-chat/chatwoot'
+
 import { frontendApi } from './client'
 
 // Kratos logout is a two-step flow: fetch a one-time logout_url, then NAVIGATE to it
@@ -13,6 +15,7 @@ export function useLogout() {
 
     try {
       const { logout_url: logoutUrl } = await frontendApi.createBrowserLogoutFlow()
+      resetSupportChat()
       window.location.href = logoutUrl
     } catch {
       setIsLoggingOut(false)

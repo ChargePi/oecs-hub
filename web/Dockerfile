@@ -40,6 +40,8 @@ ENV BACKEND_URL=http://localhost:9999
 ENV CONVERSATION_API_URL=http://localhost:9999
 # Placeholder like CONVERSATION_API_URL above, for oecs-billing-service.
 ENV BILLING_API_URL=http://localhost:9999
+ENV CHATWOOT_BASE_URL=""
+ENV CHATWOOT_WEBSITE_TOKEN=""
 # Docker's embedded DNS — override at runtime (-e RESOLVER=...) for other environments, e.g. a
 # Kubernetes cluster DNS Service IP.
 ENV RESOLVER=127.0.0.11

@@ -104,6 +104,12 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    location = /env.js {
+        default_type application/javascript;
+        add_header Cache-Control "no-cache";
+        return 200 'window.__ENV__={"chatwootBaseUrl":"${CHATWOOT_BASE_URL}","chatwootWebsiteToken":"${CHATWOOT_WEBSITE_TOKEN}"};';
+    }
+
     # Hashed build assets (Vite content-hashes filenames) are safe to cache forever; a new deploy
     # ships new filenames, not new bytes at the old URL.
     location /assets/ {
