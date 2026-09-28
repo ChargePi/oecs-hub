@@ -33,6 +33,13 @@ service ConversationService {
   // internal-only, so this is how a caller polls the result of the request
   // UpsertConversation forwards to it.
   rpc GetConversationStatus(GetConversationStatusRequest) returns (GetConversationStatusResponse);
+
+  // SubmitMessageFeedback creates or replaces the caller's thumbs up/down (and
+  // optional comment) on an assistant message.
+  rpc SubmitMessageFeedback(SubmitMessageFeedbackRequest) returns (SubmitMessageFeedbackResponse);
+
+  // DeleteMessageFeedback clears the caller's feedback on a message.
+  rpc DeleteMessageFeedback(DeleteMessageFeedbackRequest) returns (DeleteMessageFeedbackResponse);
 }
 
 enum ConversationStatus {
@@ -60,6 +67,21 @@ message Message {
   google.protobuf.Struct metadata = 5;
   int32 sequence_number = 6;
   google.protobuf.Timestamp created_at = 7;
+  // The owner's feedback on an assistant message, unset if none was given.
+  MessageFeedback feedback = 8;
+}
+
+enum FeedbackRating {
+  FEEDBACK_RATING_UNSPECIFIED = 0;
+  FEEDBACK_RATING_UP = 1;
+  FEEDBACK_RATING_DOWN = 2;
+}
+
+message MessageFeedback {
+  FeedbackRating rating = 1;
+  // Optional free-form text, at most 2000 characters.
+  string comment = 2;
+  google.protobuf.Timestamp updated_at = 3;
 }
 
 message Conversation {
@@ -151,3 +173,24 @@ message GetConversationStatusRequest {
 message GetConversationStatusResponse {
   TurnStatus status = 1;
 }
+
+message SubmitMessageFeedbackRequest {
+  string conversation_id = 1;
+  string message_id = 2;
+  string user_id = 3;
+  FeedbackRating rating = 4;
+  // Optional, at most 2000 characters.
+  string comment = 5;
+}
+
+message SubmitMessageFeedbackResponse {
+  MessageFeedback feedback = 1;
+}
+
+message DeleteMessageFeedbackRequest {
+  string conversation_id = 1;
+  string message_id = 2;
+  string user_id = 3;
+}
+
+message DeleteMessageFeedbackResponse {}

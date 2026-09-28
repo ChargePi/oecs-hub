@@ -9,6 +9,7 @@ import { clarifyingQuestionsFromMetadata, comparisonTableFromMetadata } from '@/
 import type { ChatMessage, SelectedChoice } from '@/lib/chat/types'
 import { ChatClarifyForm } from './chat-clarify-form'
 import { ChatComparisonTable } from './chat-comparison-table'
+import { ChatMessageFeedback } from './chat-message-feedback'
 
 const CLARIFY_INTRO =
   'To find the best match among thousands of chargers, please answer a few quick questions:'
@@ -196,6 +197,7 @@ export function ChatMessageBubble({
           </Button>
         </div>
       )}
+      {!isUser && <ChatMessageFeedback message={message} />}
     </div>
   )
 }

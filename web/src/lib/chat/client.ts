@@ -5,11 +5,15 @@ import { errorSeverity, isAuthError, normalizeAndDispatch, toErrorMessage, type 
 import { ConversationServiceClient } from '@/lib/registry/gen/conversation/v1/ConversationServiceClientPb'
 import {
   DeleteConversationsRequest,
+  DeleteMessageFeedbackRequest,
+  FeedbackRating as ProtoFeedbackRating,
   GetConversationRequest,
   GetConversationStatusRequest,
   ListConversationsRequest,
   Message as ProtoMessage,
+  MessageFeedback as ProtoMessageFeedback,
   MessageRole as ProtoMessageRole,
+  SubmitMessageFeedbackRequest,
   TurnStatus as ProtoTurnStatus,
   UpdateConversationRequest,
   UpsertConversationRequest,
@@ -24,6 +28,8 @@ import type {
   ConversationDetail,
   ConversationSummary,
   EvidenceItem,
+  FeedbackRating,
+  MessageFeedback,
   MessageRole,
   SelectedChoice,
   StreamDonePayload,
@@ -55,16 +61,29 @@ const TURN_STATUS_FROM_PROTO: Record<ProtoTurnStatus, TurnStatus> = {
   [ProtoTurnStatus.TURN_STATUS_FAILED]: 'TURN_STATUS_FAILED',
 }
 
+function feedbackFromProto(f?: ProtoMessageFeedback): MessageFeedback | undefined {
+  switch (f?.getRating()) {
+    case ProtoFeedbackRating.FEEDBACK_RATING_UP:
+      return { rating: 'up', comment: f.getComment() }
+    case ProtoFeedbackRating.FEEDBACK_RATING_DOWN:
+      return { rating: 'down', comment: f.getComment() }
+    default:
+      return undefined
+  }
+}
+
 function messageFromProto(m: ProtoMessage): ChatMessage {
   const metadataStruct = m.getMetadata()
   return {
     id: m.getId(),
+    conversationId: m.getConversationId(),
     role: MESSAGE_ROLE_FROM_PROTO[m.getRole()] ?? 'MESSAGE_ROLE_UNSPECIFIED',
     content: m.getContent(),
     metadata: metadataStruct
       ? (metadataStruct.toJavaScript() as Record<string, unknown>)
       : undefined,
     createdAt: m.getCreatedAt()?.toDate().toISOString() ?? '',
+    feedback: feedbackFromProto(m.getFeedback()),
   }
 }
 
@@ -228,6 +247,45 @@ export async function deleteConversations(conversationIds: string[]): Promise<vo
     await client.deleteConversations(req, {})
   } catch (err) {
     mapError(err, 'deleteConversations')
+  }
+}
+
+export async function submitMessageFeedback(
+  conversationId: string,
+  messageId: string,
+  rating: FeedbackRating,
+  comment: string,
+): Promise<MessageFeedback> {
+  const req = new SubmitMessageFeedbackRequest()
+  req.setConversationId(conversationId)
+  req.setMessageId(messageId)
+  req.setRating(
+    rating === 'up'
+      ? ProtoFeedbackRating.FEEDBACK_RATING_UP
+      : ProtoFeedbackRating.FEEDBACK_RATING_DOWN,
+  )
+  req.setComment(comment)
+
+  try {
+    const resp = await client.submitMessageFeedback(req, {})
+    return feedbackFromProto(resp.getFeedback()) ?? { rating, comment }
+  } catch (err) {
+    mapError(err, 'submitMessageFeedback')
+  }
+}
+
+export async function deleteMessageFeedback(
+  conversationId: string,
+  messageId: string,
+): Promise<void> {
+  const req = new DeleteMessageFeedbackRequest()
+  req.setConversationId(conversationId)
+  req.setMessageId(messageId)
+
+  try {
+    await client.deleteMessageFeedback(req, {})
+  } catch (err) {
+    mapError(err, 'deleteMessageFeedback')
   }
 }
 
