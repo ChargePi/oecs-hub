@@ -7,6 +7,7 @@ import type {
   ChatMessage,
   ConversationDetail,
   EvidenceItem,
+  MessageFeedback,
   SelectedChoice,
   TurnStatus,
 } from '@/lib/chat/types'
@@ -43,6 +44,7 @@ const OPTIMISTIC_ID_PREFIX = 'optimistic:'
 function makeOptimisticMessage(message: string, selectedChoices?: SelectedChoice[]): ChatMessage {
   return {
     id: `${OPTIMISTIC_ID_PREFIX}${crypto.randomUUID()}`,
+    conversationId: '',
     role: 'MESSAGE_ROLE_USER',
     content: message,
     metadata: selectedChoices?.length ? { selected_choices: selectedChoices } : undefined,
@@ -74,6 +76,7 @@ interface ChatStreamStoreState {
     selectedChoices?: SelectedChoice[],
     chargerIds?: string[],
   ) => void
+  setMessageFeedback: (messageId: string, feedback: MessageFeedback | undefined) => void
 }
 
 // Cancel closures are imperative handles, not render-relevant data, so they live
@@ -169,6 +172,20 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
         },
       },
     )
+  },
+
+  setMessageFeedback: (messageId, feedback) => {
+    set((s) => {
+      const entries = { ...s.entries }
+      for (const [key, entry] of Object.entries(s.entries)) {
+        if (!entry.messages.some((m) => m.id === messageId)) continue
+        entries[key] = {
+          ...entry,
+          messages: entry.messages.map((m) => (m.id === messageId ? { ...m, feedback } : m)),
+        }
+      }
+      return { entries }
+    })
   },
 }))
 

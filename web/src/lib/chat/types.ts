@@ -17,12 +17,21 @@ export type TurnStatus =
   | 'TURN_STATUS_COMPLETED'
   | 'TURN_STATUS_FAILED'
 
+export type FeedbackRating = 'up' | 'down'
+
+export interface MessageFeedback {
+  rating: FeedbackRating
+  comment: string
+}
+
 export interface ChatMessage {
   id: string
+  conversationId: string
   role: MessageRole
   content: string
   metadata?: Record<string, unknown>
   createdAt: string
+  feedback?: MessageFeedback
 }
 
 /** One selectable answer to a ClarifyingQuestion. Value/weight are fixed by the agent

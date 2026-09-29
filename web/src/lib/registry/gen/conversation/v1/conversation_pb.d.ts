@@ -30,6 +30,11 @@ export class Message extends jspb.Message {
   hasCreatedAt(): boolean;
   clearCreatedAt(): Message;
 
+  getFeedback(): MessageFeedback | undefined;
+  setFeedback(value?: MessageFeedback): Message;
+  hasFeedback(): boolean;
+  clearFeedback(): Message;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Message.AsObject;
   static toObject(includeInstance: boolean, msg: Message): Message.AsObject;
@@ -47,6 +52,35 @@ export namespace Message {
     metadata?: google_protobuf_struct_pb.Struct.AsObject;
     sequenceNumber: number;
     createdAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    feedback?: MessageFeedback.AsObject;
+  };
+}
+
+export class MessageFeedback extends jspb.Message {
+  getRating(): FeedbackRating;
+  setRating(value: FeedbackRating): MessageFeedback;
+
+  getComment(): string;
+  setComment(value: string): MessageFeedback;
+
+  getUpdatedAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setUpdatedAt(value?: google_protobuf_timestamp_pb.Timestamp): MessageFeedback;
+  hasUpdatedAt(): boolean;
+  clearUpdatedAt(): MessageFeedback;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MessageFeedback.AsObject;
+  static toObject(includeInstance: boolean, msg: MessageFeedback): MessageFeedback.AsObject;
+  static serializeBinaryToWriter(message: MessageFeedback, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MessageFeedback;
+  static deserializeBinaryFromReader(message: MessageFeedback, reader: jspb.BinaryReader): MessageFeedback;
+}
+
+export namespace MessageFeedback {
+  export type AsObject = {
+    rating: FeedbackRating;
+    comment: string;
+    updatedAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
 }
 
@@ -368,6 +402,100 @@ export namespace GetConversationStatusResponse {
   };
 }
 
+export class SubmitMessageFeedbackRequest extends jspb.Message {
+  getConversationId(): string;
+  setConversationId(value: string): SubmitMessageFeedbackRequest;
+
+  getMessageId(): string;
+  setMessageId(value: string): SubmitMessageFeedbackRequest;
+
+  getUserId(): string;
+  setUserId(value: string): SubmitMessageFeedbackRequest;
+
+  getRating(): FeedbackRating;
+  setRating(value: FeedbackRating): SubmitMessageFeedbackRequest;
+
+  getComment(): string;
+  setComment(value: string): SubmitMessageFeedbackRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubmitMessageFeedbackRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SubmitMessageFeedbackRequest): SubmitMessageFeedbackRequest.AsObject;
+  static serializeBinaryToWriter(message: SubmitMessageFeedbackRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubmitMessageFeedbackRequest;
+  static deserializeBinaryFromReader(message: SubmitMessageFeedbackRequest, reader: jspb.BinaryReader): SubmitMessageFeedbackRequest;
+}
+
+export namespace SubmitMessageFeedbackRequest {
+  export type AsObject = {
+    conversationId: string;
+    messageId: string;
+    userId: string;
+    rating: FeedbackRating;
+    comment: string;
+  };
+}
+
+export class SubmitMessageFeedbackResponse extends jspb.Message {
+  getFeedback(): MessageFeedback | undefined;
+  setFeedback(value?: MessageFeedback): SubmitMessageFeedbackResponse;
+  hasFeedback(): boolean;
+  clearFeedback(): SubmitMessageFeedbackResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubmitMessageFeedbackResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SubmitMessageFeedbackResponse): SubmitMessageFeedbackResponse.AsObject;
+  static serializeBinaryToWriter(message: SubmitMessageFeedbackResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubmitMessageFeedbackResponse;
+  static deserializeBinaryFromReader(message: SubmitMessageFeedbackResponse, reader: jspb.BinaryReader): SubmitMessageFeedbackResponse;
+}
+
+export namespace SubmitMessageFeedbackResponse {
+  export type AsObject = {
+    feedback?: MessageFeedback.AsObject;
+  };
+}
+
+export class DeleteMessageFeedbackRequest extends jspb.Message {
+  getConversationId(): string;
+  setConversationId(value: string): DeleteMessageFeedbackRequest;
+
+  getMessageId(): string;
+  setMessageId(value: string): DeleteMessageFeedbackRequest;
+
+  getUserId(): string;
+  setUserId(value: string): DeleteMessageFeedbackRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteMessageFeedbackRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteMessageFeedbackRequest): DeleteMessageFeedbackRequest.AsObject;
+  static serializeBinaryToWriter(message: DeleteMessageFeedbackRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteMessageFeedbackRequest;
+  static deserializeBinaryFromReader(message: DeleteMessageFeedbackRequest, reader: jspb.BinaryReader): DeleteMessageFeedbackRequest;
+}
+
+export namespace DeleteMessageFeedbackRequest {
+  export type AsObject = {
+    conversationId: string;
+    messageId: string;
+    userId: string;
+  };
+}
+
+export class DeleteMessageFeedbackResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteMessageFeedbackResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteMessageFeedbackResponse): DeleteMessageFeedbackResponse.AsObject;
+  static serializeBinaryToWriter(message: DeleteMessageFeedbackResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteMessageFeedbackResponse;
+  static deserializeBinaryFromReader(message: DeleteMessageFeedbackResponse, reader: jspb.BinaryReader): DeleteMessageFeedbackResponse;
+}
+
+export namespace DeleteMessageFeedbackResponse {
+  export type AsObject = {
+  };
+}
+
 export enum ConversationStatus {
   CONVERSATION_STATUS_UNSPECIFIED = 0,
   CONVERSATION_STATUS_OPEN = 1,
@@ -380,6 +508,11 @@ export enum MessageRole {
   MESSAGE_ROLE_ASSISTANT = 2,
   MESSAGE_ROLE_SYSTEM = 3,
   MESSAGE_ROLE_TOOL = 4,
+}
+export enum FeedbackRating {
+  FEEDBACK_RATING_UNSPECIFIED = 0,
+  FEEDBACK_RATING_UP = 1,
+  FEEDBACK_RATING_DOWN = 2,
 }
 export enum TurnStatus {
   TURN_STATUS_UNSPECIFIED = 0,

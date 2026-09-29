@@ -297,5 +297,91 @@ export class ConversationServiceClient {
     this.methodDescriptorGetConversationStatus);
   }
 
+  methodDescriptorSubmitMessageFeedback = new grpcWeb.MethodDescriptor(
+    '/conversation.v1.ConversationService/SubmitMessageFeedback',
+    grpcWeb.MethodType.UNARY,
+    conversation_v1_conversation_pb.SubmitMessageFeedbackRequest,
+    conversation_v1_conversation_pb.SubmitMessageFeedbackResponse,
+    (request: conversation_v1_conversation_pb.SubmitMessageFeedbackRequest) => {
+      return request.serializeBinary();
+    },
+    conversation_v1_conversation_pb.SubmitMessageFeedbackResponse.deserializeBinary
+  );
+
+  submitMessageFeedback(
+    request: conversation_v1_conversation_pb.SubmitMessageFeedbackRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<conversation_v1_conversation_pb.SubmitMessageFeedbackResponse>;
+
+  submitMessageFeedback(
+    request: conversation_v1_conversation_pb.SubmitMessageFeedbackRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: conversation_v1_conversation_pb.SubmitMessageFeedbackResponse) => void): grpcWeb.ClientReadableStream<conversation_v1_conversation_pb.SubmitMessageFeedbackResponse>;
+
+  submitMessageFeedback(
+    request: conversation_v1_conversation_pb.SubmitMessageFeedbackRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: conversation_v1_conversation_pb.SubmitMessageFeedbackResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/conversation.v1.ConversationService/SubmitMessageFeedback',
+        request,
+        metadata || {},
+        this.methodDescriptorSubmitMessageFeedback,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/conversation.v1.ConversationService/SubmitMessageFeedback',
+    request,
+    metadata || {},
+    this.methodDescriptorSubmitMessageFeedback);
+  }
+
+  methodDescriptorDeleteMessageFeedback = new grpcWeb.MethodDescriptor(
+    '/conversation.v1.ConversationService/DeleteMessageFeedback',
+    grpcWeb.MethodType.UNARY,
+    conversation_v1_conversation_pb.DeleteMessageFeedbackRequest,
+    conversation_v1_conversation_pb.DeleteMessageFeedbackResponse,
+    (request: conversation_v1_conversation_pb.DeleteMessageFeedbackRequest) => {
+      return request.serializeBinary();
+    },
+    conversation_v1_conversation_pb.DeleteMessageFeedbackResponse.deserializeBinary
+  );
+
+  deleteMessageFeedback(
+    request: conversation_v1_conversation_pb.DeleteMessageFeedbackRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<conversation_v1_conversation_pb.DeleteMessageFeedbackResponse>;
+
+  deleteMessageFeedback(
+    request: conversation_v1_conversation_pb.DeleteMessageFeedbackRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: conversation_v1_conversation_pb.DeleteMessageFeedbackResponse) => void): grpcWeb.ClientReadableStream<conversation_v1_conversation_pb.DeleteMessageFeedbackResponse>;
+
+  deleteMessageFeedback(
+    request: conversation_v1_conversation_pb.DeleteMessageFeedbackRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: conversation_v1_conversation_pb.DeleteMessageFeedbackResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/conversation.v1.ConversationService/DeleteMessageFeedback',
+        request,
+        metadata || {},
+        this.methodDescriptorDeleteMessageFeedback,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/conversation.v1.ConversationService/DeleteMessageFeedback',
+    request,
+    metadata || {},
+    this.methodDescriptorDeleteMessageFeedback);
+  }
+
 }
 
