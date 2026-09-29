@@ -197,7 +197,7 @@ export function ChatMessageBubble({
           </Button>
         </div>
       )}
-      {!isUser && <ChatMessageFeedback message={message} />}
+      {!isUser && !failed && <ChatMessageFeedback message={message} />}
     </div>
   )
 }
