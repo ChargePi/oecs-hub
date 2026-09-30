@@ -12,6 +12,10 @@ service BillingService {
   rpc GetUsage(GetUsageRequest) returns (GetUsageResponse);
   rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
   rpc GetPaymentPortalUrl(GetPaymentPortalUrlRequest) returns (GetPaymentPortalUrlResponse);
+  // Switches to another plan of the caller's own account type. Upgrades apply
+  // immediately once all invoices are paid and a payment method is on file; downgrades
+  // take effect at the end of the current billing period.
+  rpc ChangePlan(ChangePlanRequest) returns (ChangePlanResponse);
   // The one public/anonymous RPC on this service - called from the still-unauthenticated
   // registration wizard. See access-rules.yml's billing-service-public rule.
   rpc GetPlans(GetPlansRequest) returns (GetPlansResponse);
@@ -70,6 +74,10 @@ message GetUsageResponse {
   google.protobuf.Timestamp period_start = 3;
   google.protobuf.Timestamp period_end = 4;
   PlanTier tier = 5;
+  string plan_code = 6;
+  // Set while a downgrade is scheduled for the end of the current period.
+  optional string next_plan_code = 7;
+  optional google.protobuf.Timestamp next_plan_at = 8;
 }
 
 message ListInvoicesRequest {
@@ -97,4 +105,24 @@ message GetPaymentPortalUrlRequest {}
 
 message GetPaymentPortalUrlResponse {
   string url = 1;
+}
+
+enum PlanChangeStatus {
+  PLAN_CHANGE_STATUS_UNSPECIFIED = 0;
+  PLAN_CHANGE_STATUS_APPLIED = 1;
+  PLAN_CHANGE_STATUS_SCHEDULED = 2;
+  // Nothing changed: action_url is the payment portal to settle open invoices.
+  PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES = 3;
+  // Nothing changed: action_url is a checkout page to add a payment method.
+  PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED = 4;
+}
+
+message ChangePlanRequest {
+  string plan_code = 1;
+}
+
+message ChangePlanResponse {
+  PlanChangeStatus status = 1;
+  optional string action_url = 2;
+  optional google.protobuf.Timestamp effective_at = 3;
 }

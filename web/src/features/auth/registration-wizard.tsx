@@ -85,7 +85,7 @@ function wizardButtonClassName(primary: boolean): string {
 // <Registration>'s prebuilt card renders every node flat in one form - splitting it into
 // steps means providing our own children instead, all inside one <OryForm>. Every node
 // stays mounted, only CSS-hidden per step, so field values survive stepping back and
-// forth. Card/payment details are managed in Lago's own portal (PaymentMethodsSection),
+// forth. Card/payment details are managed in Lago's own portal (PaymentPortalButton),
 // not collected here - the plan step only decides which plan gets subscribed at signup.
 // The schema's own company/billing-address traits ARE collected here though - they're
 // identity data, not payment data (traits.company.name is what SubmitChargerSpec

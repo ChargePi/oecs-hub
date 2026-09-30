@@ -116,7 +116,7 @@ export function SettingsFlowSection({ sections }: { sections: readonly AccountSe
                 )}
                 {section.groups.map((group, i) => {
                   // Billing fields share the "profile" group but are managed in Lago's
-                  // own portal (PaymentMethodsSection), never here.
+                  // own portal (PaymentPortalButton), never here.
                   const nodes: UiNode[] = [
                     ...defaultNodes,
                     ...allNodes.filter(

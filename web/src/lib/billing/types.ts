@@ -8,8 +8,12 @@ export interface UsageMetric {
 }
 
 export interface Usage {
+  planCode: string
   planName: string
   tier?: PlanTier
+  // Set while a downgrade is scheduled for the end of the current period.
+  nextPlanCode?: string
+  nextPlanAt?: string
   metrics: UsageMetric[]
   periodStart: string
   periodEnd: string
@@ -45,4 +49,16 @@ export interface Plan {
   // The plan's free monthly allowance, absent if it has none (e.g. a paid,
   // pay-per-use plan).
   includedUnits?: number
+}
+
+export type PlanChangeStatus =
+  | 'applied'
+  | 'scheduled'
+  | 'outstanding-invoices'
+  | 'payment-method-required'
+
+export interface PlanChangeResult {
+  status: PlanChangeStatus
+  actionUrl?: string
+  effectiveAt?: string
 }

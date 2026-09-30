@@ -2,15 +2,26 @@ import { normalizeAndDispatch } from '@/lib/errors'
 import { BillingServiceClient } from '@/lib/registry/gen/billing/v1/BillingServiceClientPb'
 import {
   AccountType as ProtoAccountType,
+  ChangePlanRequest,
   GetPaymentPortalUrlRequest,
   GetPlansRequest,
   GetUsageRequest,
   ListInvoicesRequest,
+  PlanChangeStatus as ProtoPlanChangeStatus,
   PlanTier as ProtoPlanTier,
 } from '@/lib/registry/gen/billing/v1/billing_pb'
 
 import { BILLING_API_BASE } from './config'
-import type { Invoice, InvoicesPage, Plan, PlanAccountType, PlanTier, Usage } from './types'
+import type {
+  Invoice,
+  InvoicesPage,
+  Plan,
+  PlanAccountType,
+  PlanChangeResult,
+  PlanChangeStatus,
+  PlanTier,
+  Usage,
+} from './types'
 
 const ACCOUNT_TYPE_FROM_PROTO: Record<ProtoAccountType, PlanAccountType | undefined> = {
   [ProtoAccountType.ACCOUNT_TYPE_UNSPECIFIED]: undefined,
@@ -25,6 +36,14 @@ const TIER_FROM_PROTO: Record<ProtoPlanTier, PlanTier | undefined> = {
   [ProtoPlanTier.PLAN_TIER_PAID]: 'paid',
 }
 
+const PLAN_CHANGE_STATUS_FROM_PROTO: Record<ProtoPlanChangeStatus, PlanChangeStatus | undefined> = {
+  [ProtoPlanChangeStatus.PLAN_CHANGE_STATUS_UNSPECIFIED]: undefined,
+  [ProtoPlanChangeStatus.PLAN_CHANGE_STATUS_APPLIED]: 'applied',
+  [ProtoPlanChangeStatus.PLAN_CHANGE_STATUS_SCHEDULED]: 'scheduled',
+  [ProtoPlanChangeStatus.PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES]: 'outstanding-invoices',
+  [ProtoPlanChangeStatus.PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED]: 'payment-method-required',
+}
+
 // Identity comes from forwardAuth headers - every RPC here is self-service, so no
 // user/customer id is ever set on the request itself.
 const client = new BillingServiceClient(BILLING_API_BASE, null, null)
@@ -37,8 +56,11 @@ export async function getUsage(): Promise<Usage> {
   try {
     const resp = await client.getUsage(new GetUsageRequest(), {})
     return {
+      planCode: resp.getPlanCode(),
       planName: resp.getPlanName(),
       tier: TIER_FROM_PROTO[resp.getTier()],
+      nextPlanCode: resp.hasNextPlanCode() ? resp.getNextPlanCode() : undefined,
+      nextPlanAt: resp.getNextPlanAt()?.toDate().toISOString(),
       metrics: resp.getMetricsList().map((m) => ({
         code: m.getCode(),
         name: m.getName(),
@@ -89,6 +111,25 @@ export async function getPaymentPortalUrl(): Promise<string> {
     return resp.getUrl()
   } catch (err) {
     mapError(err, 'getPaymentPortalUrl')
+  }
+}
+
+export async function changePlan(planCode: string): Promise<PlanChangeResult> {
+  const req = new ChangePlanRequest()
+  req.setPlanCode(planCode)
+
+  try {
+    const resp = await client.changePlan(req, {})
+    const status = PLAN_CHANGE_STATUS_FROM_PROTO[resp.getStatus()]
+    if (!status) throw new Error(`unknown plan change status ${resp.getStatus()}`)
+
+    return {
+      status,
+      actionUrl: resp.hasActionUrl() ? resp.getActionUrl() : undefined,
+      effectiveAt: resp.getEffectiveAt()?.toDate().toISOString(),
+    }
+  } catch (err) {
+    mapError(err, 'changePlan')
   }
 }
 
