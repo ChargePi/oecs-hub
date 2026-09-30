@@ -123,6 +123,63 @@ func (PlanTier) EnumDescriptor() ([]byte, []int) {
 	return file_billing_v1_billing_proto_rawDescGZIP(), []int{1}
 }
 
+type PlanChangeStatus int32
+
+const (
+	PlanChangeStatus_PLAN_CHANGE_STATUS_UNSPECIFIED PlanChangeStatus = 0
+	PlanChangeStatus_PLAN_CHANGE_STATUS_APPLIED     PlanChangeStatus = 1
+	PlanChangeStatus_PLAN_CHANGE_STATUS_SCHEDULED   PlanChangeStatus = 2
+	// Nothing changed: action_url is the payment portal to settle open invoices.
+	PlanChangeStatus_PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES PlanChangeStatus = 3
+	// Nothing changed: action_url is a checkout page to add a payment method.
+	PlanChangeStatus_PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED PlanChangeStatus = 4
+)
+
+// Enum value maps for PlanChangeStatus.
+var (
+	PlanChangeStatus_name = map[int32]string{
+		0: "PLAN_CHANGE_STATUS_UNSPECIFIED",
+		1: "PLAN_CHANGE_STATUS_APPLIED",
+		2: "PLAN_CHANGE_STATUS_SCHEDULED",
+		3: "PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES",
+		4: "PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED",
+	}
+	PlanChangeStatus_value = map[string]int32{
+		"PLAN_CHANGE_STATUS_UNSPECIFIED":             0,
+		"PLAN_CHANGE_STATUS_APPLIED":                 1,
+		"PLAN_CHANGE_STATUS_SCHEDULED":               2,
+		"PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES":    3,
+		"PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED": 4,
+	}
+)
+
+func (x PlanChangeStatus) Enum() *PlanChangeStatus {
+	p := new(PlanChangeStatus)
+	*p = x
+	return p
+}
+
+func (x PlanChangeStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PlanChangeStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_billing_v1_billing_proto_enumTypes[2].Descriptor()
+}
+
+func (PlanChangeStatus) Type() protoreflect.EnumType {
+	return &file_billing_v1_billing_proto_enumTypes[2]
+}
+
+func (x PlanChangeStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PlanChangeStatus.Descriptor instead.
+func (PlanChangeStatus) EnumDescriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{2}
+}
+
 type GetPlansRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -424,11 +481,15 @@ func (x *UsageMetric) GetIncludedUnits() float64 {
 type GetUsageResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Lago's plan.name, e.g. "Individual Free" - shown verbatim.
-	PlanName      string                 `protobuf:"bytes,1,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
-	Metrics       []*UsageMetric         `protobuf:"bytes,2,rep,name=metrics,proto3" json:"metrics,omitempty"`
-	PeriodStart   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=period_start,json=periodStart,proto3" json:"period_start,omitempty"`
-	PeriodEnd     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=period_end,json=periodEnd,proto3" json:"period_end,omitempty"`
-	Tier          PlanTier               `protobuf:"varint,5,opt,name=tier,proto3,enum=billing.v1.PlanTier" json:"tier,omitempty"`
+	PlanName    string                 `protobuf:"bytes,1,opt,name=plan_name,json=planName,proto3" json:"plan_name,omitempty"`
+	Metrics     []*UsageMetric         `protobuf:"bytes,2,rep,name=metrics,proto3" json:"metrics,omitempty"`
+	PeriodStart *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=period_start,json=periodStart,proto3" json:"period_start,omitempty"`
+	PeriodEnd   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=period_end,json=periodEnd,proto3" json:"period_end,omitempty"`
+	Tier        PlanTier               `protobuf:"varint,5,opt,name=tier,proto3,enum=billing.v1.PlanTier" json:"tier,omitempty"`
+	PlanCode    string                 `protobuf:"bytes,6,opt,name=plan_code,json=planCode,proto3" json:"plan_code,omitempty"`
+	// Set while a downgrade is scheduled for the end of the current period.
+	NextPlanCode  *string                `protobuf:"bytes,7,opt,name=next_plan_code,json=nextPlanCode,proto3,oneof" json:"next_plan_code,omitempty"`
+	NextPlanAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=next_plan_at,json=nextPlanAt,proto3,oneof" json:"next_plan_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -496,6 +557,27 @@ func (x *GetUsageResponse) GetTier() PlanTier {
 		return x.Tier
 	}
 	return PlanTier_PLAN_TIER_UNSPECIFIED
+}
+
+func (x *GetUsageResponse) GetPlanCode() string {
+	if x != nil {
+		return x.PlanCode
+	}
+	return ""
+}
+
+func (x *GetUsageResponse) GetNextPlanCode() string {
+	if x != nil && x.NextPlanCode != nil {
+		return *x.NextPlanCode
+	}
+	return ""
+}
+
+func (x *GetUsageResponse) GetNextPlanAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.NextPlanAt
+	}
+	return nil
 }
 
 type ListInvoicesRequest struct {
@@ -782,6 +864,110 @@ func (x *GetPaymentPortalUrlResponse) GetUrl() string {
 	return ""
 }
 
+type ChangePlanRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlanCode      string                 `protobuf:"bytes,1,opt,name=plan_code,json=planCode,proto3" json:"plan_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangePlanRequest) Reset() {
+	*x = ChangePlanRequest{}
+	mi := &file_billing_v1_billing_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePlanRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePlanRequest) ProtoMessage() {}
+
+func (x *ChangePlanRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePlanRequest.ProtoReflect.Descriptor instead.
+func (*ChangePlanRequest) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ChangePlanRequest) GetPlanCode() string {
+	if x != nil {
+		return x.PlanCode
+	}
+	return ""
+}
+
+type ChangePlanResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Status        PlanChangeStatus       `protobuf:"varint,1,opt,name=status,proto3,enum=billing.v1.PlanChangeStatus" json:"status,omitempty"`
+	ActionUrl     *string                `protobuf:"bytes,2,opt,name=action_url,json=actionUrl,proto3,oneof" json:"action_url,omitempty"`
+	EffectiveAt   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=effective_at,json=effectiveAt,proto3,oneof" json:"effective_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangePlanResponse) Reset() {
+	*x = ChangePlanResponse{}
+	mi := &file_billing_v1_billing_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePlanResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePlanResponse) ProtoMessage() {}
+
+func (x *ChangePlanResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_billing_v1_billing_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePlanResponse.ProtoReflect.Descriptor instead.
+func (*ChangePlanResponse) Descriptor() ([]byte, []int) {
+	return file_billing_v1_billing_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ChangePlanResponse) GetStatus() PlanChangeStatus {
+	if x != nil {
+		return x.Status
+	}
+	return PlanChangeStatus_PLAN_CHANGE_STATUS_UNSPECIFIED
+}
+
+func (x *ChangePlanResponse) GetActionUrl() string {
+	if x != nil && x.ActionUrl != nil {
+		return *x.ActionUrl
+	}
+	return ""
+}
+
+func (x *ChangePlanResponse) GetEffectiveAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EffectiveAt
+	}
+	return nil
+}
+
 var File_billing_v1_billing_proto protoreflect.FileDescriptor
 
 const file_billing_v1_billing_proto_rawDesc = "" +
@@ -808,14 +994,20 @@ const file_billing_v1_billing_proto_rawDesc = "" +
 	"\x05units\x18\x03 \x01(\tR\x05units\x12%\n" +
 	"\x0econsumed_units\x18\x04 \x01(\x01R\rconsumedUnits\x12*\n" +
 	"\x0eincluded_units\x18\x05 \x01(\x01H\x00R\rincludedUnits\x88\x01\x01B\x11\n" +
-	"\x0f_included_units\"\x86\x02\n" +
+	"\x0f_included_units\"\xb5\x03\n" +
 	"\x10GetUsageResponse\x12\x1b\n" +
 	"\tplan_name\x18\x01 \x01(\tR\bplanName\x121\n" +
 	"\ametrics\x18\x02 \x03(\v2\x17.billing.v1.UsageMetricR\ametrics\x12=\n" +
 	"\fperiod_start\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vperiodStart\x129\n" +
 	"\n" +
 	"period_end\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tperiodEnd\x12(\n" +
-	"\x04tier\x18\x05 \x01(\x0e2\x14.billing.v1.PlanTierR\x04tier\"Q\n" +
+	"\x04tier\x18\x05 \x01(\x0e2\x14.billing.v1.PlanTierR\x04tier\x12\x1b\n" +
+	"\tplan_code\x18\x06 \x01(\tR\bplanCode\x12)\n" +
+	"\x0enext_plan_code\x18\a \x01(\tH\x00R\fnextPlanCode\x88\x01\x01\x12A\n" +
+	"\fnext_plan_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampH\x01R\n" +
+	"nextPlanAt\x88\x01\x01B\x11\n" +
+	"\x0f_next_plan_codeB\x0f\n" +
+	"\r_next_plan_at\"Q\n" +
 	"\x13ListInvoicesRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
@@ -837,7 +1029,16 @@ const file_billing_v1_billing_proto_rawDesc = "" +
 	"total_size\x18\x03 \x01(\x03R\ttotalSize\"\x1c\n" +
 	"\x1aGetPaymentPortalUrlRequest\"/\n" +
 	"\x1bGetPaymentPortalUrlResponse\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url*\x82\x01\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"0\n" +
+	"\x11ChangePlanRequest\x12\x1b\n" +
+	"\tplan_code\x18\x01 \x01(\tR\bplanCode\"\xd2\x01\n" +
+	"\x12ChangePlanResponse\x124\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1c.billing.v1.PlanChangeStatusR\x06status\x12\"\n" +
+	"\n" +
+	"action_url\x18\x02 \x01(\tH\x00R\tactionUrl\x88\x01\x01\x12B\n" +
+	"\feffective_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampH\x01R\veffectiveAt\x88\x01\x01B\r\n" +
+	"\v_action_urlB\x0f\n" +
+	"\r_effective_at*\x82\x01\n" +
 	"\vAccountType\x12\x1c\n" +
 	"\x18ACCOUNT_TYPE_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17ACCOUNT_TYPE_INDIVIDUAL\x10\x01\x12\x1d\n" +
@@ -846,11 +1047,19 @@ const file_billing_v1_billing_proto_rawDesc = "" +
 	"\bPlanTier\x12\x19\n" +
 	"\x15PLAN_TIER_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0ePLAN_TIER_FREE\x10\x01\x12\x12\n" +
-	"\x0ePLAN_TIER_PAID\x10\x022\xd9\x02\n" +
+	"\x0ePLAN_TIER_PAID\x10\x02*\xd5\x01\n" +
+	"\x10PlanChangeStatus\x12\"\n" +
+	"\x1ePLAN_CHANGE_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aPLAN_CHANGE_STATUS_APPLIED\x10\x01\x12 \n" +
+	"\x1cPLAN_CHANGE_STATUS_SCHEDULED\x10\x02\x12+\n" +
+	"'PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES\x10\x03\x12.\n" +
+	"*PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED\x10\x042\xa6\x03\n" +
 	"\x0eBillingService\x12E\n" +
 	"\bGetUsage\x12\x1b.billing.v1.GetUsageRequest\x1a\x1c.billing.v1.GetUsageResponse\x12Q\n" +
 	"\fListInvoices\x12\x1f.billing.v1.ListInvoicesRequest\x1a .billing.v1.ListInvoicesResponse\x12f\n" +
-	"\x13GetPaymentPortalUrl\x12&.billing.v1.GetPaymentPortalUrlRequest\x1a'.billing.v1.GetPaymentPortalUrlResponse\x12E\n" +
+	"\x13GetPaymentPortalUrl\x12&.billing.v1.GetPaymentPortalUrlRequest\x1a'.billing.v1.GetPaymentPortalUrlResponse\x12K\n" +
+	"\n" +
+	"ChangePlan\x12\x1d.billing.v1.ChangePlanRequest\x1a\x1e.billing.v1.ChangePlanResponse\x12E\n" +
 	"\bGetPlans\x12\x1b.billing.v1.GetPlansRequest\x1a\x1c.billing.v1.GetPlansResponseB\xa4\x01\n" +
 	"\x0ecom.billing.v1B\fBillingProtoP\x01Z;github.com/ChargePi/oecs-hub/gen/proto/billing/v1;billingv1\xa2\x02\x03BXX\xaa\x02\n" +
 	"Billing.V1\xca\x02\n" +
@@ -868,47 +1077,55 @@ func file_billing_v1_billing_proto_rawDescGZIP() []byte {
 	return file_billing_v1_billing_proto_rawDescData
 }
 
-var file_billing_v1_billing_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_billing_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_billing_v1_billing_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_billing_v1_billing_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_billing_v1_billing_proto_goTypes = []any{
 	(AccountType)(0),                    // 0: billing.v1.AccountType
 	(PlanTier)(0),                       // 1: billing.v1.PlanTier
-	(*GetPlansRequest)(nil),             // 2: billing.v1.GetPlansRequest
-	(*Plan)(nil),                        // 3: billing.v1.Plan
-	(*GetPlansResponse)(nil),            // 4: billing.v1.GetPlansResponse
-	(*GetUsageRequest)(nil),             // 5: billing.v1.GetUsageRequest
-	(*UsageMetric)(nil),                 // 6: billing.v1.UsageMetric
-	(*GetUsageResponse)(nil),            // 7: billing.v1.GetUsageResponse
-	(*ListInvoicesRequest)(nil),         // 8: billing.v1.ListInvoicesRequest
-	(*Invoice)(nil),                     // 9: billing.v1.Invoice
-	(*ListInvoicesResponse)(nil),        // 10: billing.v1.ListInvoicesResponse
-	(*GetPaymentPortalUrlRequest)(nil),  // 11: billing.v1.GetPaymentPortalUrlRequest
-	(*GetPaymentPortalUrlResponse)(nil), // 12: billing.v1.GetPaymentPortalUrlResponse
-	(*timestamppb.Timestamp)(nil),       // 13: google.protobuf.Timestamp
+	(PlanChangeStatus)(0),               // 2: billing.v1.PlanChangeStatus
+	(*GetPlansRequest)(nil),             // 3: billing.v1.GetPlansRequest
+	(*Plan)(nil),                        // 4: billing.v1.Plan
+	(*GetPlansResponse)(nil),            // 5: billing.v1.GetPlansResponse
+	(*GetUsageRequest)(nil),             // 6: billing.v1.GetUsageRequest
+	(*UsageMetric)(nil),                 // 7: billing.v1.UsageMetric
+	(*GetUsageResponse)(nil),            // 8: billing.v1.GetUsageResponse
+	(*ListInvoicesRequest)(nil),         // 9: billing.v1.ListInvoicesRequest
+	(*Invoice)(nil),                     // 10: billing.v1.Invoice
+	(*ListInvoicesResponse)(nil),        // 11: billing.v1.ListInvoicesResponse
+	(*GetPaymentPortalUrlRequest)(nil),  // 12: billing.v1.GetPaymentPortalUrlRequest
+	(*GetPaymentPortalUrlResponse)(nil), // 13: billing.v1.GetPaymentPortalUrlResponse
+	(*ChangePlanRequest)(nil),           // 14: billing.v1.ChangePlanRequest
+	(*ChangePlanResponse)(nil),          // 15: billing.v1.ChangePlanResponse
+	(*timestamppb.Timestamp)(nil),       // 16: google.protobuf.Timestamp
 }
 var file_billing_v1_billing_proto_depIdxs = []int32{
 	0,  // 0: billing.v1.Plan.account_type:type_name -> billing.v1.AccountType
 	1,  // 1: billing.v1.Plan.tier:type_name -> billing.v1.PlanTier
-	3,  // 2: billing.v1.GetPlansResponse.plans:type_name -> billing.v1.Plan
-	6,  // 3: billing.v1.GetUsageResponse.metrics:type_name -> billing.v1.UsageMetric
-	13, // 4: billing.v1.GetUsageResponse.period_start:type_name -> google.protobuf.Timestamp
-	13, // 5: billing.v1.GetUsageResponse.period_end:type_name -> google.protobuf.Timestamp
+	4,  // 2: billing.v1.GetPlansResponse.plans:type_name -> billing.v1.Plan
+	7,  // 3: billing.v1.GetUsageResponse.metrics:type_name -> billing.v1.UsageMetric
+	16, // 4: billing.v1.GetUsageResponse.period_start:type_name -> google.protobuf.Timestamp
+	16, // 5: billing.v1.GetUsageResponse.period_end:type_name -> google.protobuf.Timestamp
 	1,  // 6: billing.v1.GetUsageResponse.tier:type_name -> billing.v1.PlanTier
-	13, // 7: billing.v1.Invoice.issued_at:type_name -> google.protobuf.Timestamp
-	9,  // 8: billing.v1.ListInvoicesResponse.invoices:type_name -> billing.v1.Invoice
-	5,  // 9: billing.v1.BillingService.GetUsage:input_type -> billing.v1.GetUsageRequest
-	8,  // 10: billing.v1.BillingService.ListInvoices:input_type -> billing.v1.ListInvoicesRequest
-	11, // 11: billing.v1.BillingService.GetPaymentPortalUrl:input_type -> billing.v1.GetPaymentPortalUrlRequest
-	2,  // 12: billing.v1.BillingService.GetPlans:input_type -> billing.v1.GetPlansRequest
-	7,  // 13: billing.v1.BillingService.GetUsage:output_type -> billing.v1.GetUsageResponse
-	10, // 14: billing.v1.BillingService.ListInvoices:output_type -> billing.v1.ListInvoicesResponse
-	12, // 15: billing.v1.BillingService.GetPaymentPortalUrl:output_type -> billing.v1.GetPaymentPortalUrlResponse
-	4,  // 16: billing.v1.BillingService.GetPlans:output_type -> billing.v1.GetPlansResponse
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	16, // 7: billing.v1.GetUsageResponse.next_plan_at:type_name -> google.protobuf.Timestamp
+	16, // 8: billing.v1.Invoice.issued_at:type_name -> google.protobuf.Timestamp
+	10, // 9: billing.v1.ListInvoicesResponse.invoices:type_name -> billing.v1.Invoice
+	2,  // 10: billing.v1.ChangePlanResponse.status:type_name -> billing.v1.PlanChangeStatus
+	16, // 11: billing.v1.ChangePlanResponse.effective_at:type_name -> google.protobuf.Timestamp
+	6,  // 12: billing.v1.BillingService.GetUsage:input_type -> billing.v1.GetUsageRequest
+	9,  // 13: billing.v1.BillingService.ListInvoices:input_type -> billing.v1.ListInvoicesRequest
+	12, // 14: billing.v1.BillingService.GetPaymentPortalUrl:input_type -> billing.v1.GetPaymentPortalUrlRequest
+	14, // 15: billing.v1.BillingService.ChangePlan:input_type -> billing.v1.ChangePlanRequest
+	3,  // 16: billing.v1.BillingService.GetPlans:input_type -> billing.v1.GetPlansRequest
+	8,  // 17: billing.v1.BillingService.GetUsage:output_type -> billing.v1.GetUsageResponse
+	11, // 18: billing.v1.BillingService.ListInvoices:output_type -> billing.v1.ListInvoicesResponse
+	13, // 19: billing.v1.BillingService.GetPaymentPortalUrl:output_type -> billing.v1.GetPaymentPortalUrlResponse
+	15, // 20: billing.v1.BillingService.ChangePlan:output_type -> billing.v1.ChangePlanResponse
+	5,  // 21: billing.v1.BillingService.GetPlans:output_type -> billing.v1.GetPlansResponse
+	17, // [17:22] is the sub-list for method output_type
+	12, // [12:17] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_billing_v1_billing_proto_init() }
@@ -918,14 +1135,16 @@ func file_billing_v1_billing_proto_init() {
 	}
 	file_billing_v1_billing_proto_msgTypes[1].OneofWrappers = []any{}
 	file_billing_v1_billing_proto_msgTypes[4].OneofWrappers = []any{}
+	file_billing_v1_billing_proto_msgTypes[5].OneofWrappers = []any{}
 	file_billing_v1_billing_proto_msgTypes[7].OneofWrappers = []any{}
+	file_billing_v1_billing_proto_msgTypes[12].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_billing_v1_billing_proto_rawDesc), len(file_billing_v1_billing_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   11,
+			NumEnums:      3,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

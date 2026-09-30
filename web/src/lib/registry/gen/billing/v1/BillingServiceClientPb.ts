@@ -168,6 +168,49 @@ export class BillingServiceClient {
     this.methodDescriptorGetPaymentPortalUrl);
   }
 
+  methodDescriptorChangePlan = new grpcWeb.MethodDescriptor(
+    '/billing.v1.BillingService/ChangePlan',
+    grpcWeb.MethodType.UNARY,
+    billing_v1_billing_pb.ChangePlanRequest,
+    billing_v1_billing_pb.ChangePlanResponse,
+    (request: billing_v1_billing_pb.ChangePlanRequest) => {
+      return request.serializeBinary();
+    },
+    billing_v1_billing_pb.ChangePlanResponse.deserializeBinary
+  );
+
+  changePlan(
+    request: billing_v1_billing_pb.ChangePlanRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<billing_v1_billing_pb.ChangePlanResponse>;
+
+  changePlan(
+    request: billing_v1_billing_pb.ChangePlanRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.ChangePlanResponse) => void): grpcWeb.ClientReadableStream<billing_v1_billing_pb.ChangePlanResponse>;
+
+  changePlan(
+    request: billing_v1_billing_pb.ChangePlanRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.ChangePlanResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/billing.v1.BillingService/ChangePlan',
+        request,
+        metadata || {},
+        this.methodDescriptorChangePlan,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/billing.v1.BillingService/ChangePlan',
+    request,
+    metadata || {},
+    this.methodDescriptorChangePlan);
+  }
+
   methodDescriptorGetPlans = new grpcWeb.MethodDescriptor(
     '/billing.v1.BillingService/GetPlans',
     grpcWeb.MethodType.UNARY,

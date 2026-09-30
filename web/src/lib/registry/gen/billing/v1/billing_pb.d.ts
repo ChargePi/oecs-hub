@@ -167,6 +167,19 @@ export class GetUsageResponse extends jspb.Message {
   getTier(): PlanTier;
   setTier(value: PlanTier): GetUsageResponse;
 
+  getPlanCode(): string;
+  setPlanCode(value: string): GetUsageResponse;
+
+  getNextPlanCode(): string;
+  setNextPlanCode(value: string): GetUsageResponse;
+  hasNextPlanCode(): boolean;
+  clearNextPlanCode(): GetUsageResponse;
+
+  getNextPlanAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setNextPlanAt(value?: google_protobuf_timestamp_pb.Timestamp): GetUsageResponse;
+  hasNextPlanAt(): boolean;
+  clearNextPlanAt(): GetUsageResponse;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetUsageResponse.AsObject;
   static toObject(includeInstance: boolean, msg: GetUsageResponse): GetUsageResponse.AsObject;
@@ -182,7 +195,20 @@ export namespace GetUsageResponse {
     periodStart?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     periodEnd?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     tier: PlanTier;
+    planCode: string;
+    nextPlanCode?: string;
+    nextPlanAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
   };
+
+  export enum NextPlanCodeCase {
+    _NEXT_PLAN_CODE_NOT_SET = 0,
+    NEXT_PLAN_CODE = 7,
+  }
+
+  export enum NextPlanAtCase {
+    _NEXT_PLAN_AT_NOT_SET = 0,
+    NEXT_PLAN_AT = 8,
+  }
 }
 
 export class ListInvoicesRequest extends jspb.Message {
@@ -318,6 +344,64 @@ export namespace GetPaymentPortalUrlResponse {
   };
 }
 
+export class ChangePlanRequest extends jspb.Message {
+  getPlanCode(): string;
+  setPlanCode(value: string): ChangePlanRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangePlanRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangePlanRequest): ChangePlanRequest.AsObject;
+  static serializeBinaryToWriter(message: ChangePlanRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangePlanRequest;
+  static deserializeBinaryFromReader(message: ChangePlanRequest, reader: jspb.BinaryReader): ChangePlanRequest;
+}
+
+export namespace ChangePlanRequest {
+  export type AsObject = {
+    planCode: string;
+  };
+}
+
+export class ChangePlanResponse extends jspb.Message {
+  getStatus(): PlanChangeStatus;
+  setStatus(value: PlanChangeStatus): ChangePlanResponse;
+
+  getActionUrl(): string;
+  setActionUrl(value: string): ChangePlanResponse;
+  hasActionUrl(): boolean;
+  clearActionUrl(): ChangePlanResponse;
+
+  getEffectiveAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setEffectiveAt(value?: google_protobuf_timestamp_pb.Timestamp): ChangePlanResponse;
+  hasEffectiveAt(): boolean;
+  clearEffectiveAt(): ChangePlanResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangePlanResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangePlanResponse): ChangePlanResponse.AsObject;
+  static serializeBinaryToWriter(message: ChangePlanResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangePlanResponse;
+  static deserializeBinaryFromReader(message: ChangePlanResponse, reader: jspb.BinaryReader): ChangePlanResponse;
+}
+
+export namespace ChangePlanResponse {
+  export type AsObject = {
+    status: PlanChangeStatus;
+    actionUrl?: string;
+    effectiveAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+  };
+
+  export enum ActionUrlCase {
+    _ACTION_URL_NOT_SET = 0,
+    ACTION_URL = 2,
+  }
+
+  export enum EffectiveAtCase {
+    _EFFECTIVE_AT_NOT_SET = 0,
+    EFFECTIVE_AT = 3,
+  }
+}
+
 export enum AccountType {
   ACCOUNT_TYPE_UNSPECIFIED = 0,
   ACCOUNT_TYPE_INDIVIDUAL = 1,
@@ -328,4 +412,11 @@ export enum PlanTier {
   PLAN_TIER_UNSPECIFIED = 0,
   PLAN_TIER_FREE = 1,
   PLAN_TIER_PAID = 2,
+}
+export enum PlanChangeStatus {
+  PLAN_CHANGE_STATUS_UNSPECIFIED = 0,
+  PLAN_CHANGE_STATUS_APPLIED = 1,
+  PLAN_CHANGE_STATUS_SCHEDULED = 2,
+  PLAN_CHANGE_STATUS_OUTSTANDING_INVOICES = 3,
+  PLAN_CHANGE_STATUS_PAYMENT_METHOD_REQUIRED = 4,
 }

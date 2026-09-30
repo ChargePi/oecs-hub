@@ -1,16 +1,16 @@
 import { useState } from 'react'
+import { CreditCard } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { redirectToLogin } from '@/lib/auth/use-identity'
 import { getPaymentPortalUrl } from '@/lib/billing/client'
 import { AuthRequiredError, errorSeverity } from '@/lib/errors'
 import { toastError } from '@/stores/toast-store'
 
-export function PaymentMethodsSection() {
+export function PaymentPortalButton() {
   const [isLoading, setIsLoading] = useState(false)
 
-  async function handleManagePaymentMethod() {
+  async function handleClick() {
     setIsLoading(true)
 
     try {
@@ -29,19 +29,9 @@ export function PaymentMethodsSection() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Payment method</CardTitle>
-        <CardDescription>
-          Manage your payment method and billing details in our billing provider's secure
-          portal. No card details are ever stored on OECS Hub.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <Button onClick={handleManagePaymentMethod} disabled={isLoading} className="self-start">
-          {isLoading ? 'Opening…' : 'Manage payment method'}
-        </Button>
-      </CardContent>
-    </Card>
+    <Button variant="outline" onClick={handleClick} disabled={isLoading}>
+      <CreditCard />
+      {isLoading ? 'Opening…' : 'Manage payment method'}
+    </Button>
   )
 }

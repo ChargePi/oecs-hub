@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 import { Check, CreditCard, Gift, Loader2 } from 'lucide-react'
 
 import { getPlans } from '@/lib/billing/client'
+import { commitmentLine, priceHeadline, usageLine } from '@/lib/billing/plan-format'
 import type { Plan, PlanTier } from '@/lib/billing/types'
 import type { AccountType } from '@/lib/auth/types'
 import { cn } from '@/lib/utils'
@@ -10,31 +11,6 @@ interface PlanStepProps {
   accountType: AccountType
   selectedCode: string | null
   onSelect: (code: string, tier: PlanTier) => void
-}
-
-function priceHeadline(plan: Plan): string {
-  if (plan.tier === 'free' || plan.amountCents === 0) return 'Free'
-  return (plan.amountCents / 100).toLocaleString(undefined, {
-    style: 'currency',
-    currency: plan.currency || 'EUR',
-  })
-}
-
-function commitmentLine(plan: Plan): string {
-  return plan.tier === 'paid' ? `Billed ${plan.interval}, cancel anytime` : 'No credit card required'
-}
-
-// GetPlans's `tokens` metric is the same one chat-access-gate.tsx reads from GetUsage
-// (metrics.find(m => m.code === 'tokens')) - the one billable metric this system meters,
-// spent by the AI chat feature (recommendations, charger comparisons, general EV/charger
-// Q&A - see chat-access-gate.tsx's own "token allowance" copy). `includedUnits` is that
-// metric's free monthly allowance; unset on a paid, pay-per-use plan, which is why
-// "unlimited usage" is always true for those.
-function usageLine(plan: Plan): string {
-  if (plan.tier === 'paid') return 'Unlimited usage, billed per token'
-  return plan.includedUnits !== undefined
-    ? `${plan.includedUnits.toLocaleString()} tokens/month included`
-    : 'Limited monthly usage'
 }
 
 // Real copy pulled from AccountTypeSelector's own description, not invented marketing -

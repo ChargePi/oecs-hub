@@ -22,6 +22,7 @@ const (
 	BillingService_GetUsage_FullMethodName            = "/billing.v1.BillingService/GetUsage"
 	BillingService_ListInvoices_FullMethodName        = "/billing.v1.BillingService/ListInvoices"
 	BillingService_GetPaymentPortalUrl_FullMethodName = "/billing.v1.BillingService/GetPaymentPortalUrl"
+	BillingService_ChangePlan_FullMethodName          = "/billing.v1.BillingService/ChangePlan"
 	BillingService_GetPlans_FullMethodName            = "/billing.v1.BillingService/GetPlans"
 )
 
@@ -37,6 +38,10 @@ type BillingServiceClient interface {
 	GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error)
 	ListInvoices(ctx context.Context, in *ListInvoicesRequest, opts ...grpc.CallOption) (*ListInvoicesResponse, error)
 	GetPaymentPortalUrl(ctx context.Context, in *GetPaymentPortalUrlRequest, opts ...grpc.CallOption) (*GetPaymentPortalUrlResponse, error)
+	// Switches to another plan of the caller's own account type. Upgrades apply
+	// immediately once all invoices are paid and a payment method is on file; downgrades
+	// take effect at the end of the current billing period.
+	ChangePlan(ctx context.Context, in *ChangePlanRequest, opts ...grpc.CallOption) (*ChangePlanResponse, error)
 	// The one public/anonymous RPC on this service - called from the still-unauthenticated
 	// registration wizard. See access-rules.yml's billing-service-public rule.
 	GetPlans(ctx context.Context, in *GetPlansRequest, opts ...grpc.CallOption) (*GetPlansResponse, error)
@@ -80,6 +85,16 @@ func (c *billingServiceClient) GetPaymentPortalUrl(ctx context.Context, in *GetP
 	return out, nil
 }
 
+func (c *billingServiceClient) ChangePlan(ctx context.Context, in *ChangePlanRequest, opts ...grpc.CallOption) (*ChangePlanResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangePlanResponse)
+	err := c.cc.Invoke(ctx, BillingService_ChangePlan_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *billingServiceClient) GetPlans(ctx context.Context, in *GetPlansRequest, opts ...grpc.CallOption) (*GetPlansResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetPlansResponse)
@@ -102,6 +117,10 @@ type BillingServiceServer interface {
 	GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error)
 	ListInvoices(context.Context, *ListInvoicesRequest) (*ListInvoicesResponse, error)
 	GetPaymentPortalUrl(context.Context, *GetPaymentPortalUrlRequest) (*GetPaymentPortalUrlResponse, error)
+	// Switches to another plan of the caller's own account type. Upgrades apply
+	// immediately once all invoices are paid and a payment method is on file; downgrades
+	// take effect at the end of the current billing period.
+	ChangePlan(context.Context, *ChangePlanRequest) (*ChangePlanResponse, error)
 	// The one public/anonymous RPC on this service - called from the still-unauthenticated
 	// registration wizard. See access-rules.yml's billing-service-public rule.
 	GetPlans(context.Context, *GetPlansRequest) (*GetPlansResponse, error)
@@ -123,6 +142,9 @@ func (UnimplementedBillingServiceServer) ListInvoices(context.Context, *ListInvo
 }
 func (UnimplementedBillingServiceServer) GetPaymentPortalUrl(context.Context, *GetPaymentPortalUrlRequest) (*GetPaymentPortalUrlResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPaymentPortalUrl not implemented")
+}
+func (UnimplementedBillingServiceServer) ChangePlan(context.Context, *ChangePlanRequest) (*ChangePlanResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ChangePlan not implemented")
 }
 func (UnimplementedBillingServiceServer) GetPlans(context.Context, *GetPlansRequest) (*GetPlansResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlans not implemented")
@@ -202,6 +224,24 @@ func _BillingService_GetPaymentPortalUrl_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_ChangePlan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangePlanRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).ChangePlan(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_ChangePlan_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).ChangePlan(ctx, req.(*ChangePlanRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BillingService_GetPlans_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPlansRequest)
 	if err := dec(in); err != nil {
@@ -238,6 +278,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPaymentPortalUrl",
 			Handler:    _BillingService_GetPaymentPortalUrl_Handler,
+		},
+		{
+			MethodName: "ChangePlan",
+			Handler:    _BillingService_ChangePlan_Handler,
 		},
 		{
 			MethodName: "GetPlans",
