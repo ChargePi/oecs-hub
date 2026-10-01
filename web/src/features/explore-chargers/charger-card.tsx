@@ -1,6 +1,5 @@
-import type { DragEvent } from 'react'
+import type { DragEvent, ReactNode } from 'react'
 
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { humanize } from '@/lib/oecs/format'
@@ -73,19 +72,23 @@ export function ChargerCard({
           <CardTitle className="truncate text-lg">{variant.model.name}</CardTitle>
           <p className="truncate text-sm text-muted-foreground">{variant.manufacturer.name}</p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="secondary">{humanize(variant.model.type)}</Badge>
-          {maxPowerKw != null && <Badge variant="secondary">{maxPowerKw} kW</Badge>}
-          {connectorTypes.slice(0, 3).map((type) => (
-            <Badge key={type} variant="outline">
-              {humanize(type)}
-            </Badge>
-          ))}
-          {connectorTypes.length > 3 && (
-            <Badge variant="outline">+{connectorTypes.length - 3} more</Badge>
-          )}
-        </div>
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-sm">
+          <Spec label="Type">{humanize(variant.model.type)}</Spec>
+          <Spec label="Max power">{maxPowerKw != null ? `${maxPowerKw} kW` : '—'}</Spec>
+          <Spec label="Connectors">
+            {connectorTypes.length > 0 ? connectorTypes.map(humanize).join(', ') : '—'}
+          </Spec>
+        </dl>
       </CardContent>
     </Card>
+  )
+}
+
+function Spec({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium">{children}</dd>
+    </>
   )
 }

@@ -67,7 +67,7 @@ export function ExploreChargersPage() {
   }
 
   return (
-    <div className="flex flex-1">
+    <div className="flex h-[calc(100svh-3.5rem-1px)]">
       <FilterSidebar filters={filterState} onChange={updateFilters} />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="relative flex items-center justify-end border-b border-border p-4">

@@ -81,7 +81,7 @@ export function GridView({
   )
 }
 
-/** Mirrors ChargerCard's shape (image top ~half, title/subtitle/badges below) so the
+/** Mirrors ChargerCard's shape (image top ~half, title/subtitle/spec rows below) so the
  *  loading state doesn't jump/resize once real cards arrive. */
 function CardSkeleton() {
   return (
@@ -92,10 +92,13 @@ function CardSkeleton() {
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
         </div>
-        <div className="flex gap-1.5">
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-14 rounded-full" />
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
