@@ -1,18 +1,50 @@
 import { useEffect, useRef } from 'react'
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Loader2 } from 'lucide-react'
 
 import { selectedChoicesFromMetadata } from '@/lib/chat/client'
 import type { ChatMessage, SelectedChoice } from '@/lib/chat/types'
+import { MARKDOWN_COMPONENTS } from './chat-markdown'
 import { ChatMessageBubble } from './chat-message-bubble'
+
+/** The assistant's reply while it's still streaming in (chat-stream-store's
+ *  streamingText) - not yet a real ChatMessage (no id, no persisted metadata), so
+ *  it renders with the same Markdown styling as ChatMessageBubble's assistant
+ *  bubble but none of its feedback/resend/clarify-form affordances, none of which
+ *  make sense on text that isn't final yet. Replaced by the real message (via
+ *  ChatMessageBubble) once onDone lands. */
+function LiveAssistantBubble({ text }: { text: string }) {
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <div className="max-w-[75%] rounded-lg border border-border bg-card px-3 py-2 text-sm text-card-foreground">
+        <Markdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
+          {text}
+        </Markdown>
+        <span
+          aria-hidden
+          className="ml-0.5 inline-block h-3.5 w-[2px] animate-pulse bg-current align-text-bottom"
+        />
+      </div>
+    </div>
+  )
+}
 
 export function ChatMessageList({
   messages,
   isStreaming,
+  streamingText,
   onSubmitClarification,
   onResend,
 }: {
   messages: ChatMessage[]
   isStreaming: boolean
+  /** The live turn's reply text streamed in so far (chat-stream-store's
+   *  ChatStreamEntry.streamingText) - empty under the unary polling fallback,
+   *  which has no token-level granularity to report; isStreaming alone then falls
+   *  back to the "Thinking…" indicator for the whole turn, same as before this
+   *  prop existed. */
+  streamingText: string
   onSubmitClarification?: (summary: string, choices: SelectedChoice[]) => void
   /** Loads a failed message's originating user turn into the composer - see
    *  ChatMessageBubble's onResend. */
@@ -22,7 +54,7 @@ export function ChatMessageList({
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' })
-  }, [messages.length, isStreaming])
+  }, [messages.length, isStreaming, streamingText])
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
@@ -50,12 +82,15 @@ export function ChatMessageList({
           )
         })}
 
-        {isStreaming && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Thinking…
-          </div>
-        )}
+        {isStreaming &&
+          (streamingText ? (
+            <LiveAssistantBubble text={streamingText} />
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Thinking…
+            </div>
+          ))}
 
         <div ref={bottomRef} />
       </div>

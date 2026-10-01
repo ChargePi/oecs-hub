@@ -1,7 +1,13 @@
 import { Struct } from 'google-protobuf/google/protobuf/struct_pb'
 
 import { redirectToLoginIfSessionDead } from '@/lib/auth/use-identity'
-import { errorSeverity, isAuthError, normalizeAndDispatch, toErrorMessage, type ToastSeverity } from '@/lib/errors'
+import {
+  errorSeverity,
+  isAuthError,
+  normalizeAndDispatch,
+  toErrorMessage,
+  type ToastSeverity,
+} from '@/lib/errors'
 import { ConversationServiceClient } from '@/lib/registry/gen/conversation/v1/ConversationServiceClientPb'
 import {
   DeleteConversationsRequest,
@@ -19,7 +25,8 @@ import {
   UpsertConversationRequest,
 } from '@/lib/registry/gen/conversation/v1/conversation_pb'
 
-import { CONVERSATION_API_BASE } from './config'
+import { CHAT_STREAM_ENABLED, CONVERSATION_API_BASE } from './config'
+import { parseSseStream } from './sse'
 import type {
   ChargePointCandidate,
   ChatMessage,
@@ -308,12 +315,29 @@ function buildOutgoingMetadata(params: {
 export interface StreamHandlers {
   onMessages?: (messages: ChatMessage[], conversationId: string) => void
   onStatus?: (status: TurnStatus) => void
+  /** One chunk of the assistant's reply text, in order - the caller appends it to
+   *  whatever's already shown for this turn. Only fires over the SSE path
+   *  (streamViaSse below); the unary polling fallback has no token-level
+   *  granularity to report, so the UI stays on its "Thinking…" state for the whole
+   *  turn in that case. */
+  onDelta?: (text: string) => void
+  /** Discards any delta text rendered so far for this turn - published by
+   *  StreamHandler both when the server restarts the LLM call (a retry) and when
+   *  it falls back to deterministic text after a stream failure, so the partial
+   *  text that was streaming never ends up concatenated with the real answer. See
+   *  oecs-recommendation-agent's streamer.EventReset. Only fires over the SSE path. */
+  onReset?: () => void
   onDone?: (payload: StreamDonePayload) => void
   onError?: (message: string, severity: ToastSeverity) => void
 }
 
 const STATUS_POLL_INTERVAL_MS = 700
 const STATUS_POLL_TIMEOUT_MS = 60_000
+// How many times streamViaSse reconnects after a dropped/failed connection before
+// giving up and handing off to pollUntilDone - not retries of the whole turn, just
+// of the stream transport; the turn itself keeps running server-side regardless.
+const STREAM_RECONNECT_ATTEMPTS = 2
+const STREAM_RECONNECT_DELAY_MS = 500
 
 const TERMINAL_STATUSES: ReadonlySet<TurnStatus> = new Set([
   'TURN_STATUS_COMPLETED',
@@ -321,12 +345,143 @@ const TERMINAL_STATUSES: ReadonlySet<TurnStatus> = new Set([
   'TURN_STATUS_NONE',
 ])
 
+const KNOWN_TURN_STATUSES: ReadonlySet<TurnStatus> = new Set([
+  'TURN_STATUS_UNSPECIFIED',
+  'TURN_STATUS_NONE',
+  'TURN_STATUS_PENDING',
+  'TURN_STATUS_RUNNING',
+  'TURN_STATUS_COMPLETED',
+  'TURN_STATUS_FAILED',
+])
+
+/** Validates a "status" event's JSON payload - oecs-recommendation-agent's
+ *  StreamHandler writes these names verbatim (see its turnStatusString), but
+ *  nothing enforces that at the type level across the wire the way the generated
+ *  grpc-web stubs do for the unary RPCs. */
+function turnStatusFromWire(value: unknown): TurnStatus {
+  return typeof value === 'string' && KNOWN_TURN_STATUSES.has(value as TurnStatus)
+    ? (value as TurnStatus)
+    : 'TURN_STATUS_UNSPECIFIED'
+}
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
 /**
- * Sends a message, then polls GetConversationStatus until the agent's reply is ready.
- * ConversationService's RPCs are all unary - there's no real push channel - so this
- * mirrors the shape a server-push stream would have (onMessages/onStatus/onDone/
- * onError) purely by polling from the browser, so callers don't need to know the
- * difference. Returns a cancel function; callers must invoke it on
+ * Streams conversationId's turn over StreamHandler's SSE endpoint (GET
+ * .../stream/conversations/:id - see oecs-recommendation-agent's
+ * internal/conversation/api/stream_handler.go), calling handlers.onStatus/onDelta/
+ * onReset as events arrive and onStatusSeen on every status (even one streamChat's
+ * caller didn't ask for, so it can still track the turn's final status for its own
+ * onDone payload). Fetch, not EventSource: EventSource can't see the response
+ * status (a 401/404 just retries silently forever) and can't share an
+ * AbortController with the rest of streamChat.
+ *
+ * Returns 'done' once a "done" event lands, or 'unavailable' if the stream
+ * couldn't be established/stayed up after STREAM_RECONNECT_ATTEMPTS retries - the
+ * caller falls back to pollUntilDone in that case. A 404 (the endpoint not
+ * deployed yet, e.g. rollout skew) returns 'unavailable' immediately without
+ * retrying, since retrying won't make it exist.
+ */
+async function streamViaSse(
+  conversationId: string,
+  handlers: StreamHandlers,
+  onStatusSeen: (status: TurnStatus) => void,
+  signal: AbortSignal,
+): Promise<'done' | 'unavailable'> {
+  for (let attempt = 0; attempt <= STREAM_RECONNECT_ATTEMPTS; attempt++) {
+    if (attempt > 0) await wait(STREAM_RECONNECT_DELAY_MS)
+    if (signal.aborted) return 'done'
+
+    try {
+      const resp = await fetch(
+        `${CONVERSATION_API_BASE}/stream/conversations/${encodeURIComponent(conversationId)}`,
+        { credentials: 'same-origin', signal, headers: { Accept: 'text/event-stream' } },
+      )
+      // 404: the stream endpoint isn't deployed yet (rollout skew) - retrying won't
+      // help. 401: a dead session - the plain (non-grpc-web-framed) response here
+      // can't be recognized as an auth error the way isAuthError recognizes an
+      // RpcError, but pollUntilDone's unary fallback goes through the grpc-web
+      // client and will catch it there instead, same as before this file had an
+      // SSE path at all.
+      if (resp.status === 404 || resp.status === 401) return 'unavailable'
+      if (!resp.ok || !resp.body) throw new Error(`stream request failed: ${resp.status}`)
+
+      for await (const event of parseSseStream(resp.body)) {
+        switch (event.event) {
+          case 'status': {
+            const status = turnStatusFromWire(
+              (JSON.parse(event.data) as { status?: unknown }).status,
+            )
+            onStatusSeen(status)
+            handlers.onStatus?.(status)
+            break
+          }
+          case 'delta': {
+            const text = (JSON.parse(event.data) as { text?: string }).text
+            if (text) handlers.onDelta?.(text)
+            break
+          }
+          case 'reset':
+            handlers.onReset?.()
+            break
+          case 'done':
+            return 'done'
+        }
+      }
+      // The body closed without a "done" event (e.g. a dropped connection) -
+      // falls through to the next attempt below.
+    } catch (err) {
+      if (signal.aborted || (err instanceof DOMException && err.name === 'AbortError'))
+        return 'done'
+      // falls through to the next attempt below
+    }
+  }
+  return 'unavailable'
+}
+
+/**
+ * Polls GetConversationStatus until the turn is terminal - streamChat's fallback
+ * for whenever streamViaSse above couldn't establish/keep up its connection.
+ * Mirrors the shape a server-push stream would have (onStatus/onDone/onError)
+ * purely by polling from the browser, same as before this file had an SSE path at
+ * all - onDelta/onReset never fire here, since unary polling has no token-level
+ * granularity to report.
+ */
+async function pollUntilDone(
+  conversationId: string,
+  handlers: StreamHandlers,
+  onStatusSeen: (status: TurnStatus) => void,
+  isCancelled: () => boolean,
+): Promise<void> {
+  const deadline = Date.now() + STATUS_POLL_TIMEOUT_MS
+  let lastStatus: TurnStatus | null = null
+
+  for (;;) {
+    if (isCancelled()) return
+
+    const statusReq = new GetConversationStatusRequest()
+    statusReq.setConversationId(conversationId)
+    const statusResp = await client.getConversationStatus(statusReq, {})
+    const turnStatus = TURN_STATUS_FROM_PROTO[statusResp.getStatus()] ?? 'TURN_STATUS_UNSPECIFIED'
+    onStatusSeen(turnStatus)
+
+    if (turnStatus !== lastStatus) {
+      lastStatus = turnStatus
+      handlers.onStatus?.(turnStatus)
+    }
+
+    if (TERMINAL_STATUSES.has(turnStatus)) return
+    // Surfaces as a normal onError below, rather than silently treating a turn
+    // that never finished as if it had (the previous behavior here).
+    if (Date.now() > deadline) throw new Error('timed out waiting for a reply')
+    await wait(STATUS_POLL_INTERVAL_MS)
+  }
+}
+
+/**
+ * Sends a message, then streams the agent's reply - over SSE (streamViaSse) when
+ * available, falling back to polling GetConversationStatus (pollUntilDone)
+ * otherwise. Returns a cancel function; callers must invoke it on
  * unmount/conversation switch.
  */
 export function streamChat(
@@ -347,12 +502,7 @@ export function streamChat(
   handlers: StreamHandlers,
 ): () => void {
   let cancelled = false
-  let timer: ReturnType<typeof setTimeout> | undefined
-
-  const wait = (ms: number) =>
-    new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, ms)
-    })
+  const controller = new AbortController()
 
   void (async () => {
     try {
@@ -373,29 +523,18 @@ export function streamChat(
       const conversationId = conv.getId()
       handlers.onMessages?.(conv.getMessagesList().map(messageFromProto), conversationId)
 
-      const deadline = Date.now() + STATUS_POLL_TIMEOUT_MS
-      let lastStatus: TurnStatus | null = null
       let finalStatus: TurnStatus = 'TURN_STATUS_FAILED'
+      const onStatusSeen = (status: TurnStatus) => {
+        finalStatus = status
+      }
 
-      for (;;) {
-        if (cancelled) return
+      const streamResult = CHAT_STREAM_ENABLED
+        ? await streamViaSse(conversationId, handlers, onStatusSeen, controller.signal)
+        : 'unavailable'
+      if (cancelled) return
 
-        const statusReq = new GetConversationStatusRequest()
-        statusReq.setConversationId(conversationId)
-        const statusResp = await client.getConversationStatus(statusReq, {})
-        const turnStatus =
-          TURN_STATUS_FROM_PROTO[statusResp.getStatus()] ?? 'TURN_STATUS_UNSPECIFIED'
-
-        if (turnStatus !== lastStatus) {
-          lastStatus = turnStatus
-          handlers.onStatus?.(turnStatus)
-        }
-
-        if (TERMINAL_STATUSES.has(turnStatus) || Date.now() > deadline) {
-          finalStatus = turnStatus
-          break
-        }
-        await wait(STATUS_POLL_INTERVAL_MS)
+      if (streamResult === 'unavailable') {
+        await pollUntilDone(conversationId, handlers, onStatusSeen, () => cancelled)
       }
       if (cancelled) return
 
@@ -424,12 +563,15 @@ export function streamChat(
       // looks auth-shaped falls through to a normal error instead of bouncing via /auth/login.
       if (isAuthError(err) && (await redirectToLoginIfSessionDead())) return
       if (cancelled) return
-      handlers.onError?.(toErrorMessage(err, 'streamChat', 'chat request failed'), errorSeverity(err))
+      handlers.onError?.(
+        toErrorMessage(err, 'streamChat', 'chat request failed'),
+        errorSeverity(err),
+      )
     }
   })()
 
   return () => {
     cancelled = true
-    if (timer) clearTimeout(timer)
+    controller.abort()
   }
 }

@@ -25,6 +25,12 @@ export interface ChatStreamEntry {
   phase: ChatStreamPhase
   status: TurnStatus | null
   error: string | null
+  /** The assistant's reply text streamed in so far for the live turn (onDelta) -
+   *  cleared on onReset (a server-side retry/fallback discarding it) and again on
+   *  onDone, once the real messages list carries the final text instead. Empty
+   *  under the unary polling fallback, which has no token-level granularity to
+   *  report - the UI falls back to its "Thinking…" state in that case. */
+  streamingText: string
 }
 
 const EMPTY_ENTRY: ChatStreamEntry = {
@@ -35,6 +41,7 @@ const EMPTY_ENTRY: ChatStreamEntry = {
   phase: 'idle',
   status: null,
   error: null,
+  streamingText: '',
 }
 
 const OPTIMISTIC_ID_PREFIX = 'optimistic:'
@@ -102,6 +109,7 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
             phase: 'idle',
             status: null,
             error: null,
+            streamingText: '',
           },
         },
       }
@@ -121,6 +129,7 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
           messages: [...prior.messages, makeOptimisticMessage(message, selectedChoices)],
           phase: 'streaming',
           error: null,
+          streamingText: '',
         },
       },
     }))
@@ -140,12 +149,42 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
       })
     }
 
+    // Batches onDelta's token-by-token chunks into one store write per animation
+    // frame rather than one per chunk - a chunk can arrive every few milliseconds,
+    // far faster than the UI needs to re-render.
+    let pendingDelta = ''
+    let deltaFlushScheduled = false
+    function flushDelta() {
+      deltaFlushScheduled = false
+      if (!pendingDelta) return
+      const toAppend = pendingDelta
+      pendingDelta = ''
+      writeBoth({ streamingText: (get().entries[key]?.streamingText ?? '') + toAppend })
+    }
+    function scheduleDeltaFlush() {
+      if (deltaFlushScheduled) return
+      deltaFlushScheduled = true
+      requestAnimationFrame(flushDelta)
+    }
+
     cancelers[key] = streamChat(
       { conversationId: isDraftKey(key) ? '' : key, userId, message, selectedChoices, chargerIds },
       {
         onMessages: (messages, conversationId) => writeBoth({ messages, conversationId }),
         onStatus: (status) => writeBoth({ status }),
+        onDelta: (text) => {
+          pendingDelta += text
+          scheduleDeltaFlush()
+        },
+        onReset: () => {
+          // Discards any not-yet-flushed chunk too, not just what's already in the
+          // store - otherwise a flush already scheduled for the next frame would
+          // re-append text this reset meant to discard.
+          pendingDelta = ''
+          writeBoth({ streamingText: '' })
+        },
         onDone: (payload) => {
+          pendingDelta = ''
           writeBoth({
             conversationId: payload.conversationId,
             messages: payload.messages,
@@ -154,18 +193,23 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
             phase: 'idle',
             status: payload.turnStatus,
             error: null,
+            streamingText: '',
           })
           useChatActivityStore.getState().stopStreaming(key)
           useChatActivityStore.getState().stopStreaming(payload.conversationId)
           void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
         },
         onError: (message, severity) => {
+          pendingDelta = ''
           // Drops the never-confirmed optimistic message so a retry doesn't duplicate it.
           const current = get().entries[key]
           writeBoth({
             phase: 'error',
             error: message,
-            messages: (current?.messages ?? []).filter((m) => !m.id.startsWith(OPTIMISTIC_ID_PREFIX)),
+            messages: (current?.messages ?? []).filter(
+              (m) => !m.id.startsWith(OPTIMISTIC_ID_PREFIX),
+            ),
+            streamingText: '',
           })
           useChatActivityStore.getState().stopStreaming(key)
           toastError(GENERIC_ERROR_MESSAGE, "Message couldn't be sent", severity)

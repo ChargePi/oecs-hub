@@ -148,6 +148,7 @@ export function ChatDashboardPage() {
             <ChatMessageList
               messages={entry.messages}
               isStreaming={isStreaming}
+              streamingText={entry.streamingText}
               onSubmitClarification={handleSend}
               onResend={(text) => setResendDraft({ text, token: Date.now() })}
             />
