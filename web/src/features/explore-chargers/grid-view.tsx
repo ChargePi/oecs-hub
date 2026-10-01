@@ -39,7 +39,7 @@ export function GridView({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4 p-4">
         {Array.from({ length: 6 }, (_, i) => (
           <CardSkeleton key={i} />
         ))}
@@ -60,7 +60,7 @@ export function GridView({
       <p className="text-xs text-muted-foreground">
         {totalSize} charger{totalSize === 1 ? '' : 's'}
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
         {variants.map((variant) => (
           <ChargerCard
             key={variant.id}
@@ -71,7 +71,7 @@ export function GridView({
       </div>
       <div ref={sentinelRef} />
       {isFetchingNextPage && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
           {Array.from({ length: 3 }, (_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -81,21 +81,24 @@ export function GridView({
   )
 }
 
-/** Mirrors ChargerCard's shape (image top ~half, title/subtitle/badges below) so the
+/** Mirrors ChargerCard's shape (image top ~half, title/subtitle/spec rows below) so the
  *  loading state doesn't jump/resize once real cards arrive. */
 function CardSkeleton() {
   return (
     <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
       <Skeleton className="aspect-[5/6] w-full rounded-none" />
       <div className="flex flex-col gap-3 p-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col items-center gap-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
         </div>
-        <div className="flex gap-1.5">
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <Skeleton className="h-5 w-14 rounded-full" />
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="flex justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
