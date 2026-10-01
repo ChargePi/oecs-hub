@@ -88,7 +88,7 @@ function CardSkeleton() {
     <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
       <Skeleton className="aspect-[5/6] w-full rounded-none" />
       <div className="flex flex-col gap-3 p-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col items-center gap-2">
           <Skeleton className="h-5 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
         </div>

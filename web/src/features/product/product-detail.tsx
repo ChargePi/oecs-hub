@@ -6,9 +6,7 @@ import {
   Plug,
   PlugZap,
   ShieldCheck,
-  Tag,
   Wifi,
-  Zap,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +18,7 @@ import { ManufacturerCard } from './manufacturer-card'
 import { ProductImage } from './product-image'
 import { RateVariantControl } from './rate-variant-control'
 import { RatingsSection } from './ratings-section'
+import { SPEC_ICONS } from './spec-icons'
 import { boolBadge } from './spec-badges'
 import { SpecLinkRow, SpecListRow, SpecRow, SpecSection, ValueTooltip } from './spec-section'
 
@@ -55,7 +54,7 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
       <div className="flex flex-col gap-6">
         <ManufacturerCard manufacturer={manufacturer} />
 
-        <SpecSection title="Charger type" icon={Tag}>
+        <SpecSection title="Charger type" icon={SPEC_ICONS.chargerType}>
           <SpecRow
             label="Type"
             value={model.type}
@@ -68,7 +67,7 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
           <SpecRow label="Release date" value={model.releaseDate} />
         </SpecSection>
 
-        <SpecSection title="Power & electrical" icon={Zap}>
+        <SpecSection title="Power & electrical" icon={SPEC_ICONS.power}>
           <SpecRow label="Max output power" value={formatQuantity(electrical?.output?.maxPower)} />
           <SpecRow label="Min output power" value={formatQuantity(electrical?.output?.minPower)} />
           <SpecRow label="Input voltage" value={formatValueRange(electrical?.input?.voltage)} />
@@ -95,7 +94,7 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
           <SpecRow label="Weight" value={formatQuantity(housing?.weight)} />
         </SpecSection>
 
-        <SpecSection title="Connectors" icon={Plug}>
+        <SpecSection title="Connectors" icon={SPEC_ICONS.connectors}>
           {hardware.connectors.map((connector, i) => {
             const ConnectorIcon = connector.currentType === 'DC' ? PlugZap : Plug
             return (

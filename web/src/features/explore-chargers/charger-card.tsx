@@ -1,4 +1,4 @@
-import type { DragEvent, ReactNode } from 'react'
+import type { ComponentType, DragEvent, ReactNode } from 'react'
 
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -6,6 +6,7 @@ import { humanize } from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { cn } from '@/lib/utils'
 import { ProductImage } from '@/features/product/product-image'
+import { SPEC_ICONS } from '@/features/product/spec-icons'
 import {
   MAX_COMPARISON_ITEMS,
   VARIANT_DRAG_MIME_TYPE,
@@ -68,14 +69,14 @@ export function ChargerCard({
         </div>
       </div>
       <CardContent className="flex flex-col gap-3 py-4">
-        <div className="min-w-0">
+        <div className="min-w-0 text-center">
           <CardTitle className="truncate text-lg">{variant.model.name}</CardTitle>
           <p className="truncate text-sm text-muted-foreground">{variant.manufacturer.name}</p>
         </div>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-sm">
-          <Spec label="Type">{humanize(variant.model.type)}</Spec>
-          <Spec label="Max power">{maxPowerKw != null ? `${maxPowerKw} kW` : '—'}</Spec>
-          <Spec label="Connectors">
+          <Spec icon={SPEC_ICONS.chargerType} label="Type">{humanize(variant.model.type)}</Spec>
+          <Spec icon={SPEC_ICONS.power} label="Max power">{maxPowerKw != null ? `${maxPowerKw} kW` : '—'}</Spec>
+          <Spec icon={SPEC_ICONS.connectors} label="Connectors">
             {connectorTypes.length > 0 ? connectorTypes.map(humanize).join(', ') : '—'}
           </Spec>
         </dl>
@@ -84,10 +85,21 @@ export function ChargerCard({
   )
 }
 
-function Spec({ label, children }: { label: string; children: ReactNode }) {
+function Spec({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  children: ReactNode
+}) {
   return (
     <>
-      <dt className="text-muted-foreground">{label}</dt>
+      <dt className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="size-3.5 shrink-0 text-primary" />
+        {label}
+      </dt>
       <dd className="min-w-0 truncate text-right font-medium">{children}</dd>
     </>
   )
