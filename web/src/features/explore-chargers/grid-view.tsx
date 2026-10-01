@@ -39,7 +39,7 @@ export function GridView({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4 p-4">
         {Array.from({ length: 6 }, (_, i) => (
           <CardSkeleton key={i} />
         ))}
@@ -60,7 +60,7 @@ export function GridView({
       <p className="text-xs text-muted-foreground">
         {totalSize} charger{totalSize === 1 ? '' : 's'}
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
         {variants.map((variant) => (
           <ChargerCard
             key={variant.id}
@@ -71,7 +71,7 @@ export function GridView({
       </div>
       <div ref={sentinelRef} />
       {isFetchingNextPage && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
           {Array.from({ length: 3 }, (_, i) => (
             <CardSkeleton key={i} />
           ))}
