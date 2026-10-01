@@ -25,11 +25,8 @@ export interface ChatStreamEntry {
   phase: ChatStreamPhase
   status: TurnStatus | null
   error: string | null
-  /** The assistant's reply text streamed in so far for the live turn (onDelta) -
-   *  cleared on onReset (a server-side retry/fallback discarding it) and again on
-   *  onDone, once the real messages list carries the final text instead. Empty
-   *  under the unary polling fallback, which has no token-level granularity to
-   *  report - the UI falls back to its "Thinking…" state in that case. */
+  /** The reply text streamed in so far for the live turn - cleared on onReset
+   *  and onDone. Empty under the unary polling fallback. */
   streamingText: string
 }
 
@@ -149,9 +146,7 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
       })
     }
 
-    // Batches onDelta's token-by-token chunks into one store write per animation
-    // frame rather than one per chunk - a chunk can arrive every few milliseconds,
-    // far faster than the UI needs to re-render.
+    // Batches onDelta's chunks into one store write per animation frame.
     let pendingDelta = ''
     let deltaFlushScheduled = false
     function flushDelta() {
@@ -173,10 +168,8 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
         onMessages: (messages, conversationId) => {
           writeBoth({ messages, conversationId })
           if (isDraftKey(key)) {
-            // A brand-new conversation now has a real id - the sidebar's list
-            // doesn't have it yet (it was never there to invalidate before this),
-            // and its "Replying" badge is matched by that real id, not the draft
-            // key startStreaming was first called with above.
+            // New conversation: refresh the sidebar list and mark it streaming
+            // under its real id, not the draft key.
             useChatActivityStore.getState().startStreaming(conversationId)
             void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
           }
@@ -187,9 +180,6 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
           scheduleDeltaFlush()
         },
         onReset: () => {
-          // Discards any not-yet-flushed chunk too, not just what's already in the
-          // store - otherwise a flush already scheduled for the next frame would
-          // re-append text this reset meant to discard.
           pendingDelta = ''
           writeBoth({ streamingText: '' })
         },

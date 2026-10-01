@@ -1,10 +1,8 @@
 import type { Components } from 'react-markdown'
 
-// Shared by ChatMessageBubble (a persisted message) and ChatMessageList's
-// LiveAssistantBubble (the live turn's reply while it's still streaming in) so
-// both render Markdown identically - split into its own module, rather than
-// exported from chat-message-bubble.tsx, because a file mixing a component
-// export with a plain-value export breaks react-refresh fast refresh.
+// Shared by ChatMessageBubble and ChatMessageList's LiveAssistantBubble -
+// split out since mixing a component export with a plain-value export breaks
+// react-refresh.
 //
 // Sparse on purpose - the agent's replies use headings/bold/lists/links, not the
 // full CommonMark surface, and this stays a chat bubble rather than growing a

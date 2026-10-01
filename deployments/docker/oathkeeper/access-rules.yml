@@ -172,16 +172,9 @@
   upstream:
     url: http://host.docker.internal:50051
   match:
-    # StreamHandler (internal/conversation/api/stream_handler.go) - plain
-    # HTTP, not a ConversationService gRPC method, hence its own rule rather
-    # than widening conversation-service above: GET, not POST, and a
-    # path-shaped match instead of the gRPC-Method-shaped one. Same
-    # ownership story as conversation-service above: wildcarded conversation
-    # id, no public subset, StreamHandler itself enforces ownership using the
-    # identity these headers carry.
+    # StreamHandler - plain HTTP, not a gRPC method, hence its own rule.
     url: "http://<.*>/stream/conversations/<.*>"
     methods: ["GET"]
-  # No anonymous fallback - a session is required (see conversation-service above).
   authenticators:
     - handler: cookie_session
   authorizer:

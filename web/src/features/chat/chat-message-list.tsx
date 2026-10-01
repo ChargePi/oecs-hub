@@ -8,12 +8,8 @@ import type { ChatMessage, SelectedChoice } from '@/lib/chat/types'
 import { MARKDOWN_COMPONENTS } from './chat-markdown'
 import { ChatMessageBubble } from './chat-message-bubble'
 
-/** The assistant's reply while it's still streaming in (chat-stream-store's
- *  streamingText) - not yet a real ChatMessage (no id, no persisted metadata), so
- *  it renders with the same Markdown styling as ChatMessageBubble's assistant
- *  bubble but none of its feedback/resend/clarify-form affordances, none of which
- *  make sense on text that isn't final yet. Replaced by the real message (via
- *  ChatMessageBubble) once onDone lands. */
+/** The reply while it's still streaming in - not yet a real ChatMessage, so no
+ *  feedback/resend/clarify-form. Replaced by ChatMessageBubble on onDone. */
 function LiveAssistantBubble({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-start gap-1">
@@ -39,11 +35,6 @@ export function ChatMessageList({
 }: {
   messages: ChatMessage[]
   isStreaming: boolean
-  /** The live turn's reply text streamed in so far (chat-stream-store's
-   *  ChatStreamEntry.streamingText) - empty under the unary polling fallback,
-   *  which has no token-level granularity to report; isStreaming alone then falls
-   *  back to the "Thinking…" indicator for the whole turn, same as before this
-   *  prop existed. */
   streamingText: string
   onSubmitClarification?: (summary: string, choices: SelectedChoice[]) => void
   /** Loads a failed message's originating user turn into the composer - see

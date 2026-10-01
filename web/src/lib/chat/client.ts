@@ -315,17 +315,10 @@ function buildOutgoingMetadata(params: {
 export interface StreamHandlers {
   onMessages?: (messages: ChatMessage[], conversationId: string) => void
   onStatus?: (status: TurnStatus) => void
-  /** One chunk of the assistant's reply text, in order - the caller appends it to
-   *  whatever's already shown for this turn. Only fires over the SSE path
-   *  (streamViaSse below); the unary polling fallback has no token-level
-   *  granularity to report, so the UI stays on its "Thinking…" state for the whole
-   *  turn in that case. */
+  /** One chunk of the reply text, in order. Only fires over the SSE path. */
   onDelta?: (text: string) => void
-  /** Discards any delta text rendered so far for this turn - published by
-   *  StreamHandler both when the server restarts the LLM call (a retry) and when
-   *  it falls back to deterministic text after a stream failure, so the partial
-   *  text that was streaming never ends up concatenated with the real answer. See
-   *  oecs-recommendation-agent's streamer.EventReset. Only fires over the SSE path. */
+  /** Discards delta text rendered so far - a server-side retry or fallback. Only
+   *  fires over the SSE path. */
   onReset?: () => void
   onDone?: (payload: StreamDonePayload) => void
   onError?: (message: string, severity: ToastSeverity) => void
@@ -333,9 +326,6 @@ export interface StreamHandlers {
 
 const STATUS_POLL_INTERVAL_MS = 700
 const STATUS_POLL_TIMEOUT_MS = 60_000
-// How many times streamViaSse reconnects after a dropped/failed connection before
-// giving up and handing off to pollUntilDone - not retries of the whole turn, just
-// of the stream transport; the turn itself keeps running server-side regardless.
 const STREAM_RECONNECT_ATTEMPTS = 2
 const STREAM_RECONNECT_DELAY_MS = 500
 
@@ -354,10 +344,6 @@ const KNOWN_TURN_STATUSES: ReadonlySet<TurnStatus> = new Set([
   'TURN_STATUS_FAILED',
 ])
 
-/** Validates a "status" event's JSON payload - oecs-recommendation-agent's
- *  StreamHandler writes these names verbatim (see its turnStatusString), but
- *  nothing enforces that at the type level across the wire the way the generated
- *  grpc-web stubs do for the unary RPCs. */
 function turnStatusFromWire(value: unknown): TurnStatus {
   return typeof value === 'string' && KNOWN_TURN_STATUSES.has(value as TurnStatus)
     ? (value as TurnStatus)
@@ -366,22 +352,10 @@ function turnStatusFromWire(value: unknown): TurnStatus {
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-/**
- * Streams conversationId's turn over StreamHandler's SSE endpoint (GET
- * .../stream/conversations/:id - see oecs-recommendation-agent's
- * internal/conversation/api/stream_handler.go), calling handlers.onStatus/onDelta/
- * onReset as events arrive and onStatusSeen on every status (even one streamChat's
- * caller didn't ask for, so it can still track the turn's final status for its own
- * onDone payload). Fetch, not EventSource: EventSource can't see the response
- * status (a 401/404 just retries silently forever) and can't share an
- * AbortController with the rest of streamChat.
- *
- * Returns 'done' once a "done" event lands, or 'unavailable' if the stream
- * couldn't be established/stayed up after STREAM_RECONNECT_ATTEMPTS retries - the
- * caller falls back to pollUntilDone in that case. A 404 (the endpoint not
- * deployed yet, e.g. rollout skew) returns 'unavailable' immediately without
- * retrying, since retrying won't make it exist.
- */
+/** Streams conversationId's turn over StreamHandler's SSE endpoint. Returns
+ *  'done' once a "done" event lands, or 'unavailable' after
+ *  STREAM_RECONNECT_ATTEMPTS failed attempts - the caller falls back to
+ *  pollUntilDone in that case. */
 async function streamViaSse(
   conversationId: string,
   handlers: StreamHandlers,
@@ -397,12 +371,7 @@ async function streamViaSse(
         `${CONVERSATION_API_BASE}/stream/conversations/${encodeURIComponent(conversationId)}`,
         { credentials: 'same-origin', signal, headers: { Accept: 'text/event-stream' } },
       )
-      // 404: the stream endpoint isn't deployed yet (rollout skew) - retrying won't
-      // help. 401: a dead session - the plain (non-grpc-web-framed) response here
-      // can't be recognized as an auth error the way isAuthError recognizes an
-      // RpcError, but pollUntilDone's unary fallback goes through the grpc-web
-      // client and will catch it there instead, same as before this file had an
-      // SSE path at all.
+      // 401 is handled by pollUntilDone's grpc-web fallback instead.
       if (resp.status === 404 || resp.status === 401) return 'unavailable'
       if (!resp.ok || !resp.body) throw new Error(`stream request failed: ${resp.status}`)
 
@@ -428,25 +397,16 @@ async function streamViaSse(
             return 'done'
         }
       }
-      // The body closed without a "done" event (e.g. a dropped connection) -
-      // falls through to the next attempt below.
     } catch (err) {
       if (signal.aborted || (err instanceof DOMException && err.name === 'AbortError'))
         return 'done'
-      // falls through to the next attempt below
     }
   }
   return 'unavailable'
 }
 
-/**
- * Polls GetConversationStatus until the turn is terminal - streamChat's fallback
- * for whenever streamViaSse above couldn't establish/keep up its connection.
- * Mirrors the shape a server-push stream would have (onStatus/onDone/onError)
- * purely by polling from the browser, same as before this file had an SSE path at
- * all - onDelta/onReset never fire here, since unary polling has no token-level
- * granularity to report.
- */
+/** Polls GetConversationStatus until the turn is terminal - streamChat's
+ *  fallback when streamViaSse can't connect. No onDelta/onReset here. */
 async function pollUntilDone(
   conversationId: string,
   handlers: StreamHandlers,
@@ -471,19 +431,13 @@ async function pollUntilDone(
     }
 
     if (TERMINAL_STATUSES.has(turnStatus)) return
-    // Surfaces as a normal onError below, rather than silently treating a turn
-    // that never finished as if it had (the previous behavior here).
     if (Date.now() > deadline) throw new Error('timed out waiting for a reply')
     await wait(STATUS_POLL_INTERVAL_MS)
   }
 }
 
-/**
- * Sends a message, then streams the agent's reply - over SSE (streamViaSse) when
- * available, falling back to polling GetConversationStatus (pollUntilDone)
- * otherwise. Returns a cancel function; callers must invoke it on
- * unmount/conversation switch.
- */
+/** Sends a message, then streams the reply via SSE, falling back to polling.
+ *  Returns a cancel function; callers must invoke it on unmount/switch. */
 export function streamChat(
   params: {
     conversationId: string

@@ -14,10 +14,5 @@ export const CHAT_ENABLED = import.meta.env.VITE_FEATURE_CHAT === 'true'
  */
 export const CONVERSATION_API_BASE = '/conversation-api'
 
-/**
- * Set to "false" to force streamChat's unary polling fallback instead of its SSE
- * stream (see client.ts) - defaults to on; streamChat also falls back on its own,
- * per send, if the stream endpoint 404s or otherwise can't connect, so this is only
- * for debugging/rollback, not something a deployment normally needs to set.
- */
+/** Set to "false" to force streamChat's polling fallback instead of SSE. */
 export const CHAT_STREAM_ENABLED = import.meta.env.VITE_CHAT_STREAM !== 'false'

@@ -91,13 +91,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # ConversationService's SSE stream (see internal/conversation/api/
-    # stream_handler.go in oecs-recommendation-agent and web/src/lib/chat/
-    # sse.ts here) - same upstream/rewrite as /conversation-api/ above, but a
-    # more specific location (nginx matches the longest prefix regardless of
-    # declaration order) so only this long-lived, chunked response gets
-    # buffering disabled; the ordinary unary gRPC-Web calls above keep
-    # nginx's normal defaults.
+    # ConversationService's SSE stream - more specific than /conversation-api/
+    # above so only this long-lived response gets buffering disabled.
     location /conversation-api/stream/ {
         set $conversation_api "${CONVERSATION_API_URL}";
         rewrite ^/conversation-api/(.*)$ /$1 break;
@@ -107,10 +102,6 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        # Deltas must reach the browser as they're written, not once nginx's
-        # buffer fills or the upstream closes - and 1h, not the 60s default,
-        # since StreamHandler can legitimately hold the connection open that
-        # long (see maxStreamDuration).
         proxy_buffering off;
         proxy_cache off;
         proxy_read_timeout 1h;
