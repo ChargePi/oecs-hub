@@ -28,25 +28,46 @@ export function ChatDashboardPage() {
   // the request again itself - token is bumped on every click (even resending the
   // same text twice in a row) so ChatComposer's prefill effect re-applies it.
   const [resendDraft, setResendDraft] = useState<{ text: string; token: number }>()
-  // Guards the auto-send effect below against firing twice (StrictMode) - state
-  // wouldn't do, since setting it is itself what triggers the send.
-  const autoSentPromptRef = useRef(false)
+  // Guards the auto-send effect below against firing twice for the same
+  // autoPromptKey (StrictMode's double-invoke) while still allowing a genuinely
+  // new one (a second "Evaluate using AI" click while already mounted) to send -
+  // state wouldn't do, since setting it is itself what triggers the send.
+  const autoSentForKeyRef = useRef<string | undefined>(undefined)
   // The chat-stream-store key for a conversation with no route id yet (state, not a
   // ref, so the subscription below re-renders when it changes).
   const [draftKey, setDraftKey] = useState<string>()
+  // Same idea as draftKey, but for a comparison-view "Evaluate using AI" click,
+  // which lands here as /chat?prompt=... and fires that message immediately
+  // instead of just prefilling the composer - established during render (same
+  // set-state-in-effect reason as draftKey's own adjustments below).
+  const [autoPromptKey, setAutoPromptKey] = useState<string>()
   const [lastLocationKey, setLastLocationKey] = useState(location.key)
 
-  // Clears draftKey on a real navigation to /chat's index, e.g. "New conversation" -
-  // checked via location.key, not routeId, since that link re-navigates to /chat
-  // without routeId ever changing. Adjusted during render, not an effect, per
+  // Clears draftKey/autoPromptKey on a real navigation to /chat's index, e.g. "New
+  // conversation" or a second "Evaluate using AI" click while already on /chat -
+  // checked via location.key, not routeId, since those re-navigate to /chat without
+  // routeId ever changing. Adjusted during render, not an effect, per
   // eslint(react-hooks/set-state-in-effect). Doesn't cancel anything (chat-stream-store
   // keeps sending regardless) - it only stops this page from watching the old key.
   if (location.key !== lastLocationKey) {
     setLastLocationKey(location.key)
-    if (!routeId) setDraftKey(undefined)
+    if (!routeId) {
+      setDraftKey(undefined)
+      setAutoPromptKey(undefined)
+    }
   }
 
-  const key = routeId ?? draftKey
+  const pendingAutoPrompt = !routeId && new URLSearchParams(window.location.search).has('prompt')
+  if (pendingAutoPrompt && !autoPromptKey) {
+    setAutoPromptKey(makeDraftKey())
+  }
+
+  // autoPromptKey falls back in last, after draftKey has had a chance to pick up
+  // entry.conversationId below - once that happens they refer to the same entry
+  // (writeBoth mirrors it under both keys), but until then autoPromptKey is the
+  // only key anything was ever sent under, and entry must resolve through it or
+  // the page never notices the auto-sent turn at all.
+  const key = routeId ?? draftKey ?? autoPromptKey
   const entry = useChatStreamStore((s) => (key ? s.entries[key] : undefined))
 
   const {
@@ -65,23 +86,14 @@ export function ChatDashboardPage() {
     useChatStreamStore.getState().send(sendKey, userId, queryClient, text, selectedChoices, chargerIds)
   }
 
-  // A comparison-view "Evaluate using AI" click lands here as /chat?prompt=... - fires
-  // that message immediately instead of just prefilling the composer. autoPromptKey is
-  // established during render (same set-state-in-effect reason as above);
-  // autoSentPromptRef, read only inside the effect, guards the send itself.
-  const [autoPromptKey, setAutoPromptKey] = useState<string>()
-  const pendingAutoPrompt = !routeId && new URLSearchParams(window.location.search).has('prompt')
-  if (pendingAutoPrompt && !autoPromptKey) {
-    setAutoPromptKey(makeDraftKey())
-  }
-
+  // autoSentForKeyRef, read only inside this effect, guards the send itself.
   useEffect(() => {
-    if (routeId || autoSentPromptRef.current || !autoPromptKey) return
+    if (routeId || !autoPromptKey || autoSentForKeyRef.current === autoPromptKey) return
     const params = new URLSearchParams(window.location.search)
     const prompt = params.get('prompt')
     if (!prompt) return
     const chargerIds = params.get('chargerIds')?.split(',').filter(Boolean)
-    autoSentPromptRef.current = true
+    autoSentForKeyRef.current = autoPromptKey
     // Cosmetic replace (not a router navigation, same as below) so refreshing doesn't resend.
     window.history.replaceState(null, '', '/chat')
     useChatStreamStore.getState().send(autoPromptKey, userId, queryClient, prompt, undefined, chargerIds)

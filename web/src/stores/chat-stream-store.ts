@@ -170,7 +170,17 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
     cancelers[key] = streamChat(
       { conversationId: isDraftKey(key) ? '' : key, userId, message, selectedChoices, chargerIds },
       {
-        onMessages: (messages, conversationId) => writeBoth({ messages, conversationId }),
+        onMessages: (messages, conversationId) => {
+          writeBoth({ messages, conversationId })
+          if (isDraftKey(key)) {
+            // A brand-new conversation now has a real id - the sidebar's list
+            // doesn't have it yet (it was never there to invalidate before this),
+            // and its "Replying" badge is matched by that real id, not the draft
+            // key startStreaming was first called with above.
+            useChatActivityStore.getState().startStreaming(conversationId)
+            void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+          }
+        },
         onStatus: (status) => writeBoth({ status }),
         onDelta: (text) => {
           pendingDelta += text
