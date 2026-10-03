@@ -1,6 +1,6 @@
 import { Settings } from '@ory/elements-react/theme'
 import '@ory/elements-react/theme/styles.css'
-import { useState } from 'react'
+import { useSearchParams } from 'react-router'
 
 import { BillingSection } from '@/features/billing/billing-section'
 import { frontendApi, oryClientConfiguration } from '@/lib/auth/client'
@@ -23,7 +23,11 @@ const NAV_ITEMS: { value: ProfileTab; label: string }[] = [
 ]
 
 export function ProfilePage() {
-  const [tab, setTab] = useState<ProfileTab>('general')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requested = searchParams.get('tab')
+  const tab: ProfileTab = NAV_ITEMS.some((item) => item.value === requested)
+    ? (requested as ProfileTab)
+    : 'general'
   const { flow, error } = useFlow(
     () => frontendApi.createBrowserSettingsFlow(),
     (id) => frontendApi.getSettingsFlow({ id }),
@@ -47,7 +51,15 @@ export function ProfilePage() {
             <button
               key={item.value}
               type="button"
-              onClick={() => setTab(item.value)}
+              onClick={() =>
+                setSearchParams(
+                  (prev) => {
+                    prev.set('tab', item.value)
+                    return prev
+                  },
+                  { replace: true },
+                )
+              }
               className={cn(
                 'rounded-md px-3 py-2 text-left text-sm transition-colors',
                 tab === item.value
