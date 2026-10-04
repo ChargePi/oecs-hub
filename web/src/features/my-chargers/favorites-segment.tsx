@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { Heart } from 'lucide-react'
+import { Heart, HeartOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -100,6 +100,7 @@ export function FavoritesSegment() {
                       disabled={isPending}
                       onClick={() => handleUnfavorite(favorite.charger.id)}
                     >
+                      <HeartOff aria-hidden="true" />
                       {isPending ? 'Removing…' : 'Remove'}
                     </Button>
                   </TableCell>

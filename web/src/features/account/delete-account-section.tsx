@@ -41,7 +41,7 @@ export function DeleteAccountSection() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col items-center gap-4 text-center">
       <div>
         <h2 className="font-heading text-lg font-semibold text-foreground">Delete account</h2>
         <p className="text-sm text-muted-foreground">
@@ -51,7 +51,7 @@ export function DeleteAccountSection() {
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" className="self-start">
+          <Button variant="destructive" className="self-center">
             Delete account
           </Button>
         </AlertDialogTrigger>

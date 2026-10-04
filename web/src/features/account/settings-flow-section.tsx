@@ -30,7 +30,7 @@ function AccountTypeIndicator({ accountType }: { accountType: AccountType }) {
     individual: 'Individual account',
   }[accountType]
   return (
-    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+    <div className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground">
       <Icon className="size-4" aria-hidden="true" />
       <span>{label}</span>
     </div>

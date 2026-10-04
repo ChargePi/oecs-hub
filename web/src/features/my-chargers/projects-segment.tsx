@@ -40,9 +40,7 @@ export function ProjectsSegment() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Named shortlists of chargers you're evaluating.
-        </p>
+        <h2 className="font-heading text-lg font-semibold">Projects</h2>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" />
           New project
