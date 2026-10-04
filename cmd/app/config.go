@@ -63,6 +63,11 @@ type BillingConfiguration struct {
 	TierCacheTTL time.Duration `json:"tierCacheTtl" mapstructure:"tierCacheTtl" yaml:"tierCacheTtl"`
 }
 
+// PlanningConfiguration moves user projects to the external projects API when ProjectsAddress is set.
+type PlanningConfiguration struct {
+	ProjectsAddress string `json:"projectsAddress" mapstructure:"projectsAddress" yaml:"projectsAddress"`
+}
+
 // BifrostConfiguration points the prompt-suggestions LLM client at Bifrost
 // (github.com/maximhq/bifrost), an OpenAI-API-compatible proxy already deployed by the sibling
 // oecs-recommendation-agent repo on this service's own docker network (oecs-hub_default) -
@@ -127,6 +132,7 @@ type Configuration struct {
 	Auth              AuthConfiguration              `json:"auth"              mapstructure:"auth"              validate:"required" yaml:"auth"`
 	Kratos            KratosConfiguration            `json:"kratos"            mapstructure:"kratos"            validate:"required" yaml:"kratos"`
 	Billing           BillingConfiguration           `json:"billing"           mapstructure:"billing"           validate:"required" yaml:"billing"`
+	Planning          PlanningConfiguration          `json:"planning"          mapstructure:"planning"                              yaml:"planning"`
 	Bifrost           BifrostConfiguration           `json:"bifrost"           mapstructure:"bifrost"           validate:"required" yaml:"bifrost"`
 	PromptSuggestions PromptSuggestionsConfiguration `json:"promptSuggestions" mapstructure:"promptSuggestions" validate:"required" yaml:"promptSuggestions"`
 	PendingActions    PendingActionsConfiguration    `json:"pendingActions"    mapstructure:"pendingActions"    yaml:"pendingActions"`

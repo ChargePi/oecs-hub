@@ -31,6 +31,15 @@ const (
 	MaxProjectChargers = 500
 )
 
+type ProjectStore interface {
+	CreateProject(ctx context.Context, p *Project) error
+	GetProject(ctx context.Context, identityID, id uuid.UUID) (*Project, error)
+	ListProjects(ctx context.Context, identityID uuid.UUID, limit, offset uint32) ([]*Project, int64, error)
+	UpdateProjectAttributes(ctx context.Context, identityID, id uuid.UUID, attrs ProjectAttributes) (*Project, error)
+	DeleteProject(ctx context.Context, identityID, id uuid.UUID) error
+	ApplyChargerChanges(ctx context.Context, identityID, id uuid.UUID, apply func([]ProjectCharger) ([]ProjectCharger, error)) (*Project, error)
+}
+
 type Repository interface {
 	// SetFavorite adds or removes one favorite and reports the resulting state. Both
 	// directions are idempotent. Returns ErrVariantNotFound if variantID isn't a verified

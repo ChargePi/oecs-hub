@@ -102,7 +102,7 @@ func newService(repo Repository, chargers ChargerReader, cache ChargerCache, pla
 		plans = &fakePlans{paid: true}
 	}
 
-	return NewService(repo, chargers, cache, plans)
+	return NewService(repo, repo, chargers, cache, plans)
 }
 
 func TestService_ProjectsRequireAPaidPlan(t *testing.T) {

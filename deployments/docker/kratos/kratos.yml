@@ -23,6 +23,7 @@ selfservice:
     # returnTo on logout so it lands back on its own login page instead of the public
     # site's default_browser_return_url above.
     - http://registry.localhost:8000/admin/auth/login
+    - http://registry.localhost:8000/planner/
 
   methods:
     password:

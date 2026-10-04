@@ -28,6 +28,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
+	"github.com/ChargePi/oecs-hub/internal/planningclient"
 	"github.com/ChargePi/oecs-hub/internal/preferences"
 	"github.com/ChargePi/oecs-hub/internal/promptsuggestion"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
@@ -240,7 +241,24 @@ var (
 			)
 
 			userChargersRepo := postgresStorage.NewUserChargersRepository(db)
-			userChargersSvc := userchargers.NewService(userChargersRepo, chargerSvc, chargerCache, entitlementSvc)
+
+			var projectStore userchargers.ProjectStore = userChargersRepo
+			if cfg.Planning.ProjectsAddress != "" {
+				planning, err := planningclient.New(cfg.Planning.ProjectsAddress, cfg.Auth.GatewaySecret)
+				if err != nil {
+					logger.Fatal("failed to create projects client", zap.Error(err))
+				}
+
+				defer func() {
+					if err := planning.Close(); err != nil {
+						logger.Error("failed to close projects client", zap.Error(err))
+					}
+				}()
+
+				projectStore = planning
+			}
+
+			userChargersSvc := userchargers.NewService(userChargersRepo, projectStore, chargerSvc, chargerCache, entitlementSvc)
 
 			pendingActionSvc := useraction.NewService(
 				redisStorage.NewPendingActionStore(redisClient),
@@ -435,6 +453,7 @@ func setDefaults() {
 	_ = viper.BindEnv("kratos.adminUrl", "OECS_HUB_KRATOS_ADMIN_URL")
 	_ = viper.BindEnv("billing.address", "OECS_HUB_BILLING_ADDRESS")
 	_ = viper.BindEnv("billing.tierCacheTtl", "OECS_HUB_BILLING_TIERCACHETTL")
+	_ = viper.BindEnv("planning.projectsAddress", "OECS_HUB_PLANNING_PROJECTSADDRESS")
 	_ = viper.BindEnv("bifrost.baseUrl", "OECS_HUB_BIFROST_BASEURL")
 	_ = viper.BindEnv("bifrost.apiKey", "OECS_HUB_BIFROST_APIKEY")
 	_ = viper.BindEnv("bifrost.model", "OECS_HUB_BIFROST_MODEL")

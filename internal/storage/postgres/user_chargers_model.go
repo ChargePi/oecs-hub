@@ -58,13 +58,14 @@ func userProjectToDomain(e *userProjectEntity) (*userchargers.Project, error) {
 	}
 
 	return &userchargers.Project{
-		ID:          e.ID,
-		IdentityID:  e.IdentityID,
-		Name:        e.Name,
-		Description: e.Description,
-		Chargers:    chargers,
-		CreatedAt:   e.CreatedAt,
-		UpdatedAt:   e.UpdatedAt,
+		ID:           e.ID,
+		IdentityID:   e.IdentityID,
+		Name:         e.Name,
+		Description:  e.Description,
+		Chargers:     chargers,
+		ChargerCount: int64(len(chargers)),
+		CreatedAt:    e.CreatedAt,
+		UpdatedAt:    e.UpdatedAt,
 	}, nil
 }
 

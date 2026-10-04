@@ -436,7 +436,7 @@ func projectToProto(p *userchargers.Project) *userchargersv1.Project {
 		Id:           p.ID.String(),
 		Name:         p.Name,
 		Description:  p.Description,
-		ChargerCount: int64(len(p.Chargers)),
+		ChargerCount: p.ChargerCount,
 		CreatedAt:    timestamppb.New(p.CreatedAt),
 		UpdatedAt:    timestamppb.New(p.UpdatedAt),
 	}

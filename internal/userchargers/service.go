@@ -64,13 +64,14 @@ type MyRatingEntry struct {
 
 type Service struct {
 	repo         Repository
+	projects     ProjectStore
 	chargers     ChargerReader
 	chargerCache ChargerCache
 	plans        PaidPlanChecker
 }
 
-func NewService(repo Repository, chargers ChargerReader, chargerCache ChargerCache, plans PaidPlanChecker) *Service {
-	return &Service{repo: repo, chargers: chargers, chargerCache: chargerCache, plans: plans}
+func NewService(repo Repository, projects ProjectStore, chargers ChargerReader, chargerCache ChargerCache, plans PaidPlanChecker) *Service {
+	return &Service{repo: repo, projects: projects, chargers: chargers, chargerCache: chargerCache, plans: plans}
 }
 
 // SetFavorite adds or removes one charger from identityID's favorites. Idempotent in both
@@ -156,7 +157,7 @@ func (s *Service) CreateProject(ctx context.Context, identityID uuid.UUID, name 
 		Chargers:    []ProjectCharger{},
 	}
 
-	if err := s.repo.CreateProject(ctx, project); err != nil {
+	if err := s.projects.CreateProject(ctx, project); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -194,7 +195,7 @@ func (s *Service) UpdateProject(ctx context.Context, identityID, id uuid.UUID, a
 	// to nil the way CreateProject does.
 	attrs.Description = trimmed(attrs.Description)
 
-	project, err := s.repo.UpdateProjectAttributes(ctx, identityID, id, attrs)
+	project, err := s.projects.UpdateProjectAttributes(ctx, identityID, id, attrs)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -215,7 +216,7 @@ func (s *Service) DeleteProject(ctx context.Context, identityID, id uuid.UUID) e
 		return err
 	}
 
-	if err := s.repo.DeleteProject(ctx, identityID, id); err != nil {
+	if err := s.projects.DeleteProject(ctx, identityID, id); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -235,7 +236,7 @@ func (s *Service) ListProjects(ctx context.Context, identityID uuid.UUID, limit,
 		return nil, 0, err
 	}
 
-	projects, total, err := s.repo.ListProjects(ctx, identityID, clampPageSize(limit), offset)
+	projects, total, err := s.projects.ListProjects(ctx, identityID, clampPageSize(limit), offset)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -257,7 +258,7 @@ func (s *Service) GetProject(ctx context.Context, identityID, id uuid.UUID) (*Pr
 		return nil, nil, err
 	}
 
-	project, err := s.repo.GetProject(ctx, identityID, id)
+	project, err := s.projects.GetProject(ctx, identityID, id)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -297,7 +298,7 @@ func (s *Service) ManageChargers(ctx context.Context, identityID, id uuid.UUID, 
 		return nil, nil, err
 	}
 
-	project, err := s.repo.ApplyChargerChanges(ctx, identityID, id, func(current []ProjectCharger) ([]ProjectCharger, error) {
+	project, err := s.projects.ApplyChargerChanges(ctx, identityID, id, func(current []ProjectCharger) ([]ProjectCharger, error) {
 		next, err := applyChanges(current, changes)
 		if err != nil {
 			return nil, err

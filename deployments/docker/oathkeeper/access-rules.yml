@@ -346,3 +346,151 @@
     handler: allow
   mutators:
     - handler: header
+
+- id: planning-organization-service
+  upstream:
+    url: http://projects-service:50080
+  match:
+    url: "http://<.*>/projects.v1.OrganizationService/<CreateOrganization|ListMyOrganizations|GetOrganization|UpdateOrganization|DeleteOrganization|ListMembers|AddMember|UpdateMemberRole|RemoveMember>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: planning-project-service
+  upstream:
+    url: http://projects-service:50080
+  match:
+    url: "http://<.*>/projects.v1.ProjectService/<CreateProject|GetProject|ListProjects|UpdateProject|DeleteProject|ManageProjectChargers>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: planning-software-catalog-read
+  upstream:
+    url: http://projects-service:50080
+  match:
+    url: "http://<.*>/projects.v1.SoftwareCatalogService/<ListSoftwareProducts|GetSoftwareProduct>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: planning-software-catalog-admin
+  upstream:
+    url: http://projects-service:50080
+  match:
+    url: "http://<.*>/projects.v1.SoftwareCatalogService/<CreateSoftwareProduct|UpdateSoftwareProduct|DeleteSoftwareProduct>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: remote_json
+    config:
+      payload: |
+        {
+          "namespace": "Role",
+          "object": "admin",
+          "relation": "members",
+          "subject_id": "{{ print .Subject }}"
+        }
+  mutators:
+    - handler: header
+
+- id: planning-component-catalog-read
+  upstream:
+    url: http://projects-service:50080
+  match:
+    url: "http://<.*>/projects.v1.ComponentCatalogService/<ListComponentCatalogueEntries|GetComponentCatalogueEntry>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: planning-component-catalog-admin
+  upstream:
+    url: http://projects-service:50080
+  match:
+    url: "http://<.*>/projects.v1.ComponentCatalogService/<CreateComponentCatalogueEntry|UpdateComponentCatalogueEntry|DeleteComponentCatalogueEntry>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: remote_json
+    config:
+      payload: |
+        {
+          "namespace": "Role",
+          "object": "admin",
+          "relation": "members",
+          "subject_id": "{{ print .Subject }}"
+        }
+  mutators:
+    - handler: header
+
+- id: planning-site-topology-service
+  upstream:
+    url: http://site-service:50090
+  match:
+    url: "http://<.*>/site.v1.TopologyService/<GetSite|AddComponent|UpdateComponent|RemoveComponent|Connect|UpdateConnection|Disconnect|ApplyChanges|ImportComponentSpec|ValidateSite>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: planning-site-layout-service
+  upstream:
+    url: http://site-service:50090
+  match:
+    url: "http://<.*>/site.v1.LayoutService/<SetSiteBoundary|PlaceComponents|SetConnectionRoute|SetDiagramPositions>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: planning-site-analysis-service
+  upstream:
+    url: http://site-service:50090
+  match:
+    url: "http://<.*>/site.v1.AnalysisService/<AnalyzeCapacity>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+# MCP for agents: Streamable HTTP, so GET/DELETE as well as POST. Keto checks run per tool call.
+- id: planning-site-mcp
+  upstream:
+    url: http://site-service:50090
+  match:
+    url: "http://<.*>/planning/mcp"
+    methods: ["GET", "POST", "DELETE"]
+  authenticators:
+    - handler: bearer_token
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header

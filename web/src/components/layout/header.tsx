@@ -7,6 +7,8 @@ import { AssistantToggle } from '@/features/chat/assistant-toggle'
 import { SearchBar } from '@/components/search-bar'
 import { useIdentity } from '@/lib/auth/use-identity'
 
+const PLANNER_ENABLED = import.meta.env.VITE_FEATURE_PLANNER === 'true'
+
 const NAV_LINKS = [
   { to: '/manufacturers', label: 'Manufacturers' },
   { to: '/chargers', label: 'Chargers' },
@@ -51,6 +53,14 @@ export function Header() {
               {link.label}
             </NavLink>
           ))}
+          {identity && PLANNER_ENABLED && (
+            <a
+              href="/planner/"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Site planner
+            </a>
+          )}
         </nav>
 
         <AssistantToggle />

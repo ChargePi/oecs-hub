@@ -20,13 +20,14 @@ type Favorite struct {
 // stored as an embedded JSON document on the project row rather than in a join table, so a
 // project is always loaded and saved whole.
 type Project struct {
-	ID          uuid.UUID
-	IdentityID  uuid.UUID
-	Name        string
-	Description *string
-	Chargers    []ProjectCharger
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID           uuid.UUID
+	IdentityID   uuid.UUID
+	Name         string
+	Description  *string
+	Chargers     []ProjectCharger
+	ChargerCount int64
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // ProjectCharger is one charger's membership in a project. There is no FK behind

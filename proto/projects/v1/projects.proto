@@ -1,0 +1,251 @@
+syntax = "proto3";
+
+package projects.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service OrganizationService {
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse);
+  // ListMyOrganizations always includes the caller's personal organization, creating it on first call.
+  rpc ListMyOrganizations(ListMyOrganizationsRequest) returns (ListMyOrganizationsResponse);
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse);
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse);
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (google.protobuf.Empty);
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse);
+  rpc UpdateMemberRole(UpdateMemberRoleRequest) returns (UpdateMemberRoleResponse);
+  rpc RemoveMember(RemoveMemberRequest) returns (google.protobuf.Empty);
+}
+
+service ProjectService {
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
+  // DeleteProject hides the project immediately; its site and permissions are cleaned up asynchronously.
+  rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty);
+  rpc ManageProjectChargers(ManageProjectChargersRequest) returns (ManageProjectChargersResponse);
+}
+
+// ProjectAdminService is served on the internal port only.
+service ProjectAdminService {
+  rpc ImportProject(ImportProjectRequest) returns (ImportProjectResponse);
+}
+
+enum OrganizationRole {
+  ORGANIZATION_ROLE_UNSPECIFIED = 0;
+  ORGANIZATION_ROLE_OWNER = 1;
+  ORGANIZATION_ROLE_EDITOR = 2;
+  ORGANIZATION_ROLE_VIEWER = 3;
+}
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  bool personal = 3;
+  OrganizationRole my_role = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message Member {
+  string identity_id = 1;
+  string email = 2;
+  OrganizationRole role = 3;
+}
+
+message CreateOrganizationRequest {
+  string name = 1;
+}
+
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message ListMyOrganizationsRequest {}
+
+message ListMyOrganizationsResponse {
+  repeated Organization organizations = 1;
+}
+
+message GetOrganizationRequest {
+  string id = 1;
+}
+
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message UpdateOrganizationRequest {
+  string id = 1;
+  string name = 2;
+}
+
+message UpdateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message DeleteOrganizationRequest {
+  string id = 1;
+}
+
+message ListMembersRequest {
+  string organization_id = 1;
+}
+
+message ListMembersResponse {
+  repeated Member members = 1;
+}
+
+message AddMemberRequest {
+  string organization_id = 1;
+  string email = 2;
+  OrganizationRole role = 3;
+}
+
+message AddMemberResponse {
+  Member member = 1;
+}
+
+message UpdateMemberRoleRequest {
+  string organization_id = 1;
+  string identity_id = 2;
+  OrganizationRole role = 3;
+}
+
+message UpdateMemberRoleResponse {
+  Member member = 1;
+}
+
+message RemoveMemberRequest {
+  string organization_id = 1;
+  string identity_id = 2;
+}
+
+enum ProjectStatus {
+  PROJECT_STATUS_UNSPECIFIED = 0;
+  PROJECT_STATUS_ACTIVE = 1;
+  PROJECT_STATUS_DELETING = 2;
+}
+
+message Location {
+  double latitude = 1;
+  double longitude = 2;
+  string country = 3;
+  string address = 4;
+}
+
+message Project {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  optional string description = 4;
+  ProjectStatus status = 5;
+  optional Location location = 6;
+  optional string grid_operator = 7;
+  int64 charger_count = 8;
+  int64 version = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message ProjectCharger {
+  string charger_variant_id = 1;
+  optional string note = 2;
+}
+
+message CreateProjectRequest {
+  // Empty means the caller's personal organization.
+  string organization_id = 1;
+  string name = 2;
+  optional string description = 3;
+  optional Location location = 4;
+  optional string grid_operator = 5;
+}
+
+message CreateProjectResponse {
+  Project project = 1;
+}
+
+message GetProjectRequest {
+  string id = 1;
+}
+
+message GetProjectResponse {
+  Project project = 1;
+  repeated ProjectCharger chargers = 2;
+}
+
+message ListProjectsRequest {
+  // Empty means the caller's personal organization.
+  string organization_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  int64 total_size = 2;
+  string next_page_token = 3;
+}
+
+// Unset fields are left as they are.
+message UpdateProjectRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional Location location = 4;
+  optional string grid_operator = 5;
+  // Zero skips the optimistic concurrency check.
+  int64 expected_version = 6;
+}
+
+message UpdateProjectResponse {
+  Project project = 1;
+}
+
+message DeleteProjectRequest {
+  string id = 1;
+}
+
+enum ProjectChargerAction {
+  PROJECT_CHARGER_ACTION_UNSPECIFIED = 0;
+  PROJECT_CHARGER_ACTION_ADD = 1;
+  PROJECT_CHARGER_ACTION_REMOVE = 2;
+  PROJECT_CHARGER_ACTION_SET_NOTE = 3;
+}
+
+message ProjectChargerChange {
+  string charger_variant_id = 1;
+  ProjectChargerAction action = 2;
+  optional string note = 3;
+}
+
+message ManageProjectChargersRequest {
+  string project_id = 1;
+  repeated ProjectChargerChange changes = 2;
+  // Must be a permutation of the project's charger ids after changes are applied.
+  repeated string ordered_charger_variant_ids = 3;
+}
+
+message ManageProjectChargersResponse {
+  Project project = 1;
+  repeated ProjectCharger chargers = 2;
+}
+
+message ImportProjectRequest {
+  string id = 1;
+  string owner_identity_id = 2;
+  string name = 3;
+  optional string description = 4;
+  repeated ProjectCharger chargers = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message ImportProjectResponse {
+  Project project = 1;
+  // True when the project already existed and was left untouched.
+  bool already_existed = 2;
+}

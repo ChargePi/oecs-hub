@@ -205,6 +205,7 @@ services:
       # Model-specific: re-tune when the embedding model changes.
       - OECS_HUB_SEMANTICSEARCH_MINSCORE=${OECS_HUB_SEMANTICSEARCH_MINSCORE:-0.25}
       - OECS_HUB_SEMANTICSEARCH_MANUFACTURERMINSCORE=${OECS_HUB_SEMANTICSEARCH_MANUFACTURERMINSCORE:-0.25}
+      - OECS_HUB_PLANNING_PROJECTSADDRESS=${OECS_HUB_PLANNING_PROJECTSADDRESS:-}
     labels:
       - traefik.enable=true
       # Shared forwardAuth middleware referenced by every protected router, including
@@ -240,6 +241,7 @@ services:
       args:
         VITE_FEATURE_CHAT: "true"
         VITE_FEATURE_BILLING: "true"
+        VITE_FEATURE_PLANNER: "true"
     container_name: oecs-hub-web
     hostname: web
     restart: unless-stopped
