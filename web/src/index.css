@@ -122,15 +122,8 @@ body .oecs-settings-wide .ory-elements select.max-w-\[488px\] {
   max-width: 100%;
 }
 
-/* Buttons carry their own, unconditional max-w-[488px] (part of buttonStyles' cva base,
- * not the flowType-gated rule above) - left alone, so Save/Add/Link buttons keep a normal
- * button-like width instead of stretching to the page's full width. What *does* need
- * fixing: the flex-column wrappers around them (this file's and OrySettingsFormSection's
- * own, both `flex flex-col` with the default `align-items: stretch`) stretch the button to
- * fill that cross-axis up to its 488px cap regardless of its label's actual width, and with
- * no `justify-content` set, a capped-but-stretched button still sits flush against the left
- * edge of the now much wider (unconstrained, see above) row. `align-self: center` overrides
- * the inherited stretch so the button sizes to its own content and centers itself instead.
+/* Ory buttons stretch across their flex-column wrapper; size them like a default
+ * components/ui/button.tsx instead, centered in the column.
  * Matched by tag + the max-w-[488px] class itself (every button carries it), not by
  * data-testid - the OIDC link/unlink button renders through a different path with testid
  * "ory/form/node/input/link" despite being a <button> with the exact same buttonStyles
@@ -138,7 +131,75 @@ body .oecs-settings-wide .ory-elements select.max-w-\[488px\] {
  */
 body .oecs-settings-wide .ory-elements button.max-w-\[488px\] {
   align-self: center;
-  min-width: 12rem;
+  align-items: center;
+  height: 2rem;
+  padding: 0 0.625rem;
+  font-size: 0.875rem;
+}
+
+/* Match components/ui/input.tsx and button.tsx. Ory's --color-* tokens resolve at :root,
+ * so the final tokens are overridden here rather than the --input-* ones feeding them. */
+body .oecs-settings-wide .ory-elements {
+  --color-input-background-default: oklch(1 0 0 / 3.6%);
+  --color-input-background-hover: oklch(1 0 0 / 3.6%);
+  --color-input-background-disabled: oklch(1 0 0 / 6%);
+  --color-input-border-default: var(--input);
+  --color-input-border-hover: var(--input);
+  --color-input-border-disabled: var(--input);
+  --color-input-border-focus: var(--ring);
+  --color-input-foreground-tertiary: var(--muted-foreground);
+  --color-input-foreground-disabled: var(--muted-foreground);
+  --color-button-primary-background-default: var(--primary);
+  --color-button-primary-background-hover: color-mix(in oklch, var(--primary) 80%, transparent);
+  --color-button-primary-border-default: transparent;
+  --color-button-primary-border-hover: transparent;
+  --color-button-primary-foreground-default: var(--primary-foreground);
+  --color-button-primary-foreground-hover: var(--primary-foreground);
+}
+
+body .oecs-settings-wide .ory-elements label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+body .oecs-settings-wide .ory-elements input.max-w-\[488px\],
+body .oecs-settings-wide .ory-elements input[type='password'] {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+body .oecs-settings-wide .ory-elements div:has(> input[type='password']) > button {
+  padding-block: 0;
+}
+
+body .oecs-settings-wide .ory-elements input.max-w-\[488px\]:focus-visible,
+body .oecs-settings-wide .ory-elements div:has(> input[type='password']):focus-within {
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+}
+
+body .oecs-settings-wide .ory-elements input[name='totp_secret_key'] {
+  font-family: var(--font-mono);
+}
+
+body .oecs-settings-wide .ory-elements .py-\[15px\] {
+  height: 2.25rem;
+  padding-block: 0;
+  font-size: 0.875rem;
+}
+
+body .oecs-settings-wide .ory-elements figure {
+  display: flex;
+  justify-content: center;
+}
+
+body .oecs-settings-wide .ory-elements figure img {
+  width: 10rem;
+  border-radius: var(--radius-lg);
+}
+
+body .oecs-settings-wide .ory-elements div.max-w-\[488px\] {
+  max-width: 100%;
 }
 
 /* OryCard's own chrome (border/background/rounded corners/padding, all on the div
