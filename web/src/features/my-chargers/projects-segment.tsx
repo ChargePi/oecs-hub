@@ -1,12 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { FolderKanban, Plus } from 'lucide-react'
+import { FolderKanban, Plus, Trash2 } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { redirectToLogin } from '@/lib/auth/use-identity'
 import { AuthRequiredError } from '@/lib/errors'
-import { createProject, listProjects } from '@/lib/user-chargers/client'
+import { useToastAction } from '@/lib/use-toast-action'
+import { createProject, deleteProject, listProjects } from '@/lib/user-chargers/client'
 import { ProjectDetail } from './project-detail'
 import { ProjectFormDialog } from './project-form-dialog'
 
@@ -14,6 +26,7 @@ const PAGE_SIZE = 20
 
 export function ProjectsSegment() {
   const queryClient = useQueryClient()
+  const { run } = useToastAction()
   const [createOpen, setCreateOpen] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
 
@@ -34,6 +47,13 @@ export function ProjectsSegment() {
   }
 
   if (isLoading) return <Skeleton className="h-48 w-full" />
+
+  async function handleDelete(projectId: string) {
+    const result = await run(() => deleteProject(projectId))
+    if (result !== undefined) {
+      await queryClient.invalidateQueries({ queryKey: ['user-chargers', 'projects'] })
+    }
+  }
 
   const projects = data?.pages.flatMap((page) => page.projects) ?? []
 
@@ -59,13 +79,16 @@ export function ProjectsSegment() {
       ) : (
         <ul className="flex flex-col gap-2">
           {projects.map((project) => (
-            <li key={project.id}>
+            <li
+              key={project.id}
+              className="flex items-center gap-2 rounded-lg border border-border pr-2 transition-colors hover:bg-muted"
+            >
               <button
                 type="button"
                 onClick={() => setSelectedProjectId(project.id)}
-                className="flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-left transition-colors hover:bg-muted"
+                className="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4 text-left"
               >
-                <span>
+                <span className="min-w-0">
                   <span className="font-medium">{project.name}</span>
                   {project.description ? (
                     <span className="ml-2 text-sm text-muted-foreground">
@@ -77,6 +100,36 @@ export function ProjectsSegment() {
                   {project.chargerCount} charger{project.chargerCount === 1 ? '' : 's'}
                 </span>
               </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                    <span className="sr-only">Delete project</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently removes "{project.name}" and its charger list. This can't be
+                      undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep project</AlertDialogCancel>
+                    <AlertDialogAction
+                      variant="destructive"
+                      onClick={() => handleDelete(project.id)}
+                    >
+                      Delete project
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </li>
           ))}
         </ul>
