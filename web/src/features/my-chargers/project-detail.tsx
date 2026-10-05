@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Plus, Search, X } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Trash2 } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -25,6 +25,7 @@ import {
   manageProjectChargers,
   updateProject,
 } from '@/lib/user-chargers/client'
+import { ProductImage } from '@/features/product/product-image'
 import { VariantDetailSheet } from '@/features/product/variant-detail-sheet'
 import { ProjectFormDialog } from './project-form-dialog'
 
@@ -222,49 +223,64 @@ export function ProjectDetail({ projectId, onBack }: { projectId: string; onBack
           chargers.map((member) => (
             <div
               key={member.charger.id}
-              className="flex flex-col gap-2 rounded-lg border border-border p-3"
+              className="flex items-center gap-3 rounded-lg border border-border p-3"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-3">
                 <button
                   type="button"
-                  className="text-left"
+                  className="flex min-w-0 items-center gap-3 text-left"
                   onClick={() => setOpenVariantId(member.charger.id)}
                 >
-                  <p className="font-medium hover:underline">{member.charger.model.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {member.charger.manufacturer.name}
-                  </p>
+                  <ProductImage
+                    src={member.charger.model.productImageUrl}
+                    alt={member.charger.model.name}
+                    className="size-14"
+                  />
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="truncate font-medium hover:underline">
+                      {member.charger.model.name}
+                    </span>
+                    <span className="truncate text-sm text-muted-foreground">
+                      {member.charger.manufacturer.name}
+                    </span>
+                  </span>
                 </button>
-                <Button variant="ghost" size="icon" onClick={() => handleRemove(member.charger.id)}>
-                  <X className="size-4" />
-                  <span className="sr-only">Remove from project</span>
-                </Button>
+
+                {editingNoteId === member.charger.id ? (
+                  <div className="flex gap-2">
+                    <Input
+                      autoFocus
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      placeholder="Add a note"
+                    />
+                    <Button size="sm" onClick={() => saveNote(member.charger.id)}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingNoteId(null)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="w-fit text-left text-sm text-muted-foreground hover:text-foreground"
+                    onClick={() => startEditingNote(member.charger.id, member.note)}
+                  >
+                    {member.note ? member.note : 'Add a note…'}
+                  </button>
+                )}
               </div>
 
-              {editingNoteId === member.charger.id ? (
-                <div className="flex gap-2">
-                  <Input
-                    autoFocus
-                    value={noteDraft}
-                    onChange={(e) => setNoteDraft(e.target.value)}
-                    placeholder="Add a note"
-                  />
-                  <Button size="sm" onClick={() => saveNote(member.charger.id)}>
-                    Save
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setEditingNoteId(null)}>
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="w-fit text-left text-sm text-muted-foreground hover:text-foreground"
-                  onClick={() => startEditingNote(member.charger.id, member.note)}
-                >
-                  {member.note ? member.note : 'Add a note…'}
-                </button>
-              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => handleRemove(member.charger.id)}
+              >
+                <Trash2 className="size-4" />
+                <span className="sr-only">Remove from project</span>
+              </Button>
             </div>
           ))
         )}
