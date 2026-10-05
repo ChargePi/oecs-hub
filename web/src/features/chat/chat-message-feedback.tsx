@@ -87,7 +87,7 @@ export function ChatMessageFeedback({ message }: { message: ChatMessage }) {
                   <Icon className={cn('size-3.5', active && 'fill-current')} />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{active ? 'Remove feedback' : label}</TooltipContent>
+              <TooltipContent side="bottom">{active ? 'Remove feedback' : label}</TooltipContent>
             </Tooltip>
           )
         })}
