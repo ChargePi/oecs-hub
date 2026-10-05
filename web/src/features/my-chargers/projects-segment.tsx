@@ -88,10 +88,10 @@ export function ProjectsSegment() {
                 onClick={() => setSelectedProjectId(project.id)}
                 className="flex min-w-0 flex-1 items-center justify-between gap-3 py-3 pl-4 text-left"
               >
-                <span className="min-w-0">
-                  <span className="font-medium">{project.name}</span>
+                <span className="flex min-w-0 flex-col gap-1">
+                  <span className="truncate font-medium">{project.name}</span>
                   {project.description ? (
-                    <span className="ml-2 text-sm text-muted-foreground">
+                    <span className="truncate text-sm text-muted-foreground">
                       {project.description}
                     </span>
                   ) : null}
