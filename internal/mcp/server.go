@@ -1,5 +1,5 @@
-// Package mcp exposes the OECS Hub registry to MCP clients (e.g. LLM agents) as a
-// set of read-only tools.
+// Package mcp exposes the OECS Hub registry to MCP clients (e.g. LLM agents): read-only
+// catalogue tools, plus user tools that act for the signed-in caller (see user_tools.go).
 package mcp
 
 import (
@@ -43,6 +43,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithDescription(searchChargersDescription),
 		mcp.WithInputSchema[SearchChargersInput](),
 		mcp.WithOutputSchema[SearchChargersOutput](),
+		readOnlyAnnotations(),
 	)
 	s.AddTool(searchTool, newSearchChargersHandler(chargers).Handle)
 
@@ -50,6 +51,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithDescription(getChargersDescription),
 		mcp.WithInputSchema[GetChargersInput](),
 		mcp.WithOutputSchema[GetChargersOutput](),
+		readOnlyAnnotations(),
 	)
 	s.AddTool(getTool, newGetChargersHandler(chargers).Handle)
 
@@ -57,6 +59,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithDescription(listManufacturersDescription),
 		mcp.WithInputSchema[ListManufacturersInput](),
 		mcp.WithOutputSchema[ListManufacturersOutput](),
+		readOnlyAnnotations(),
 	)
 	s.AddTool(listManufacturersTool, newListManufacturersHandler(manufacturers).Handle)
 }

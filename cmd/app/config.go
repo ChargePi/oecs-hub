@@ -75,6 +75,14 @@ type BifrostConfiguration struct {
 	Model string `json:"model" mapstructure:"model" validate:"required" yaml:"model"`
 }
 
+// PendingActionsConfiguration configures internal/useraction - writes the chat assistant
+// proposes on a user's behalf that wait for the user's confirmation.
+type PendingActionsConfiguration struct {
+	// TTL is how long a proposed action can still be confirmed. There is no history past
+	// it: an expired action is simply gone.
+	TTL time.Duration `json:"ttl" mapstructure:"ttl" yaml:"ttl"`
+}
+
 // PromptSuggestionsConfiguration configures internal/promptsuggestion.Service.
 type PromptSuggestionsConfiguration struct {
 	// RefreshInterval is the cache TTL for a topic's pool - expiry is what triggers the next
@@ -101,4 +109,5 @@ type Configuration struct {
 	Billing           BillingConfiguration           `json:"billing"           mapstructure:"billing"           validate:"required" yaml:"billing"`
 	Bifrost           BifrostConfiguration           `json:"bifrost"           mapstructure:"bifrost"           validate:"required" yaml:"bifrost"`
 	PromptSuggestions PromptSuggestionsConfiguration `json:"promptSuggestions" mapstructure:"promptSuggestions" validate:"required" yaml:"promptSuggestions"`
+	PendingActions    PendingActionsConfiguration    `json:"pendingActions"    mapstructure:"pendingActions"    yaml:"pendingActions"`
 }

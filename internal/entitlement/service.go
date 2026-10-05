@@ -120,10 +120,17 @@ func (s *Service) Tier(ctx context.Context) (billingv1.PlanTier, error) {
 // withIdentity re-emits the identity headers the edge injected on the way in, so the
 // billing service's own header-trust interceptor resolves the same caller.
 func (s *Service) withIdentity(ctx context.Context, identity *auth.Identity) context.Context {
-	return metadata.AppendToOutgoingContext(ctx,
+	kv := []string{
 		gatewaySecretHeader, s.gatewaySecret,
 		userIDHeader, identity.ID,
-		userEmailHeader, identity.Email,
 		userTypeHeader, identity.UserType,
-	)
+	}
+
+	// Callers reaching the hub over MCP (the chat agent) never forward an email - only
+	// the edge does - so an empty one is dropped rather than sent as a blank header.
+	if identity.Email != "" {
+		kv = append(kv, userEmailHeader, identity.Email)
+	}
+
+	return metadata.AppendToOutgoingContext(ctx, kv...)
 }

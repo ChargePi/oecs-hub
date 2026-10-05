@@ -514,3 +514,196 @@ export class RatingServiceClient {
 
 }
 
+export class PendingActionServiceClient {
+  client_: grpcWeb.AbstractClientBase;
+  hostname_: string;
+  credentials_: null | { [index: string]: string; };
+  options_: null | { [index: string]: any; };
+
+  constructor (hostname: string,
+               credentials?: null | { [index: string]: string; },
+               options?: null | { [index: string]: any; }) {
+    if (!options) options = {};
+    if (!credentials) credentials = {};
+    options['format'] = 'binary';
+
+    this.client_ = new grpcWeb.GrpcWebClientBase(options);
+    this.hostname_ = hostname.replace(/\/+$/, '');
+    this.credentials_ = credentials;
+    this.options_ = options;
+  }
+
+  methodDescriptorGetPendingAction = new grpcWeb.MethodDescriptor(
+    '/userchargers.v1.PendingActionService/GetPendingAction',
+    grpcWeb.MethodType.UNARY,
+    userchargers_v1_userchargers_pb.GetPendingActionRequest,
+    userchargers_v1_userchargers_pb.GetPendingActionResponse,
+    (request: userchargers_v1_userchargers_pb.GetPendingActionRequest) => {
+      return request.serializeBinary();
+    },
+    userchargers_v1_userchargers_pb.GetPendingActionResponse.deserializeBinary
+  );
+
+  getPendingAction(
+    request: userchargers_v1_userchargers_pb.GetPendingActionRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<userchargers_v1_userchargers_pb.GetPendingActionResponse>;
+
+  getPendingAction(
+    request: userchargers_v1_userchargers_pb.GetPendingActionRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.GetPendingActionResponse) => void): grpcWeb.ClientReadableStream<userchargers_v1_userchargers_pb.GetPendingActionResponse>;
+
+  getPendingAction(
+    request: userchargers_v1_userchargers_pb.GetPendingActionRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.GetPendingActionResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/userchargers.v1.PendingActionService/GetPendingAction',
+        request,
+        metadata || {},
+        this.methodDescriptorGetPendingAction,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/userchargers.v1.PendingActionService/GetPendingAction',
+    request,
+    metadata || {},
+    this.methodDescriptorGetPendingAction);
+  }
+
+  methodDescriptorListPendingActions = new grpcWeb.MethodDescriptor(
+    '/userchargers.v1.PendingActionService/ListPendingActions',
+    grpcWeb.MethodType.UNARY,
+    userchargers_v1_userchargers_pb.ListPendingActionsRequest,
+    userchargers_v1_userchargers_pb.ListPendingActionsResponse,
+    (request: userchargers_v1_userchargers_pb.ListPendingActionsRequest) => {
+      return request.serializeBinary();
+    },
+    userchargers_v1_userchargers_pb.ListPendingActionsResponse.deserializeBinary
+  );
+
+  listPendingActions(
+    request: userchargers_v1_userchargers_pb.ListPendingActionsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<userchargers_v1_userchargers_pb.ListPendingActionsResponse>;
+
+  listPendingActions(
+    request: userchargers_v1_userchargers_pb.ListPendingActionsRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.ListPendingActionsResponse) => void): grpcWeb.ClientReadableStream<userchargers_v1_userchargers_pb.ListPendingActionsResponse>;
+
+  listPendingActions(
+    request: userchargers_v1_userchargers_pb.ListPendingActionsRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.ListPendingActionsResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/userchargers.v1.PendingActionService/ListPendingActions',
+        request,
+        metadata || {},
+        this.methodDescriptorListPendingActions,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/userchargers.v1.PendingActionService/ListPendingActions',
+    request,
+    metadata || {},
+    this.methodDescriptorListPendingActions);
+  }
+
+  methodDescriptorConfirmPendingAction = new grpcWeb.MethodDescriptor(
+    '/userchargers.v1.PendingActionService/ConfirmPendingAction',
+    grpcWeb.MethodType.UNARY,
+    userchargers_v1_userchargers_pb.ConfirmPendingActionRequest,
+    userchargers_v1_userchargers_pb.ConfirmPendingActionResponse,
+    (request: userchargers_v1_userchargers_pb.ConfirmPendingActionRequest) => {
+      return request.serializeBinary();
+    },
+    userchargers_v1_userchargers_pb.ConfirmPendingActionResponse.deserializeBinary
+  );
+
+  confirmPendingAction(
+    request: userchargers_v1_userchargers_pb.ConfirmPendingActionRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<userchargers_v1_userchargers_pb.ConfirmPendingActionResponse>;
+
+  confirmPendingAction(
+    request: userchargers_v1_userchargers_pb.ConfirmPendingActionRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.ConfirmPendingActionResponse) => void): grpcWeb.ClientReadableStream<userchargers_v1_userchargers_pb.ConfirmPendingActionResponse>;
+
+  confirmPendingAction(
+    request: userchargers_v1_userchargers_pb.ConfirmPendingActionRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.ConfirmPendingActionResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/userchargers.v1.PendingActionService/ConfirmPendingAction',
+        request,
+        metadata || {},
+        this.methodDescriptorConfirmPendingAction,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/userchargers.v1.PendingActionService/ConfirmPendingAction',
+    request,
+    metadata || {},
+    this.methodDescriptorConfirmPendingAction);
+  }
+
+  methodDescriptorRejectPendingAction = new grpcWeb.MethodDescriptor(
+    '/userchargers.v1.PendingActionService/RejectPendingAction',
+    grpcWeb.MethodType.UNARY,
+    userchargers_v1_userchargers_pb.RejectPendingActionRequest,
+    userchargers_v1_userchargers_pb.RejectPendingActionResponse,
+    (request: userchargers_v1_userchargers_pb.RejectPendingActionRequest) => {
+      return request.serializeBinary();
+    },
+    userchargers_v1_userchargers_pb.RejectPendingActionResponse.deserializeBinary
+  );
+
+  rejectPendingAction(
+    request: userchargers_v1_userchargers_pb.RejectPendingActionRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<userchargers_v1_userchargers_pb.RejectPendingActionResponse>;
+
+  rejectPendingAction(
+    request: userchargers_v1_userchargers_pb.RejectPendingActionRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.RejectPendingActionResponse) => void): grpcWeb.ClientReadableStream<userchargers_v1_userchargers_pb.RejectPendingActionResponse>;
+
+  rejectPendingAction(
+    request: userchargers_v1_userchargers_pb.RejectPendingActionRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: userchargers_v1_userchargers_pb.RejectPendingActionResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/userchargers.v1.PendingActionService/RejectPendingAction',
+        request,
+        metadata || {},
+        this.methodDescriptorRejectPendingAction,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/userchargers.v1.PendingActionService/RejectPendingAction',
+    request,
+    metadata || {},
+    this.methodDescriptorRejectPendingAction);
+  }
+
+}
+

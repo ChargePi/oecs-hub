@@ -125,6 +125,114 @@ func (ProjectChargerAction) EnumDescriptor() ([]byte, []int) {
 	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{1}
 }
 
+type PendingActionKind int32
+
+const (
+	PendingActionKind_PENDING_ACTION_KIND_UNSPECIFIED PendingActionKind = 0
+	PendingActionKind_PENDING_ACTION_KIND_FAVORITE    PendingActionKind = 1
+	PendingActionKind_PENDING_ACTION_KIND_PROJECT     PendingActionKind = 2
+	PendingActionKind_PENDING_ACTION_KIND_RATING      PendingActionKind = 3
+)
+
+// Enum value maps for PendingActionKind.
+var (
+	PendingActionKind_name = map[int32]string{
+		0: "PENDING_ACTION_KIND_UNSPECIFIED",
+		1: "PENDING_ACTION_KIND_FAVORITE",
+		2: "PENDING_ACTION_KIND_PROJECT",
+		3: "PENDING_ACTION_KIND_RATING",
+	}
+	PendingActionKind_value = map[string]int32{
+		"PENDING_ACTION_KIND_UNSPECIFIED": 0,
+		"PENDING_ACTION_KIND_FAVORITE":    1,
+		"PENDING_ACTION_KIND_PROJECT":     2,
+		"PENDING_ACTION_KIND_RATING":      3,
+	}
+)
+
+func (x PendingActionKind) Enum() *PendingActionKind {
+	p := new(PendingActionKind)
+	*p = x
+	return p
+}
+
+func (x PendingActionKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PendingActionKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_userchargers_v1_userchargers_proto_enumTypes[2].Descriptor()
+}
+
+func (PendingActionKind) Type() protoreflect.EnumType {
+	return &file_userchargers_v1_userchargers_proto_enumTypes[2]
+}
+
+func (x PendingActionKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PendingActionKind.Descriptor instead.
+func (PendingActionKind) EnumDescriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{2}
+}
+
+type PendingActionStatus int32
+
+const (
+	PendingActionStatus_PENDING_ACTION_STATUS_UNSPECIFIED PendingActionStatus = 0
+	PendingActionStatus_PENDING_ACTION_STATUS_PENDING     PendingActionStatus = 1
+	PendingActionStatus_PENDING_ACTION_STATUS_CONFIRMED   PendingActionStatus = 2
+	PendingActionStatus_PENDING_ACTION_STATUS_REJECTED    PendingActionStatus = 3
+	// The action was confirmed but the write itself failed.
+	PendingActionStatus_PENDING_ACTION_STATUS_FAILED PendingActionStatus = 4
+)
+
+// Enum value maps for PendingActionStatus.
+var (
+	PendingActionStatus_name = map[int32]string{
+		0: "PENDING_ACTION_STATUS_UNSPECIFIED",
+		1: "PENDING_ACTION_STATUS_PENDING",
+		2: "PENDING_ACTION_STATUS_CONFIRMED",
+		3: "PENDING_ACTION_STATUS_REJECTED",
+		4: "PENDING_ACTION_STATUS_FAILED",
+	}
+	PendingActionStatus_value = map[string]int32{
+		"PENDING_ACTION_STATUS_UNSPECIFIED": 0,
+		"PENDING_ACTION_STATUS_PENDING":     1,
+		"PENDING_ACTION_STATUS_CONFIRMED":   2,
+		"PENDING_ACTION_STATUS_REJECTED":    3,
+		"PENDING_ACTION_STATUS_FAILED":      4,
+	}
+)
+
+func (x PendingActionStatus) Enum() *PendingActionStatus {
+	p := new(PendingActionStatus)
+	*p = x
+	return p
+}
+
+func (x PendingActionStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (PendingActionStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_userchargers_v1_userchargers_proto_enumTypes[3].Descriptor()
+}
+
+func (PendingActionStatus) Type() protoreflect.EnumType {
+	return &file_userchargers_v1_userchargers_proto_enumTypes[3]
+}
+
+func (x PendingActionStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use PendingActionStatus.Descriptor instead.
+func (PendingActionStatus) EnumDescriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{3}
+}
+
 type FavoriteChargerRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	ChargerVariantId string                 `protobuf:"bytes,1,opt,name=charger_variant_id,json=chargerVariantId,proto3" json:"charger_variant_id,omitempty"`
@@ -1506,6 +1614,455 @@ func (x *ListMyRatingsResponse) GetNextPageToken() string {
 	return ""
 }
 
+type PendingAction struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Kind  PendingActionKind      `protobuf:"varint,2,opt,name=kind,proto3,enum=userchargers.v1.PendingActionKind" json:"kind,omitempty"`
+	// Human-readable description of exactly what Confirm will do, built by the hub from
+	// catalogue data rather than written by the assistant.
+	Summary        string                 `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
+	Status         PendingActionStatus    `protobuf:"varint,4,opt,name=status,proto3,enum=userchargers.v1.PendingActionStatus" json:"status,omitempty"`
+	ExpiresAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	ConversationId string                 `protobuf:"bytes,6,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	// Confirming removes something, e.g. a favorite or a charger from a project.
+	Destructive   bool `protobuf:"varint,7,opt,name=destructive,proto3" json:"destructive,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PendingAction) Reset() {
+	*x = PendingAction{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PendingAction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PendingAction) ProtoMessage() {}
+
+func (x *PendingAction) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PendingAction.ProtoReflect.Descriptor instead.
+func (*PendingAction) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *PendingAction) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *PendingAction) GetKind() PendingActionKind {
+	if x != nil {
+		return x.Kind
+	}
+	return PendingActionKind_PENDING_ACTION_KIND_UNSPECIFIED
+}
+
+func (x *PendingAction) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *PendingAction) GetStatus() PendingActionStatus {
+	if x != nil {
+		return x.Status
+	}
+	return PendingActionStatus_PENDING_ACTION_STATUS_UNSPECIFIED
+}
+
+func (x *PendingAction) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *PendingAction) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+func (x *PendingAction) GetDestructive() bool {
+	if x != nil {
+		return x.Destructive
+	}
+	return false
+}
+
+type GetPendingActionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPendingActionRequest) Reset() {
+	*x = GetPendingActionRequest{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPendingActionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPendingActionRequest) ProtoMessage() {}
+
+func (x *GetPendingActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPendingActionRequest.ProtoReflect.Descriptor instead.
+func (*GetPendingActionRequest) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetPendingActionRequest) GetActionId() string {
+	if x != nil {
+		return x.ActionId
+	}
+	return ""
+}
+
+type GetPendingActionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Action        *PendingAction         `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPendingActionResponse) Reset() {
+	*x = GetPendingActionResponse{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPendingActionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPendingActionResponse) ProtoMessage() {}
+
+func (x *GetPendingActionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPendingActionResponse.ProtoReflect.Descriptor instead.
+func (*GetPendingActionResponse) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetPendingActionResponse) GetAction() *PendingAction {
+	if x != nil {
+		return x.Action
+	}
+	return nil
+}
+
+type ListPendingActionsRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ConversationId string                 `protobuf:"bytes,1,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListPendingActionsRequest) Reset() {
+	*x = ListPendingActionsRequest{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPendingActionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPendingActionsRequest) ProtoMessage() {}
+
+func (x *ListPendingActionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPendingActionsRequest.ProtoReflect.Descriptor instead.
+func (*ListPendingActionsRequest) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ListPendingActionsRequest) GetConversationId() string {
+	if x != nil {
+		return x.ConversationId
+	}
+	return ""
+}
+
+type ListPendingActionsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The caller's unexpired actions in the conversation, oldest first. Expired actions are
+	// omitted.
+	Actions       []*PendingAction `protobuf:"bytes,1,rep,name=actions,proto3" json:"actions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPendingActionsResponse) Reset() {
+	*x = ListPendingActionsResponse{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPendingActionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPendingActionsResponse) ProtoMessage() {}
+
+func (x *ListPendingActionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPendingActionsResponse.ProtoReflect.Descriptor instead.
+func (*ListPendingActionsResponse) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ListPendingActionsResponse) GetActions() []*PendingAction {
+	if x != nil {
+		return x.Actions
+	}
+	return nil
+}
+
+type ConfirmPendingActionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmPendingActionRequest) Reset() {
+	*x = ConfirmPendingActionRequest{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmPendingActionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmPendingActionRequest) ProtoMessage() {}
+
+func (x *ConfirmPendingActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmPendingActionRequest.ProtoReflect.Descriptor instead.
+func (*ConfirmPendingActionRequest) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ConfirmPendingActionRequest) GetActionId() string {
+	if x != nil {
+		return x.ActionId
+	}
+	return ""
+}
+
+type ConfirmPendingActionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Action        *PendingAction         `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConfirmPendingActionResponse) Reset() {
+	*x = ConfirmPendingActionResponse{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConfirmPendingActionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConfirmPendingActionResponse) ProtoMessage() {}
+
+func (x *ConfirmPendingActionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConfirmPendingActionResponse.ProtoReflect.Descriptor instead.
+func (*ConfirmPendingActionResponse) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ConfirmPendingActionResponse) GetAction() *PendingAction {
+	if x != nil {
+		return x.Action
+	}
+	return nil
+}
+
+type RejectPendingActionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectPendingActionRequest) Reset() {
+	*x = RejectPendingActionRequest{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectPendingActionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectPendingActionRequest) ProtoMessage() {}
+
+func (x *RejectPendingActionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectPendingActionRequest.ProtoReflect.Descriptor instead.
+func (*RejectPendingActionRequest) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *RejectPendingActionRequest) GetActionId() string {
+	if x != nil {
+		return x.ActionId
+	}
+	return ""
+}
+
+type RejectPendingActionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Action        *PendingAction         `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RejectPendingActionResponse) Reset() {
+	*x = RejectPendingActionResponse{}
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectPendingActionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectPendingActionResponse) ProtoMessage() {}
+
+func (x *RejectPendingActionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_userchargers_v1_userchargers_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectPendingActionResponse.ProtoReflect.Descriptor instead.
+func (*RejectPendingActionResponse) Descriptor() ([]byte, []int) {
+	return file_userchargers_v1_userchargers_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *RejectPendingActionResponse) GetAction() *PendingAction {
+	if x != nil {
+		return x.Action
+	}
+	return nil
+}
+
 var File_userchargers_v1_userchargers_proto protoreflect.FileDescriptor
 
 const file_userchargers_v1_userchargers_proto_rawDesc = "" +
@@ -1608,7 +2165,32 @@ const file_userchargers_v1_userchargers_proto_rawDesc = "" +
 	"\aratings\x18\x01 \x03(\v2\x19.userchargers.v1.MyRatingR\aratings\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x02 \x01(\x03R\ttotalSize\x12&\n" +
-	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken*m\n" +
+	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken\"\xb5\x02\n" +
+	"\rPendingAction\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x126\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\".userchargers.v1.PendingActionKindR\x04kind\x12\x18\n" +
+	"\asummary\x18\x03 \x01(\tR\asummary\x12<\n" +
+	"\x06status\x18\x04 \x01(\x0e2$.userchargers.v1.PendingActionStatusR\x06status\x129\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12'\n" +
+	"\x0fconversation_id\x18\x06 \x01(\tR\x0econversationId\x12 \n" +
+	"\vdestructive\x18\a \x01(\bR\vdestructive\"6\n" +
+	"\x17GetPendingActionRequest\x12\x1b\n" +
+	"\taction_id\x18\x01 \x01(\tR\bactionId\"R\n" +
+	"\x18GetPendingActionResponse\x126\n" +
+	"\x06action\x18\x01 \x01(\v2\x1e.userchargers.v1.PendingActionR\x06action\"D\n" +
+	"\x19ListPendingActionsRequest\x12'\n" +
+	"\x0fconversation_id\x18\x01 \x01(\tR\x0econversationId\"V\n" +
+	"\x1aListPendingActionsResponse\x128\n" +
+	"\aactions\x18\x01 \x03(\v2\x1e.userchargers.v1.PendingActionR\aactions\":\n" +
+	"\x1bConfirmPendingActionRequest\x12\x1b\n" +
+	"\taction_id\x18\x01 \x01(\tR\bactionId\"V\n" +
+	"\x1cConfirmPendingActionResponse\x126\n" +
+	"\x06action\x18\x01 \x01(\v2\x1e.userchargers.v1.PendingActionR\x06action\"9\n" +
+	"\x1aRejectPendingActionRequest\x12\x1b\n" +
+	"\taction_id\x18\x01 \x01(\tR\bactionId\"U\n" +
+	"\x1bRejectPendingActionResponse\x126\n" +
+	"\x06action\x18\x01 \x01(\v2\x1e.userchargers.v1.PendingActionR\x06action*m\n" +
 	"\rFavoriteState\x12\x1e\n" +
 	"\x1aFAVORITE_STATE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18FAVORITE_STATE_FAVORITED\x10\x01\x12\x1e\n" +
@@ -1617,7 +2199,18 @@ const file_userchargers_v1_userchargers_proto_rawDesc = "" +
 	"\"PROJECT_CHARGER_ACTION_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aPROJECT_CHARGER_ACTION_ADD\x10\x01\x12!\n" +
 	"\x1dPROJECT_CHARGER_ACTION_REMOVE\x10\x02\x12#\n" +
-	"\x1fPROJECT_CHARGER_ACTION_SET_NOTE\x10\x032\xd7\x01\n" +
+	"\x1fPROJECT_CHARGER_ACTION_SET_NOTE\x10\x03*\x9b\x01\n" +
+	"\x11PendingActionKind\x12#\n" +
+	"\x1fPENDING_ACTION_KIND_UNSPECIFIED\x10\x00\x12 \n" +
+	"\x1cPENDING_ACTION_KIND_FAVORITE\x10\x01\x12\x1f\n" +
+	"\x1bPENDING_ACTION_KIND_PROJECT\x10\x02\x12\x1e\n" +
+	"\x1aPENDING_ACTION_KIND_RATING\x10\x03*\xca\x01\n" +
+	"\x13PendingActionStatus\x12%\n" +
+	"!PENDING_ACTION_STATUS_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dPENDING_ACTION_STATUS_PENDING\x10\x01\x12#\n" +
+	"\x1fPENDING_ACTION_STATUS_CONFIRMED\x10\x02\x12\"\n" +
+	"\x1ePENDING_ACTION_STATUS_REJECTED\x10\x03\x12 \n" +
+	"\x1cPENDING_ACTION_STATUS_FAILED\x10\x042\xd7\x01\n" +
 	"\x0fFavoriteService\x12d\n" +
 	"\x0fFavoriteCharger\x12'.userchargers.v1.FavoriteChargerRequest\x1a(.userchargers.v1.FavoriteChargerResponse\x12^\n" +
 	"\rListFavorites\x12%.userchargers.v1.ListFavoritesRequest\x1a&.userchargers.v1.ListFavoritesResponse2\xcc\x04\n" +
@@ -1631,7 +2224,12 @@ const file_userchargers_v1_userchargers_proto_rawDesc = "" +
 	"\x15ManageProjectChargers\x12-.userchargers.v1.ManageProjectChargersRequest\x1a..userchargers.v1.ManageProjectChargersResponse2\xcc\x01\n" +
 	"\rRatingService\x12[\n" +
 	"\fSubmitRating\x12$.userchargers.v1.SubmitRatingRequest\x1a%.userchargers.v1.SubmitRatingResponse\x12^\n" +
-	"\rListMyRatings\x12%.userchargers.v1.ListMyRatingsRequest\x1a&.userchargers.v1.ListMyRatingsResponseB\xcc\x01\n" +
+	"\rListMyRatings\x12%.userchargers.v1.ListMyRatingsRequest\x1a&.userchargers.v1.ListMyRatingsResponse2\xd5\x03\n" +
+	"\x14PendingActionService\x12g\n" +
+	"\x10GetPendingAction\x12(.userchargers.v1.GetPendingActionRequest\x1a).userchargers.v1.GetPendingActionResponse\x12m\n" +
+	"\x12ListPendingActions\x12*.userchargers.v1.ListPendingActionsRequest\x1a+.userchargers.v1.ListPendingActionsResponse\x12s\n" +
+	"\x14ConfirmPendingAction\x12,.userchargers.v1.ConfirmPendingActionRequest\x1a-.userchargers.v1.ConfirmPendingActionResponse\x12p\n" +
+	"\x13RejectPendingAction\x12+.userchargers.v1.RejectPendingActionRequest\x1a,.userchargers.v1.RejectPendingActionResponseB\xcc\x01\n" +
 	"\x13com.userchargers.v1B\x11UserchargersProtoP\x01ZEgithub.com/ChargePi/oecs-hub/gen/proto/userchargers/v1;userchargersv1\xa2\x02\x03UXX\xaa\x02\x0fUserchargers.V1\xca\x02\x0fUserchargers\\V1\xe2\x02\x1bUserchargers\\V1\\GPBMetadata\xea\x02\x10Userchargers::V1b\x06proto3"
 
 var (
@@ -1646,90 +2244,116 @@ func file_userchargers_v1_userchargers_proto_rawDescGZIP() []byte {
 	return file_userchargers_v1_userchargers_proto_rawDescData
 }
 
-var file_userchargers_v1_userchargers_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_userchargers_v1_userchargers_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_userchargers_v1_userchargers_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_userchargers_v1_userchargers_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_userchargers_v1_userchargers_proto_goTypes = []any{
 	(FavoriteState)(0),                    // 0: userchargers.v1.FavoriteState
 	(ProjectChargerAction)(0),             // 1: userchargers.v1.ProjectChargerAction
-	(*FavoriteChargerRequest)(nil),        // 2: userchargers.v1.FavoriteChargerRequest
-	(*FavoriteChargerResponse)(nil),       // 3: userchargers.v1.FavoriteChargerResponse
-	(*ListFavoritesRequest)(nil),          // 4: userchargers.v1.ListFavoritesRequest
-	(*Favorite)(nil),                      // 5: userchargers.v1.Favorite
-	(*ListFavoritesResponse)(nil),         // 6: userchargers.v1.ListFavoritesResponse
-	(*Project)(nil),                       // 7: userchargers.v1.Project
-	(*ProjectCharger)(nil),                // 8: userchargers.v1.ProjectCharger
-	(*CreateProjectRequest)(nil),          // 9: userchargers.v1.CreateProjectRequest
-	(*CreateProjectResponse)(nil),         // 10: userchargers.v1.CreateProjectResponse
-	(*UpdateProjectRequest)(nil),          // 11: userchargers.v1.UpdateProjectRequest
-	(*UpdateProjectResponse)(nil),         // 12: userchargers.v1.UpdateProjectResponse
-	(*DeleteProjectRequest)(nil),          // 13: userchargers.v1.DeleteProjectRequest
-	(*ListProjectsRequest)(nil),           // 14: userchargers.v1.ListProjectsRequest
-	(*ListProjectsResponse)(nil),          // 15: userchargers.v1.ListProjectsResponse
-	(*GetProjectRequest)(nil),             // 16: userchargers.v1.GetProjectRequest
-	(*GetProjectResponse)(nil),            // 17: userchargers.v1.GetProjectResponse
-	(*ProjectChargerChange)(nil),          // 18: userchargers.v1.ProjectChargerChange
-	(*ManageProjectChargersRequest)(nil),  // 19: userchargers.v1.ManageProjectChargersRequest
-	(*ManageProjectChargersResponse)(nil), // 20: userchargers.v1.ManageProjectChargersResponse
-	(*RatingInput)(nil),                   // 21: userchargers.v1.RatingInput
-	(*SubmitRatingRequest)(nil),           // 22: userchargers.v1.SubmitRatingRequest
-	(*SubmitRatingResponse)(nil),          // 23: userchargers.v1.SubmitRatingResponse
-	(*ListMyRatingsRequest)(nil),          // 24: userchargers.v1.ListMyRatingsRequest
-	(*MyRating)(nil),                      // 25: userchargers.v1.MyRating
-	(*ListMyRatingsResponse)(nil),         // 26: userchargers.v1.ListMyRatingsResponse
-	(*v1.ChargerVariantSummary)(nil),      // 27: registry.v1.ChargerVariantSummary
-	(*timestamppb.Timestamp)(nil),         // 28: google.protobuf.Timestamp
-	(*v1.CategoryRating)(nil),             // 29: registry.v1.CategoryRating
-	(*emptypb.Empty)(nil),                 // 30: google.protobuf.Empty
+	(PendingActionKind)(0),                // 2: userchargers.v1.PendingActionKind
+	(PendingActionStatus)(0),              // 3: userchargers.v1.PendingActionStatus
+	(*FavoriteChargerRequest)(nil),        // 4: userchargers.v1.FavoriteChargerRequest
+	(*FavoriteChargerResponse)(nil),       // 5: userchargers.v1.FavoriteChargerResponse
+	(*ListFavoritesRequest)(nil),          // 6: userchargers.v1.ListFavoritesRequest
+	(*Favorite)(nil),                      // 7: userchargers.v1.Favorite
+	(*ListFavoritesResponse)(nil),         // 8: userchargers.v1.ListFavoritesResponse
+	(*Project)(nil),                       // 9: userchargers.v1.Project
+	(*ProjectCharger)(nil),                // 10: userchargers.v1.ProjectCharger
+	(*CreateProjectRequest)(nil),          // 11: userchargers.v1.CreateProjectRequest
+	(*CreateProjectResponse)(nil),         // 12: userchargers.v1.CreateProjectResponse
+	(*UpdateProjectRequest)(nil),          // 13: userchargers.v1.UpdateProjectRequest
+	(*UpdateProjectResponse)(nil),         // 14: userchargers.v1.UpdateProjectResponse
+	(*DeleteProjectRequest)(nil),          // 15: userchargers.v1.DeleteProjectRequest
+	(*ListProjectsRequest)(nil),           // 16: userchargers.v1.ListProjectsRequest
+	(*ListProjectsResponse)(nil),          // 17: userchargers.v1.ListProjectsResponse
+	(*GetProjectRequest)(nil),             // 18: userchargers.v1.GetProjectRequest
+	(*GetProjectResponse)(nil),            // 19: userchargers.v1.GetProjectResponse
+	(*ProjectChargerChange)(nil),          // 20: userchargers.v1.ProjectChargerChange
+	(*ManageProjectChargersRequest)(nil),  // 21: userchargers.v1.ManageProjectChargersRequest
+	(*ManageProjectChargersResponse)(nil), // 22: userchargers.v1.ManageProjectChargersResponse
+	(*RatingInput)(nil),                   // 23: userchargers.v1.RatingInput
+	(*SubmitRatingRequest)(nil),           // 24: userchargers.v1.SubmitRatingRequest
+	(*SubmitRatingResponse)(nil),          // 25: userchargers.v1.SubmitRatingResponse
+	(*ListMyRatingsRequest)(nil),          // 26: userchargers.v1.ListMyRatingsRequest
+	(*MyRating)(nil),                      // 27: userchargers.v1.MyRating
+	(*ListMyRatingsResponse)(nil),         // 28: userchargers.v1.ListMyRatingsResponse
+	(*PendingAction)(nil),                 // 29: userchargers.v1.PendingAction
+	(*GetPendingActionRequest)(nil),       // 30: userchargers.v1.GetPendingActionRequest
+	(*GetPendingActionResponse)(nil),      // 31: userchargers.v1.GetPendingActionResponse
+	(*ListPendingActionsRequest)(nil),     // 32: userchargers.v1.ListPendingActionsRequest
+	(*ListPendingActionsResponse)(nil),    // 33: userchargers.v1.ListPendingActionsResponse
+	(*ConfirmPendingActionRequest)(nil),   // 34: userchargers.v1.ConfirmPendingActionRequest
+	(*ConfirmPendingActionResponse)(nil),  // 35: userchargers.v1.ConfirmPendingActionResponse
+	(*RejectPendingActionRequest)(nil),    // 36: userchargers.v1.RejectPendingActionRequest
+	(*RejectPendingActionResponse)(nil),   // 37: userchargers.v1.RejectPendingActionResponse
+	(*v1.ChargerVariantSummary)(nil),      // 38: registry.v1.ChargerVariantSummary
+	(*timestamppb.Timestamp)(nil),         // 39: google.protobuf.Timestamp
+	(*v1.CategoryRating)(nil),             // 40: registry.v1.CategoryRating
+	(*emptypb.Empty)(nil),                 // 41: google.protobuf.Empty
 }
 var file_userchargers_v1_userchargers_proto_depIdxs = []int32{
 	0,  // 0: userchargers.v1.FavoriteChargerRequest.state:type_name -> userchargers.v1.FavoriteState
-	27, // 1: userchargers.v1.Favorite.summary:type_name -> registry.v1.ChargerVariantSummary
-	28, // 2: userchargers.v1.Favorite.favorited_at:type_name -> google.protobuf.Timestamp
-	5,  // 3: userchargers.v1.ListFavoritesResponse.favorites:type_name -> userchargers.v1.Favorite
-	28, // 4: userchargers.v1.Project.created_at:type_name -> google.protobuf.Timestamp
-	28, // 5: userchargers.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
-	27, // 6: userchargers.v1.ProjectCharger.summary:type_name -> registry.v1.ChargerVariantSummary
-	7,  // 7: userchargers.v1.CreateProjectResponse.project:type_name -> userchargers.v1.Project
-	7,  // 8: userchargers.v1.UpdateProjectResponse.project:type_name -> userchargers.v1.Project
-	7,  // 9: userchargers.v1.ListProjectsResponse.projects:type_name -> userchargers.v1.Project
-	7,  // 10: userchargers.v1.GetProjectResponse.project:type_name -> userchargers.v1.Project
-	8,  // 11: userchargers.v1.GetProjectResponse.chargers:type_name -> userchargers.v1.ProjectCharger
+	38, // 1: userchargers.v1.Favorite.summary:type_name -> registry.v1.ChargerVariantSummary
+	39, // 2: userchargers.v1.Favorite.favorited_at:type_name -> google.protobuf.Timestamp
+	7,  // 3: userchargers.v1.ListFavoritesResponse.favorites:type_name -> userchargers.v1.Favorite
+	39, // 4: userchargers.v1.Project.created_at:type_name -> google.protobuf.Timestamp
+	39, // 5: userchargers.v1.Project.updated_at:type_name -> google.protobuf.Timestamp
+	38, // 6: userchargers.v1.ProjectCharger.summary:type_name -> registry.v1.ChargerVariantSummary
+	9,  // 7: userchargers.v1.CreateProjectResponse.project:type_name -> userchargers.v1.Project
+	9,  // 8: userchargers.v1.UpdateProjectResponse.project:type_name -> userchargers.v1.Project
+	9,  // 9: userchargers.v1.ListProjectsResponse.projects:type_name -> userchargers.v1.Project
+	9,  // 10: userchargers.v1.GetProjectResponse.project:type_name -> userchargers.v1.Project
+	10, // 11: userchargers.v1.GetProjectResponse.chargers:type_name -> userchargers.v1.ProjectCharger
 	1,  // 12: userchargers.v1.ProjectChargerChange.action:type_name -> userchargers.v1.ProjectChargerAction
-	18, // 13: userchargers.v1.ManageProjectChargersRequest.changes:type_name -> userchargers.v1.ProjectChargerChange
-	7,  // 14: userchargers.v1.ManageProjectChargersResponse.project:type_name -> userchargers.v1.Project
-	8,  // 15: userchargers.v1.ManageProjectChargersResponse.chargers:type_name -> userchargers.v1.ProjectCharger
-	21, // 16: userchargers.v1.SubmitRatingRequest.ratings:type_name -> userchargers.v1.RatingInput
-	29, // 17: userchargers.v1.SubmitRatingResponse.ratings:type_name -> registry.v1.CategoryRating
-	27, // 18: userchargers.v1.MyRating.summary:type_name -> registry.v1.ChargerVariantSummary
-	21, // 19: userchargers.v1.MyRating.my_scores:type_name -> userchargers.v1.RatingInput
-	29, // 20: userchargers.v1.MyRating.aggregate:type_name -> registry.v1.CategoryRating
-	28, // 21: userchargers.v1.MyRating.rated_at:type_name -> google.protobuf.Timestamp
-	25, // 22: userchargers.v1.ListMyRatingsResponse.ratings:type_name -> userchargers.v1.MyRating
-	2,  // 23: userchargers.v1.FavoriteService.FavoriteCharger:input_type -> userchargers.v1.FavoriteChargerRequest
-	4,  // 24: userchargers.v1.FavoriteService.ListFavorites:input_type -> userchargers.v1.ListFavoritesRequest
-	9,  // 25: userchargers.v1.ProjectService.CreateProject:input_type -> userchargers.v1.CreateProjectRequest
-	11, // 26: userchargers.v1.ProjectService.UpdateProject:input_type -> userchargers.v1.UpdateProjectRequest
-	13, // 27: userchargers.v1.ProjectService.DeleteProject:input_type -> userchargers.v1.DeleteProjectRequest
-	14, // 28: userchargers.v1.ProjectService.ListProjects:input_type -> userchargers.v1.ListProjectsRequest
-	16, // 29: userchargers.v1.ProjectService.GetProject:input_type -> userchargers.v1.GetProjectRequest
-	19, // 30: userchargers.v1.ProjectService.ManageProjectChargers:input_type -> userchargers.v1.ManageProjectChargersRequest
-	22, // 31: userchargers.v1.RatingService.SubmitRating:input_type -> userchargers.v1.SubmitRatingRequest
-	24, // 32: userchargers.v1.RatingService.ListMyRatings:input_type -> userchargers.v1.ListMyRatingsRequest
-	3,  // 33: userchargers.v1.FavoriteService.FavoriteCharger:output_type -> userchargers.v1.FavoriteChargerResponse
-	6,  // 34: userchargers.v1.FavoriteService.ListFavorites:output_type -> userchargers.v1.ListFavoritesResponse
-	10, // 35: userchargers.v1.ProjectService.CreateProject:output_type -> userchargers.v1.CreateProjectResponse
-	12, // 36: userchargers.v1.ProjectService.UpdateProject:output_type -> userchargers.v1.UpdateProjectResponse
-	30, // 37: userchargers.v1.ProjectService.DeleteProject:output_type -> google.protobuf.Empty
-	15, // 38: userchargers.v1.ProjectService.ListProjects:output_type -> userchargers.v1.ListProjectsResponse
-	17, // 39: userchargers.v1.ProjectService.GetProject:output_type -> userchargers.v1.GetProjectResponse
-	20, // 40: userchargers.v1.ProjectService.ManageProjectChargers:output_type -> userchargers.v1.ManageProjectChargersResponse
-	23, // 41: userchargers.v1.RatingService.SubmitRating:output_type -> userchargers.v1.SubmitRatingResponse
-	26, // 42: userchargers.v1.RatingService.ListMyRatings:output_type -> userchargers.v1.ListMyRatingsResponse
-	33, // [33:43] is the sub-list for method output_type
-	23, // [23:33] is the sub-list for method input_type
-	23, // [23:23] is the sub-list for extension type_name
-	23, // [23:23] is the sub-list for extension extendee
-	0,  // [0:23] is the sub-list for field type_name
+	20, // 13: userchargers.v1.ManageProjectChargersRequest.changes:type_name -> userchargers.v1.ProjectChargerChange
+	9,  // 14: userchargers.v1.ManageProjectChargersResponse.project:type_name -> userchargers.v1.Project
+	10, // 15: userchargers.v1.ManageProjectChargersResponse.chargers:type_name -> userchargers.v1.ProjectCharger
+	23, // 16: userchargers.v1.SubmitRatingRequest.ratings:type_name -> userchargers.v1.RatingInput
+	40, // 17: userchargers.v1.SubmitRatingResponse.ratings:type_name -> registry.v1.CategoryRating
+	38, // 18: userchargers.v1.MyRating.summary:type_name -> registry.v1.ChargerVariantSummary
+	23, // 19: userchargers.v1.MyRating.my_scores:type_name -> userchargers.v1.RatingInput
+	40, // 20: userchargers.v1.MyRating.aggregate:type_name -> registry.v1.CategoryRating
+	39, // 21: userchargers.v1.MyRating.rated_at:type_name -> google.protobuf.Timestamp
+	27, // 22: userchargers.v1.ListMyRatingsResponse.ratings:type_name -> userchargers.v1.MyRating
+	2,  // 23: userchargers.v1.PendingAction.kind:type_name -> userchargers.v1.PendingActionKind
+	3,  // 24: userchargers.v1.PendingAction.status:type_name -> userchargers.v1.PendingActionStatus
+	39, // 25: userchargers.v1.PendingAction.expires_at:type_name -> google.protobuf.Timestamp
+	29, // 26: userchargers.v1.GetPendingActionResponse.action:type_name -> userchargers.v1.PendingAction
+	29, // 27: userchargers.v1.ListPendingActionsResponse.actions:type_name -> userchargers.v1.PendingAction
+	29, // 28: userchargers.v1.ConfirmPendingActionResponse.action:type_name -> userchargers.v1.PendingAction
+	29, // 29: userchargers.v1.RejectPendingActionResponse.action:type_name -> userchargers.v1.PendingAction
+	4,  // 30: userchargers.v1.FavoriteService.FavoriteCharger:input_type -> userchargers.v1.FavoriteChargerRequest
+	6,  // 31: userchargers.v1.FavoriteService.ListFavorites:input_type -> userchargers.v1.ListFavoritesRequest
+	11, // 32: userchargers.v1.ProjectService.CreateProject:input_type -> userchargers.v1.CreateProjectRequest
+	13, // 33: userchargers.v1.ProjectService.UpdateProject:input_type -> userchargers.v1.UpdateProjectRequest
+	15, // 34: userchargers.v1.ProjectService.DeleteProject:input_type -> userchargers.v1.DeleteProjectRequest
+	16, // 35: userchargers.v1.ProjectService.ListProjects:input_type -> userchargers.v1.ListProjectsRequest
+	18, // 36: userchargers.v1.ProjectService.GetProject:input_type -> userchargers.v1.GetProjectRequest
+	21, // 37: userchargers.v1.ProjectService.ManageProjectChargers:input_type -> userchargers.v1.ManageProjectChargersRequest
+	24, // 38: userchargers.v1.RatingService.SubmitRating:input_type -> userchargers.v1.SubmitRatingRequest
+	26, // 39: userchargers.v1.RatingService.ListMyRatings:input_type -> userchargers.v1.ListMyRatingsRequest
+	30, // 40: userchargers.v1.PendingActionService.GetPendingAction:input_type -> userchargers.v1.GetPendingActionRequest
+	32, // 41: userchargers.v1.PendingActionService.ListPendingActions:input_type -> userchargers.v1.ListPendingActionsRequest
+	34, // 42: userchargers.v1.PendingActionService.ConfirmPendingAction:input_type -> userchargers.v1.ConfirmPendingActionRequest
+	36, // 43: userchargers.v1.PendingActionService.RejectPendingAction:input_type -> userchargers.v1.RejectPendingActionRequest
+	5,  // 44: userchargers.v1.FavoriteService.FavoriteCharger:output_type -> userchargers.v1.FavoriteChargerResponse
+	8,  // 45: userchargers.v1.FavoriteService.ListFavorites:output_type -> userchargers.v1.ListFavoritesResponse
+	12, // 46: userchargers.v1.ProjectService.CreateProject:output_type -> userchargers.v1.CreateProjectResponse
+	14, // 47: userchargers.v1.ProjectService.UpdateProject:output_type -> userchargers.v1.UpdateProjectResponse
+	41, // 48: userchargers.v1.ProjectService.DeleteProject:output_type -> google.protobuf.Empty
+	17, // 49: userchargers.v1.ProjectService.ListProjects:output_type -> userchargers.v1.ListProjectsResponse
+	19, // 50: userchargers.v1.ProjectService.GetProject:output_type -> userchargers.v1.GetProjectResponse
+	22, // 51: userchargers.v1.ProjectService.ManageProjectChargers:output_type -> userchargers.v1.ManageProjectChargersResponse
+	25, // 52: userchargers.v1.RatingService.SubmitRating:output_type -> userchargers.v1.SubmitRatingResponse
+	28, // 53: userchargers.v1.RatingService.ListMyRatings:output_type -> userchargers.v1.ListMyRatingsResponse
+	31, // 54: userchargers.v1.PendingActionService.GetPendingAction:output_type -> userchargers.v1.GetPendingActionResponse
+	33, // 55: userchargers.v1.PendingActionService.ListPendingActions:output_type -> userchargers.v1.ListPendingActionsResponse
+	35, // 56: userchargers.v1.PendingActionService.ConfirmPendingAction:output_type -> userchargers.v1.ConfirmPendingActionResponse
+	37, // 57: userchargers.v1.PendingActionService.RejectPendingAction:output_type -> userchargers.v1.RejectPendingActionResponse
+	44, // [44:58] is the sub-list for method output_type
+	30, // [30:44] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_userchargers_v1_userchargers_proto_init() }
@@ -1747,10 +2371,10 @@ func file_userchargers_v1_userchargers_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_userchargers_v1_userchargers_proto_rawDesc), len(file_userchargers_v1_userchargers_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   25,
+			NumEnums:      4,
+			NumMessages:   34,
 			NumExtensions: 0,
-			NumServices:   3,
+			NumServices:   4,
 		},
 		GoTypes:           file_userchargers_v1_userchargers_proto_goTypes,
 		DependencyIndexes: file_userchargers_v1_userchargers_proto_depIdxs,

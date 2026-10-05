@@ -62,3 +62,23 @@ export interface MyRatingsPage {
   nextPageToken: string
   totalSize: number
 }
+
+export type PendingActionKind = 'favorite' | 'project' | 'rating'
+
+/** Where the user's decision on an assistant-proposed action stands. 'expired' is never
+ *  returned by the hub - an expired action is simply gone - but is what the chat shows
+ *  for one it can no longer find. */
+export type PendingActionStatus = 'pending' | 'confirmed' | 'rejected' | 'failed' | 'expired'
+
+/** A change to the user's favorites/projects/ratings the chat assistant proposed, which
+ *  only runs once the user confirms it. */
+export interface PendingAction {
+  id: string
+  kind: PendingActionKind
+  /** Exactly what Confirm will do, written by the hub - not by the assistant. */
+  summary: string
+  status: PendingActionStatus
+  expiresAt: string
+  /** Confirming removes something, e.g. a favorite or a charger from a project. */
+  destructive: boolean
+}

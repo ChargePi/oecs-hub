@@ -1,10 +1,12 @@
 import { normalizeAndDispatch } from '@/lib/errors'
 import {
   FavoriteServiceClient,
+  PendingActionServiceClient,
   ProjectServiceClient,
   RatingServiceClient,
 } from '@/lib/registry/gen/userchargers/v1/UserchargersServiceClientPb'
 import {
+  ConfirmPendingActionRequest,
   CreateProjectRequest,
   DeleteProjectRequest,
   FavoriteChargerRequest,
@@ -12,13 +14,18 @@ import {
   GetProjectRequest,
   ListFavoritesRequest,
   ListMyRatingsRequest,
+  ListPendingActionsRequest,
   ListProjectsRequest,
   ManageProjectChargersRequest,
   type MyRating as MyRatingProto,
+  type PendingAction as PendingActionProto,
+  PendingActionKind as PendingActionKindProto,
+  PendingActionStatus as PendingActionStatusProto,
   ProjectChargerAction,
   ProjectChargerChange,
   type ProjectCharger as ProjectChargerProto,
   RatingInput,
+  RejectPendingActionRequest,
   SubmitRatingRequest,
   UpdateProjectRequest,
 } from '@/lib/registry/gen/userchargers/v1/userchargers_pb'
@@ -29,6 +36,9 @@ import type {
   FavoritesPage,
   MyRating,
   MyRatingsPage,
+  PendingAction,
+  PendingActionKind,
+  PendingActionStatus,
   Project,
   ProjectCharger,
   ProjectChargerChange as ProjectChargerChangeInput,
@@ -44,6 +54,7 @@ const BASE_URL = '/api'
 const favoriteClient = new FavoriteServiceClient(BASE_URL, null, null)
 const projectClient = new ProjectServiceClient(BASE_URL, null, null)
 const ratingClient = new RatingServiceClient(BASE_URL, null, null)
+const pendingActionClient = new PendingActionServiceClient(BASE_URL, null, null)
 
 function mapError(err: unknown, context: string): never {
   normalizeAndDispatch(err, context, 'user-chargers request failed')
@@ -283,5 +294,71 @@ export async function listMyRatings(params: {
     }
   } catch (err) {
     mapError(err, 'listMyRatings')
+  }
+}
+
+const PENDING_ACTION_KIND_FROM_PROTO: Record<PendingActionKindProto, PendingActionKind> = {
+  [PendingActionKindProto.PENDING_ACTION_KIND_UNSPECIFIED]: 'favorite',
+  [PendingActionKindProto.PENDING_ACTION_KIND_FAVORITE]: 'favorite',
+  [PendingActionKindProto.PENDING_ACTION_KIND_PROJECT]: 'project',
+  [PendingActionKindProto.PENDING_ACTION_KIND_RATING]: 'rating',
+}
+
+const PENDING_ACTION_STATUS_FROM_PROTO: Record<PendingActionStatusProto, PendingActionStatus> = {
+  [PendingActionStatusProto.PENDING_ACTION_STATUS_UNSPECIFIED]: 'pending',
+  [PendingActionStatusProto.PENDING_ACTION_STATUS_PENDING]: 'pending',
+  [PendingActionStatusProto.PENDING_ACTION_STATUS_CONFIRMED]: 'confirmed',
+  [PendingActionStatusProto.PENDING_ACTION_STATUS_REJECTED]: 'rejected',
+  [PendingActionStatusProto.PENDING_ACTION_STATUS_FAILED]: 'failed',
+}
+
+function pendingActionFromProto(a: PendingActionProto): PendingAction {
+  return {
+    id: a.getId(),
+    kind: PENDING_ACTION_KIND_FROM_PROTO[a.getKind()],
+    summary: a.getSummary(),
+    status: PENDING_ACTION_STATUS_FROM_PROTO[a.getStatus()],
+    expiresAt: a.getExpiresAt()?.toDate().toISOString() ?? '',
+    destructive: a.getDestructive(),
+  }
+}
+
+/** The caller's unexpired assistant-proposed actions in a conversation. One that has
+ *  expired is absent, not returned as 'expired'. */
+export async function listPendingActions(conversationId: string): Promise<PendingAction[]> {
+  const req = new ListPendingActionsRequest()
+  req.setConversationId(conversationId)
+
+  try {
+    const resp = await pendingActionClient.listPendingActions(req, {})
+    return resp.getActionsList().map(pendingActionFromProto)
+  } catch (err) {
+    mapError(err, `listPendingActions(${conversationId})`)
+  }
+}
+
+/** Runs an assistant-proposed action. Fails if it was already decided or has expired. */
+export async function confirmPendingAction(actionId: string): Promise<PendingAction> {
+  const req = new ConfirmPendingActionRequest()
+  req.setActionId(actionId)
+
+  try {
+    const resp = await pendingActionClient.confirmPendingAction(req, {})
+    return pendingActionFromProto(resp.getAction()!)
+  } catch (err) {
+    mapError(err, `confirmPendingAction(${actionId})`)
+  }
+}
+
+/** Declines an assistant-proposed action - nothing runs. */
+export async function rejectPendingAction(actionId: string): Promise<PendingAction> {
+  const req = new RejectPendingActionRequest()
+  req.setActionId(actionId)
+
+  try {
+    const resp = await pendingActionClient.rejectPendingAction(req, {})
+    return pendingActionFromProto(resp.getAction()!)
+  } catch (err) {
+    mapError(err, `rejectPendingAction(${actionId})`)
   }
 }
