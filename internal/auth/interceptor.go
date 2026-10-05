@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -34,19 +35,26 @@ func identityFromMetadata(ctx context.Context, gatewaySecret string) *Identity {
 		return nil
 	}
 
-	if firstValue(md, gatewaySecretHeader) != gatewaySecret {
+	return IdentityFromHeaders(func(key string) string { return firstValue(md, key) }, gatewaySecret)
+}
+
+// IdentityFromHeaders applies the same trust rule as UnaryInterceptor to any header
+// source (gRPC metadata, an HTTP request's headers): x-user-* is honored only alongside a
+// matching x-gateway-secret, otherwise the caller is anonymous (nil).
+func IdentityFromHeaders(get func(key string) string, gatewaySecret string) *Identity {
+	if get(gatewaySecretHeader) != gatewaySecret {
 		return nil
 	}
 
-	id := firstValue(md, userIDHeader)
+	id := get(userIDHeader)
 	if id == "" {
 		return nil
 	}
 
 	return &Identity{
 		ID:       id,
-		Email:    firstValue(md, userEmailHeader),
-		UserType: firstValue(md, userTypeHeader),
+		Email:    get(userEmailHeader),
+		UserType: get(userTypeHeader),
 	}
 }
 
@@ -69,4 +77,26 @@ func RequireIdentity(ctx context.Context) (*Identity, error) {
 	}
 
 	return identity, nil
+}
+
+// RequireUserChargersIdentity resolves the authenticated caller and rejects anyone who
+// isn't an individual or business account, returning their identity ID for scoping
+// favorites, projects, ratings and pending actions. Shared by the gRPC handlers and the
+// MCP user tools so both enforce the same eligibility rule.
+func RequireUserChargersIdentity(ctx context.Context) (uuid.UUID, error) {
+	identity, err := RequireIdentity(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if !identity.HasUserChargers() {
+		return uuid.Nil, status.Error(codes.PermissionDenied, "only individual and business accounts can access this API")
+	}
+
+	identityID, err := uuid.Parse(identity.ID)
+	if err != nil {
+		return uuid.Nil, status.Error(codes.Internal, "invalid identity id from proxy")
+	}
+
+	return identityID, nil
 }

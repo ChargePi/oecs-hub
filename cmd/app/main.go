@@ -30,6 +30,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/promptsuggestion"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
 	redisStorage "github.com/ChargePi/oecs-hub/internal/storage/redis"
+	"github.com/ChargePi/oecs-hub/internal/useraction"
 	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -174,9 +175,22 @@ var (
 			userChargersRepo := postgresStorage.NewUserChargersRepository(db)
 			userChargersSvc := userchargers.NewService(userChargersRepo, chargerSvc, chargerCache, entitlementSvc)
 
+			pendingActionSvc := useraction.NewService(
+				redisStorage.NewPendingActionStore(redisClient),
+				userChargersSvc,
+				chargerSvc,
+				entitlementSvc,
+				cfg.PendingActions.TTL,
+			)
+
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
-			mcpHandler := server.NewStreamableHTTPServer(mcpSrv)
+			mcp.RegisterUserTools(mcpSrv, userChargersSvc, pendingActionSvc)
+			// The user tools act for whoever the gateway-secret-backed x-user-* headers name,
+			// resolved per request exactly like the gRPC interceptor does.
+			mcpHandler := server.NewStreamableHTTPServer(mcpSrv,
+				server.WithHTTPContextFunc(mcp.HTTPContextFunc(cfg.Auth.GatewaySecret)),
+			)
 
 			// promptsuggestion calls search_chargers as a genuine MCP tool call, in-process
 			// against mcpSrv above (no network hop) - must be created after RegisterTools.
@@ -234,6 +248,7 @@ var (
 			userchargersv1.RegisterFavoriteServiceServer(grpcServer, grpcHandler.NewFavoriteHandler(userChargersSvc))
 			userchargersv1.RegisterProjectServiceServer(grpcServer, grpcHandler.NewProjectHandler(userChargersSvc))
 			userchargersv1.RegisterRatingServiceServer(grpcServer, grpcHandler.NewRatingHandler(userChargersSvc))
+			userchargersv1.RegisterPendingActionServiceServer(grpcServer, grpcHandler.NewPendingActionHandler(pendingActionSvc))
 			promptsv1.RegisterPromptSuggestionsServiceServer(grpcServer, grpcHandler.NewPromptSuggestionHandler(suggestionSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service
@@ -323,6 +338,7 @@ func setDefaults() {
 	viper.SetDefault("promptSuggestions.refreshInterval", "30m")
 	viper.SetDefault("promptSuggestions.poolSize", 10)
 	viper.SetDefault("promptSuggestions.returnCount", 1)
+	viper.SetDefault("pendingActions.ttl", "15m")
 
 	_ = viper.BindEnv("database.dsn", "OECS_HUB_DATABASE_DSN")
 	_ = viper.BindEnv("redis.address", "OECS_HUB_REDIS_ADDRESS")
@@ -345,6 +361,7 @@ func setDefaults() {
 	_ = viper.BindEnv("promptSuggestions.refreshInterval", "OECS_HUB_PROMPTSUGGESTIONS_REFRESHINTERVAL")
 	_ = viper.BindEnv("promptSuggestions.poolSize", "OECS_HUB_PROMPTSUGGESTIONS_POOLSIZE")
 	_ = viper.BindEnv("promptSuggestions.returnCount", "OECS_HUB_PROMPTSUGGESTIONS_RETURNCOUNT")
+	_ = viper.BindEnv("pendingActions.ttl", "OECS_HUB_PENDINGACTIONS_TTL")
 }
 
 // getConfiguration gets the configuration from cache or file.

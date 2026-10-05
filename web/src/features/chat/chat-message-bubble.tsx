@@ -4,12 +4,17 @@ import { RotateCcw, TriangleAlert } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { clarifyingQuestionsFromMetadata, comparisonTableFromMetadata } from '@/lib/chat/client'
+import {
+  clarifyingQuestionsFromMetadata,
+  comparisonTableFromMetadata,
+  proposedActionsFromMetadata,
+} from '@/lib/chat/client'
 import type { ChatMessage, SelectedChoice } from '@/lib/chat/types'
 import { ChatClarifyForm } from './chat-clarify-form'
 import { ChatComparisonTable } from './chat-comparison-table'
 import { MARKDOWN_COMPONENTS } from './chat-markdown'
 import { ChatMessageFeedback } from './chat-message-feedback'
+import { ChatPendingActions } from './chat-pending-actions'
 
 const CLARIFY_INTRO =
   'To find the best match among thousands of chargers, please answer a few quick questions:'
@@ -70,7 +75,12 @@ export function ChatMessageBubble({
   // form) it renders the same regardless of isLast.
   const comparisonTable = comparisonTableFromMetadata(message.metadata)
   const showComparisonTable = !isUser && comparisonTable !== undefined
-  const isWide = showClarifyForm || showComparisonTable
+  // Changes to the user's favorites/projects/ratings the assistant proposed - rendered
+  // as confirm/reject cards under the reply, regardless of isLast, since each card
+  // tracks its own live status.
+  const proposedActions = isUser ? [] : proposedActionsFromMetadata(message.metadata)
+  const showPendingActions = proposedActions.length > 0
+  const isWide = showClarifyForm || showComparisonTable || showPendingActions
   // Resend lives on the request, not the response - a response only gets its own
   // when it failed, since then the request just above it doesn't visually read as
   // "the thing to resend" the way a warning-flagged reply does.
@@ -127,6 +137,14 @@ export function ChatMessageBubble({
               <Markdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
                 {message.content}
               </Markdown>
+            )}
+            {showPendingActions && (
+              <div className="mt-3">
+                <ChatPendingActions
+                  conversationId={message.conversationId}
+                  actions={proposedActions}
+                />
+              </div>
             )}
             {!isUser && canResend && (
               <Button

@@ -83,6 +83,16 @@ export interface ComparisonTable {
   rows: ComparisonRow[]
 }
 
+/** A change to the user's favorites/projects/ratings the assistant proposed in a reply
+ *  (metadata key "pending_actions"). Its live status - confirmed, rejected, ... - lives in
+ *  the hub, not here: see lib/user-chargers listPendingActions. */
+export interface ProposedAction {
+  actionId: string
+  kind: string
+  summary: string
+  expiresAt: string
+}
+
 export interface ChargePointCandidate {
   id: string
   manufacturerName: string

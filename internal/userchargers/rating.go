@@ -26,10 +26,10 @@ type RatingInput struct {
 	Score        int
 }
 
-// validateRatingInputs rejects unknown categories, out-of-range scores, and repeated
+// ValidateRatingInputs rejects unknown categories, out-of-range scores, and repeated
 // categories within the same call - the latter would otherwise reach UpsertRatings' multi-
 // row upsert as two rows sharing the same conflict target, which Postgres errors on.
-func validateRatingInputs(inputs []RatingInput) error {
+func ValidateRatingInputs(inputs []RatingInput) error {
 	seen := make(map[string]bool, len(inputs))
 
 	for _, in := range inputs {

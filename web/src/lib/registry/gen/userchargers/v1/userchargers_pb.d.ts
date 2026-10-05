@@ -673,6 +673,198 @@ export namespace ListMyRatingsResponse {
   };
 }
 
+export class PendingAction extends jspb.Message {
+  getId(): string;
+  setId(value: string): PendingAction;
+
+  getKind(): PendingActionKind;
+  setKind(value: PendingActionKind): PendingAction;
+
+  getSummary(): string;
+  setSummary(value: string): PendingAction;
+
+  getStatus(): PendingActionStatus;
+  setStatus(value: PendingActionStatus): PendingAction;
+
+  getExpiresAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setExpiresAt(value?: google_protobuf_timestamp_pb.Timestamp): PendingAction;
+  hasExpiresAt(): boolean;
+  clearExpiresAt(): PendingAction;
+
+  getConversationId(): string;
+  setConversationId(value: string): PendingAction;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PendingAction.AsObject;
+  static toObject(includeInstance: boolean, msg: PendingAction): PendingAction.AsObject;
+  static serializeBinaryToWriter(message: PendingAction, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PendingAction;
+  static deserializeBinaryFromReader(message: PendingAction, reader: jspb.BinaryReader): PendingAction;
+}
+
+export namespace PendingAction {
+  export type AsObject = {
+    id: string;
+    kind: PendingActionKind;
+    summary: string;
+    status: PendingActionStatus;
+    expiresAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    conversationId: string;
+  };
+}
+
+export class GetPendingActionRequest extends jspb.Message {
+  getActionId(): string;
+  setActionId(value: string): GetPendingActionRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetPendingActionRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetPendingActionRequest): GetPendingActionRequest.AsObject;
+  static serializeBinaryToWriter(message: GetPendingActionRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetPendingActionRequest;
+  static deserializeBinaryFromReader(message: GetPendingActionRequest, reader: jspb.BinaryReader): GetPendingActionRequest;
+}
+
+export namespace GetPendingActionRequest {
+  export type AsObject = {
+    actionId: string;
+  };
+}
+
+export class GetPendingActionResponse extends jspb.Message {
+  getAction(): PendingAction | undefined;
+  setAction(value?: PendingAction): GetPendingActionResponse;
+  hasAction(): boolean;
+  clearAction(): GetPendingActionResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetPendingActionResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetPendingActionResponse): GetPendingActionResponse.AsObject;
+  static serializeBinaryToWriter(message: GetPendingActionResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetPendingActionResponse;
+  static deserializeBinaryFromReader(message: GetPendingActionResponse, reader: jspb.BinaryReader): GetPendingActionResponse;
+}
+
+export namespace GetPendingActionResponse {
+  export type AsObject = {
+    action?: PendingAction.AsObject;
+  };
+}
+
+export class ListPendingActionsRequest extends jspb.Message {
+  getConversationId(): string;
+  setConversationId(value: string): ListPendingActionsRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListPendingActionsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ListPendingActionsRequest): ListPendingActionsRequest.AsObject;
+  static serializeBinaryToWriter(message: ListPendingActionsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListPendingActionsRequest;
+  static deserializeBinaryFromReader(message: ListPendingActionsRequest, reader: jspb.BinaryReader): ListPendingActionsRequest;
+}
+
+export namespace ListPendingActionsRequest {
+  export type AsObject = {
+    conversationId: string;
+  };
+}
+
+export class ListPendingActionsResponse extends jspb.Message {
+  getActionsList(): Array<PendingAction>;
+  setActionsList(value: Array<PendingAction>): ListPendingActionsResponse;
+  clearActionsList(): ListPendingActionsResponse;
+  addActions(value?: PendingAction, index?: number): PendingAction;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListPendingActionsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ListPendingActionsResponse): ListPendingActionsResponse.AsObject;
+  static serializeBinaryToWriter(message: ListPendingActionsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ListPendingActionsResponse;
+  static deserializeBinaryFromReader(message: ListPendingActionsResponse, reader: jspb.BinaryReader): ListPendingActionsResponse;
+}
+
+export namespace ListPendingActionsResponse {
+  export type AsObject = {
+    actionsList: Array<PendingAction.AsObject>;
+  };
+}
+
+export class ConfirmPendingActionRequest extends jspb.Message {
+  getActionId(): string;
+  setActionId(value: string): ConfirmPendingActionRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConfirmPendingActionRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: ConfirmPendingActionRequest): ConfirmPendingActionRequest.AsObject;
+  static serializeBinaryToWriter(message: ConfirmPendingActionRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConfirmPendingActionRequest;
+  static deserializeBinaryFromReader(message: ConfirmPendingActionRequest, reader: jspb.BinaryReader): ConfirmPendingActionRequest;
+}
+
+export namespace ConfirmPendingActionRequest {
+  export type AsObject = {
+    actionId: string;
+  };
+}
+
+export class ConfirmPendingActionResponse extends jspb.Message {
+  getAction(): PendingAction | undefined;
+  setAction(value?: PendingAction): ConfirmPendingActionResponse;
+  hasAction(): boolean;
+  clearAction(): ConfirmPendingActionResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ConfirmPendingActionResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: ConfirmPendingActionResponse): ConfirmPendingActionResponse.AsObject;
+  static serializeBinaryToWriter(message: ConfirmPendingActionResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ConfirmPendingActionResponse;
+  static deserializeBinaryFromReader(message: ConfirmPendingActionResponse, reader: jspb.BinaryReader): ConfirmPendingActionResponse;
+}
+
+export namespace ConfirmPendingActionResponse {
+  export type AsObject = {
+    action?: PendingAction.AsObject;
+  };
+}
+
+export class RejectPendingActionRequest extends jspb.Message {
+  getActionId(): string;
+  setActionId(value: string): RejectPendingActionRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RejectPendingActionRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: RejectPendingActionRequest): RejectPendingActionRequest.AsObject;
+  static serializeBinaryToWriter(message: RejectPendingActionRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RejectPendingActionRequest;
+  static deserializeBinaryFromReader(message: RejectPendingActionRequest, reader: jspb.BinaryReader): RejectPendingActionRequest;
+}
+
+export namespace RejectPendingActionRequest {
+  export type AsObject = {
+    actionId: string;
+  };
+}
+
+export class RejectPendingActionResponse extends jspb.Message {
+  getAction(): PendingAction | undefined;
+  setAction(value?: PendingAction): RejectPendingActionResponse;
+  hasAction(): boolean;
+  clearAction(): RejectPendingActionResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RejectPendingActionResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: RejectPendingActionResponse): RejectPendingActionResponse.AsObject;
+  static serializeBinaryToWriter(message: RejectPendingActionResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RejectPendingActionResponse;
+  static deserializeBinaryFromReader(message: RejectPendingActionResponse, reader: jspb.BinaryReader): RejectPendingActionResponse;
+}
+
+export namespace RejectPendingActionResponse {
+  export type AsObject = {
+    action?: PendingAction.AsObject;
+  };
+}
+
 export enum FavoriteState {
   FAVORITE_STATE_UNSPECIFIED = 0,
   FAVORITE_STATE_FAVORITED = 1,
@@ -683,4 +875,17 @@ export enum ProjectChargerAction {
   PROJECT_CHARGER_ACTION_ADD = 1,
   PROJECT_CHARGER_ACTION_REMOVE = 2,
   PROJECT_CHARGER_ACTION_SET_NOTE = 3,
+}
+export enum PendingActionKind {
+  PENDING_ACTION_KIND_UNSPECIFIED = 0,
+  PENDING_ACTION_KIND_FAVORITE = 1,
+  PENDING_ACTION_KIND_PROJECT = 2,
+  PENDING_ACTION_KIND_RATING = 3,
+}
+export enum PendingActionStatus {
+  PENDING_ACTION_STATUS_UNSPECIFIED = 0,
+  PENDING_ACTION_STATUS_PENDING = 1,
+  PENDING_ACTION_STATUS_CONFIRMED = 2,
+  PENDING_ACTION_STATUS_REJECTED = 3,
+  PENDING_ACTION_STATUS_FAILED = 4,
 }

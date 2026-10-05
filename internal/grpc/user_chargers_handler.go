@@ -73,24 +73,10 @@ func NewRatingHandler(ratings UserRatingService) *RatingHandler {
 }
 
 // requireUserChargersIdentity resolves the authenticated caller and rejects anyone who isn't
-// an individual or business account, returning their identity ID for scoping. The mirror of
-// requireManufacturerIdentity - like it, eligibility isn't checked at the Oathkeeper edge.
+// an individual or business account. The mirror of requireManufacturerIdentity - like it,
+// eligibility isn't checked at the Oathkeeper edge.
 func requireUserChargersIdentity(ctx context.Context) (uuid.UUID, error) {
-	identity, err := auth.RequireIdentity(ctx)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	if !identity.HasUserChargers() {
-		return uuid.Nil, status.Error(codes.PermissionDenied, "only individual and business accounts can access this API")
-	}
-
-	identityID, err := uuid.Parse(identity.ID)
-	if err != nil {
-		return uuid.Nil, status.Error(codes.Internal, "invalid identity id from proxy")
-	}
-
-	return identityID, nil
+	return auth.RequireUserChargersIdentity(ctx)
 }
 
 // userChargersError maps this package's domain errors onto gRPC codes. A free plan and an

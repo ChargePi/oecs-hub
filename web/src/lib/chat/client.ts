@@ -38,6 +38,7 @@ import type {
   FeedbackRating,
   MessageFeedback,
   MessageRole,
+  ProposedAction,
   SelectedChoice,
   StreamDonePayload,
   TurnStatus,
@@ -138,6 +139,19 @@ export function selectedChoicesFromMetadata(metadata?: Record<string, unknown>):
     value: String(c.value ?? ''),
     weight: Number(c.weight ?? 0),
   }))
+}
+
+/** Extracts the changes the assistant proposed in a reply (metadata key
+ *  "pending_actions") - each one waits for the user to confirm or reject it. */
+export function proposedActionsFromMetadata(metadata?: Record<string, unknown>): ProposedAction[] {
+  return asRecordArray(metadata?.pending_actions)
+    .map((a) => ({
+      actionId: String(a.action_id ?? ''),
+      kind: String(a.kind ?? ''),
+      summary: String(a.summary ?? ''),
+      expiresAt: String(a.expires_at ?? ''),
+    }))
+    .filter((a) => a.actionId !== '')
 }
 
 /** Extracts the deterministic side-by-side attribute table the agent's compare step

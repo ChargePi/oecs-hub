@@ -618,3 +618,229 @@ var RatingService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "userchargers/v1/userchargers.proto",
 }
+
+const (
+	PendingActionService_GetPendingAction_FullMethodName     = "/userchargers.v1.PendingActionService/GetPendingAction"
+	PendingActionService_ListPendingActions_FullMethodName   = "/userchargers.v1.PendingActionService/ListPendingActions"
+	PendingActionService_ConfirmPendingAction_FullMethodName = "/userchargers.v1.PendingActionService/ConfirmPendingAction"
+	PendingActionService_RejectPendingAction_FullMethodName  = "/userchargers.v1.PendingActionService/RejectPendingAction"
+)
+
+// PendingActionServiceClient is the client API for PendingActionService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// PendingActionService lets the caller decide on actions the chat assistant proposed.
+type PendingActionServiceClient interface {
+	GetPendingAction(ctx context.Context, in *GetPendingActionRequest, opts ...grpc.CallOption) (*GetPendingActionResponse, error)
+	ListPendingActions(ctx context.Context, in *ListPendingActionsRequest, opts ...grpc.CallOption) (*ListPendingActionsResponse, error)
+	// ConfirmPendingAction runs the action. Fails with FAILED_PRECONDITION if it was already
+	// decided, NOT_FOUND if it doesn't exist, isn't the caller's, or has expired.
+	ConfirmPendingAction(ctx context.Context, in *ConfirmPendingActionRequest, opts ...grpc.CallOption) (*ConfirmPendingActionResponse, error)
+	// RejectPendingAction declines the action; nothing runs. Same errors as Confirm.
+	RejectPendingAction(ctx context.Context, in *RejectPendingActionRequest, opts ...grpc.CallOption) (*RejectPendingActionResponse, error)
+}
+
+type pendingActionServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPendingActionServiceClient(cc grpc.ClientConnInterface) PendingActionServiceClient {
+	return &pendingActionServiceClient{cc}
+}
+
+func (c *pendingActionServiceClient) GetPendingAction(ctx context.Context, in *GetPendingActionRequest, opts ...grpc.CallOption) (*GetPendingActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPendingActionResponse)
+	err := c.cc.Invoke(ctx, PendingActionService_GetPendingAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pendingActionServiceClient) ListPendingActions(ctx context.Context, in *ListPendingActionsRequest, opts ...grpc.CallOption) (*ListPendingActionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPendingActionsResponse)
+	err := c.cc.Invoke(ctx, PendingActionService_ListPendingActions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pendingActionServiceClient) ConfirmPendingAction(ctx context.Context, in *ConfirmPendingActionRequest, opts ...grpc.CallOption) (*ConfirmPendingActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConfirmPendingActionResponse)
+	err := c.cc.Invoke(ctx, PendingActionService_ConfirmPendingAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pendingActionServiceClient) RejectPendingAction(ctx context.Context, in *RejectPendingActionRequest, opts ...grpc.CallOption) (*RejectPendingActionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RejectPendingActionResponse)
+	err := c.cc.Invoke(ctx, PendingActionService_RejectPendingAction_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PendingActionServiceServer is the server API for PendingActionService service.
+// All implementations must embed UnimplementedPendingActionServiceServer
+// for forward compatibility.
+//
+// PendingActionService lets the caller decide on actions the chat assistant proposed.
+type PendingActionServiceServer interface {
+	GetPendingAction(context.Context, *GetPendingActionRequest) (*GetPendingActionResponse, error)
+	ListPendingActions(context.Context, *ListPendingActionsRequest) (*ListPendingActionsResponse, error)
+	// ConfirmPendingAction runs the action. Fails with FAILED_PRECONDITION if it was already
+	// decided, NOT_FOUND if it doesn't exist, isn't the caller's, or has expired.
+	ConfirmPendingAction(context.Context, *ConfirmPendingActionRequest) (*ConfirmPendingActionResponse, error)
+	// RejectPendingAction declines the action; nothing runs. Same errors as Confirm.
+	RejectPendingAction(context.Context, *RejectPendingActionRequest) (*RejectPendingActionResponse, error)
+	mustEmbedUnimplementedPendingActionServiceServer()
+}
+
+// UnimplementedPendingActionServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedPendingActionServiceServer struct{}
+
+func (UnimplementedPendingActionServiceServer) GetPendingAction(context.Context, *GetPendingActionRequest) (*GetPendingActionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPendingAction not implemented")
+}
+func (UnimplementedPendingActionServiceServer) ListPendingActions(context.Context, *ListPendingActionsRequest) (*ListPendingActionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListPendingActions not implemented")
+}
+func (UnimplementedPendingActionServiceServer) ConfirmPendingAction(context.Context, *ConfirmPendingActionRequest) (*ConfirmPendingActionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ConfirmPendingAction not implemented")
+}
+func (UnimplementedPendingActionServiceServer) RejectPendingAction(context.Context, *RejectPendingActionRequest) (*RejectPendingActionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RejectPendingAction not implemented")
+}
+func (UnimplementedPendingActionServiceServer) mustEmbedUnimplementedPendingActionServiceServer() {}
+func (UnimplementedPendingActionServiceServer) testEmbeddedByValue()                              {}
+
+// UnsafePendingActionServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PendingActionServiceServer will
+// result in compilation errors.
+type UnsafePendingActionServiceServer interface {
+	mustEmbedUnimplementedPendingActionServiceServer()
+}
+
+func RegisterPendingActionServiceServer(s grpc.ServiceRegistrar, srv PendingActionServiceServer) {
+	// If the following call panics, it indicates UnimplementedPendingActionServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&PendingActionService_ServiceDesc, srv)
+}
+
+func _PendingActionService_GetPendingAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPendingActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PendingActionServiceServer).GetPendingAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PendingActionService_GetPendingAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PendingActionServiceServer).GetPendingAction(ctx, req.(*GetPendingActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PendingActionService_ListPendingActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPendingActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PendingActionServiceServer).ListPendingActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PendingActionService_ListPendingActions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PendingActionServiceServer).ListPendingActions(ctx, req.(*ListPendingActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PendingActionService_ConfirmPendingAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConfirmPendingActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PendingActionServiceServer).ConfirmPendingAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PendingActionService_ConfirmPendingAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PendingActionServiceServer).ConfirmPendingAction(ctx, req.(*ConfirmPendingActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PendingActionService_RejectPendingAction_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RejectPendingActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PendingActionServiceServer).RejectPendingAction(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PendingActionService_RejectPendingAction_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PendingActionServiceServer).RejectPendingAction(ctx, req.(*RejectPendingActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// PendingActionService_ServiceDesc is the grpc.ServiceDesc for PendingActionService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PendingActionService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "userchargers.v1.PendingActionService",
+	HandlerType: (*PendingActionServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetPendingAction",
+			Handler:    _PendingActionService_GetPendingAction_Handler,
+		},
+		{
+			MethodName: "ListPendingActions",
+			Handler:    _PendingActionService_ListPendingActions_Handler,
+		},
+		{
+			MethodName: "ConfirmPendingAction",
+			Handler:    _PendingActionService_ConfirmPendingAction_Handler,
+		},
+		{
+			MethodName: "RejectPendingAction",
+			Handler:    _PendingActionService_RejectPendingAction_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "userchargers/v1/userchargers.proto",
+}

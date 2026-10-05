@@ -1,5 +1,5 @@
-// Package mcp exposes the OECS Hub registry to MCP clients (e.g. LLM agents) as a
-// set of read-only tools.
+// Package mcp exposes the OECS Hub registry to MCP clients (e.g. LLM agents): read-only
+// catalogue tools, plus user tools that act for the signed-in caller (see user_tools.go).
 package mcp
 
 import (

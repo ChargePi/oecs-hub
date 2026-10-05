@@ -315,3 +315,20 @@
     handler: allow
   mutators:
     - handler: header
+
+- id: userchargers-pending-action-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # Deciding on actions the chat assistant proposed, from the chat UI with the user's own
+    # session. The assistant's model never sees a confirm or reject tool - its MCP tools
+    # can only propose - so a decision always starts from a user click routed through here.
+    url: "http://<.*>/userchargers.v1.PendingActionService/<GetPendingAction|ListPendingActions|ConfirmPendingAction|RejectPendingAction>"
+    methods: ["POST"]
+  # No anonymous fallback - a session is required.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header

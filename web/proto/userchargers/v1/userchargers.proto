@@ -208,3 +208,81 @@ service RatingService {
   rpc SubmitRating(SubmitRatingRequest) returns (SubmitRatingResponse);
   rpc ListMyRatings(ListMyRatingsRequest) returns (ListMyRatingsResponse);
 }
+
+// Pending actions are favorites/projects/ratings writes the chat assistant proposed on
+// the caller's behalf (through the hub's MCP user tools) that only run once the caller
+// confirms them here. Confirming must come through the Oathkeeper edge with the user's
+// own session, so the assistant can never approve its own proposal. Actions expire after
+// a short TTL; an expired action is simply not found.
+
+enum PendingActionKind {
+  PENDING_ACTION_KIND_UNSPECIFIED = 0;
+  PENDING_ACTION_KIND_FAVORITE = 1;
+  PENDING_ACTION_KIND_PROJECT = 2;
+  PENDING_ACTION_KIND_RATING = 3;
+}
+
+enum PendingActionStatus {
+  PENDING_ACTION_STATUS_UNSPECIFIED = 0;
+  PENDING_ACTION_STATUS_PENDING = 1;
+  PENDING_ACTION_STATUS_CONFIRMED = 2;
+  PENDING_ACTION_STATUS_REJECTED = 3;
+  // The action was confirmed but the write itself failed.
+  PENDING_ACTION_STATUS_FAILED = 4;
+}
+
+message PendingAction {
+  string id = 1;
+  PendingActionKind kind = 2;
+  // Human-readable description of exactly what Confirm will do, built by the hub from
+  // catalogue data rather than written by the assistant.
+  string summary = 3;
+  PendingActionStatus status = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  string conversation_id = 6;
+}
+
+message GetPendingActionRequest {
+  string action_id = 1;
+}
+
+message GetPendingActionResponse {
+  PendingAction action = 1;
+}
+
+message ListPendingActionsRequest {
+  string conversation_id = 1;
+}
+
+message ListPendingActionsResponse {
+  // The caller's unexpired actions in the conversation, oldest first. Expired actions are
+  // omitted.
+  repeated PendingAction actions = 1;
+}
+
+message ConfirmPendingActionRequest {
+  string action_id = 1;
+}
+
+message ConfirmPendingActionResponse {
+  PendingAction action = 1;
+}
+
+message RejectPendingActionRequest {
+  string action_id = 1;
+}
+
+message RejectPendingActionResponse {
+  PendingAction action = 1;
+}
+
+// PendingActionService lets the caller decide on actions the chat assistant proposed.
+service PendingActionService {
+  rpc GetPendingAction(GetPendingActionRequest) returns (GetPendingActionResponse);
+  rpc ListPendingActions(ListPendingActionsRequest) returns (ListPendingActionsResponse);
+  // ConfirmPendingAction runs the action. Fails with FAILED_PRECONDITION if it was already
+  // decided, NOT_FOUND if it doesn't exist, isn't the caller's, or has expired.
+  rpc ConfirmPendingAction(ConfirmPendingActionRequest) returns (ConfirmPendingActionResponse);
+  // RejectPendingAction declines the action; nothing runs. Same errors as Confirm.
+  rpc RejectPendingAction(RejectPendingActionRequest) returns (RejectPendingActionResponse);
+}

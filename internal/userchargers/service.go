@@ -140,7 +140,7 @@ func (s *Service) CreateProject(ctx context.Context, identityID uuid.UUID, name 
 		return nil, err
 	}
 
-	name, err := validateProjectName(name)
+	name, err := ValidateProjectName(name)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -177,7 +177,7 @@ func (s *Service) UpdateProject(ctx context.Context, identityID, id uuid.UUID, a
 	}
 
 	if attrs.Name != nil {
-		name, err := validateProjectName(*attrs.Name)
+		name, err := ValidateProjectName(*attrs.Name)
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -331,7 +331,7 @@ func (s *Service) SubmitRating(ctx context.Context, variantID, raterIdentityID u
 		trace.WithAttributes(identityAttr(raterIdentityID), variantAttr(variantID)))
 	defer span.End()
 
-	if err := validateRatingInputs(inputs); err != nil {
+	if err := ValidateRatingInputs(inputs); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -578,7 +578,9 @@ func addedVariantIDs(changes []ChargerChange) []uuid.UUID {
 	return ids
 }
 
-func validateProjectName(name string) (string, error) {
+// ValidateProjectName trims name and rejects a blank or overlong one, returning the
+// trimmed value. Exported so pending project actions are checked before they are proposed.
+func ValidateProjectName(name string) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if name == "" {
