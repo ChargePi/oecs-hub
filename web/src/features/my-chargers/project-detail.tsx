@@ -225,17 +225,24 @@ export function ProjectDetail({ projectId, onBack }: { projectId: string; onBack
               key={member.charger.id}
               className="flex items-center gap-3 rounded-lg border border-border p-3"
             >
-              <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <button
+                type="button"
+                className="shrink-0"
+                onClick={() => setOpenVariantId(member.charger.id)}
+              >
+                <ProductImage
+                  src={member.charger.model.productImageUrl}
+                  alt={member.charger.model.name}
+                  className="size-14"
+                />
+              </button>
+
+              <div className="flex min-w-0 flex-1 flex-col gap-2">
                 <button
                   type="button"
-                  className="flex min-w-0 items-center gap-3 text-left"
+                  className="min-w-0 text-left"
                   onClick={() => setOpenVariantId(member.charger.id)}
                 >
-                  <ProductImage
-                    src={member.charger.model.productImageUrl}
-                    alt={member.charger.model.name}
-                    className="size-14"
-                  />
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="truncate font-medium hover:underline">
                       {member.charger.model.name}
