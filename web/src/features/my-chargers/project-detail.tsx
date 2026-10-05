@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Plus, Search, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -189,11 +189,13 @@ export function ProjectDetail({ projectId, onBack }: { projectId: string; onBack
 
         <div className="flex shrink-0 gap-2">
           <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" />
             Edit
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm">
+                <Trash2 className="size-4" />
                 Delete
               </Button>
             </AlertDialogTrigger>
