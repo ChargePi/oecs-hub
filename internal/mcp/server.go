@@ -43,6 +43,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithDescription(searchChargersDescription),
 		mcp.WithInputSchema[SearchChargersInput](),
 		mcp.WithOutputSchema[SearchChargersOutput](),
+		readOnlyAnnotations(),
 	)
 	s.AddTool(searchTool, newSearchChargersHandler(chargers).Handle)
 
@@ -50,6 +51,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithDescription(getChargersDescription),
 		mcp.WithInputSchema[GetChargersInput](),
 		mcp.WithOutputSchema[GetChargersOutput](),
+		readOnlyAnnotations(),
 	)
 	s.AddTool(getTool, newGetChargersHandler(chargers).Handle)
 
@@ -57,6 +59,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithDescription(listManufacturersDescription),
 		mcp.WithInputSchema[ListManufacturersInput](),
 		mcp.WithOutputSchema[ListManufacturersOutput](),
+		readOnlyAnnotations(),
 	)
 	s.AddTool(listManufacturersTool, newListManufacturersHandler(manufacturers).Handle)
 }

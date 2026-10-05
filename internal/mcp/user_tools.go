@@ -190,36 +190,42 @@ func RegisterUserTools(s *server.MCPServer, userChargers UserChargersReader, act
 		mcp.WithDescription(listMyProjectsDescription),
 		mcp.WithInputSchema[ListMyProjectsInput](),
 		mcp.WithOutputSchema[ListMyProjectsOutput](),
+		readOnlyAnnotations(),
 	), h.listMyProjects)
 
 	s.AddTool(mcp.NewTool("list_my_favorites",
 		mcp.WithDescription(listMyFavoritesDescription),
 		mcp.WithInputSchema[ListMyFavoritesInput](),
 		mcp.WithOutputSchema[ListMyFavoritesOutput](),
+		readOnlyAnnotations(),
 	), h.listMyFavorites)
 
 	s.AddTool(mcp.NewTool("propose_favorite_change",
 		mcp.WithDescription(proposeFavoriteChangeDescription),
 		mcp.WithInputSchema[ProposeFavoriteChangeInput](),
 		mcp.WithOutputSchema[ProposedActionOutput](),
+		actionAnnotations(),
 	), h.proposeFavoriteChange)
 
 	s.AddTool(mcp.NewTool("propose_project_change",
 		mcp.WithDescription(proposeProjectChangeDescription),
 		mcp.WithInputSchema[ProposeProjectChangeInput](),
 		mcp.WithOutputSchema[ProposedActionOutput](),
+		actionAnnotations(),
 	), h.proposeProjectChange)
 
 	s.AddTool(mcp.NewTool("propose_rating",
 		mcp.WithDescription(proposeRatingDescription()),
 		mcp.WithInputSchema[ProposeRatingInput](),
 		mcp.WithOutputSchema[ProposedActionOutput](),
+		actionAnnotations(),
 	), h.proposeRating)
 
 	s.AddTool(mcp.NewTool("list_conversation_actions",
 		mcp.WithDescription(listConversationActionsDescription),
 		mcp.WithInputSchema[ListConversationActionsInput](),
 		mcp.WithOutputSchema[ListConversationActionsOutput](),
+		readOnlyAnnotations(),
 	), h.listConversationActions)
 }
 
