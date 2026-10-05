@@ -319,6 +319,7 @@ function pendingActionFromProto(a: PendingActionProto): PendingAction {
     summary: a.getSummary(),
     status: PENDING_ACTION_STATUS_FROM_PROTO[a.getStatus()],
     expiresAt: a.getExpiresAt()?.toDate().toISOString() ?? '',
+    destructive: a.getDestructive(),
   }
 }
 

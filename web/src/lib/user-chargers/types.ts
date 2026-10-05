@@ -79,4 +79,6 @@ export interface PendingAction {
   summary: string
   status: PendingActionStatus
   expiresAt: string
+  /** Confirming removes something, e.g. a favorite or a charger from a project. */
+  destructive: boolean
 }

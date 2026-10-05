@@ -1624,8 +1624,10 @@ type PendingAction struct {
 	Status         PendingActionStatus    `protobuf:"varint,4,opt,name=status,proto3,enum=userchargers.v1.PendingActionStatus" json:"status,omitempty"`
 	ExpiresAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	ConversationId string                 `protobuf:"bytes,6,opt,name=conversation_id,json=conversationId,proto3" json:"conversation_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Confirming removes something, e.g. a favorite or a charger from a project.
+	Destructive   bool `protobuf:"varint,7,opt,name=destructive,proto3" json:"destructive,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PendingAction) Reset() {
@@ -1698,6 +1700,13 @@ func (x *PendingAction) GetConversationId() string {
 		return x.ConversationId
 	}
 	return ""
+}
+
+func (x *PendingAction) GetDestructive() bool {
+	if x != nil {
+		return x.Destructive
+	}
+	return false
 }
 
 type GetPendingActionRequest struct {
@@ -2156,7 +2165,7 @@ const file_userchargers_v1_userchargers_proto_rawDesc = "" +
 	"\aratings\x18\x01 \x03(\v2\x19.userchargers.v1.MyRatingR\aratings\x12\x1d\n" +
 	"\n" +
 	"total_size\x18\x02 \x01(\x03R\ttotalSize\x12&\n" +
-	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken\"\x93\x02\n" +
+	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken\"\xb5\x02\n" +
 	"\rPendingAction\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x126\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\".userchargers.v1.PendingActionKindR\x04kind\x12\x18\n" +
@@ -2164,7 +2173,8 @@ const file_userchargers_v1_userchargers_proto_rawDesc = "" +
 	"\x06status\x18\x04 \x01(\x0e2$.userchargers.v1.PendingActionStatusR\x06status\x129\n" +
 	"\n" +
 	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12'\n" +
-	"\x0fconversation_id\x18\x06 \x01(\tR\x0econversationId\"6\n" +
+	"\x0fconversation_id\x18\x06 \x01(\tR\x0econversationId\x12 \n" +
+	"\vdestructive\x18\a \x01(\bR\vdestructive\"6\n" +
 	"\x17GetPendingActionRequest\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\"R\n" +
 	"\x18GetPendingActionResponse\x126\n" +

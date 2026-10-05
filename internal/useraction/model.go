@@ -93,6 +93,22 @@ type Action struct {
 	Rating   *RatingPayload   `json:"rating,omitempty"`
 }
 
+// Destructive reports whether confirming removes something: a favorite, or a charger from a project.
+func (a *Action) Destructive() bool {
+	switch {
+	case a.Favorite != nil:
+		return !a.Favorite.Favorited
+	case a.Project != nil:
+		for _, change := range a.Project.Changes {
+			if change.Action == userchargers.ChargerChangeRemove {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // State is an action together with its current status.
 type State struct {
 	Action

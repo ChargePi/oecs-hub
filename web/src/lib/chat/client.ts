@@ -150,6 +150,7 @@ export function proposedActionsFromMetadata(metadata?: Record<string, unknown>):
       kind: String(a.kind ?? ''),
       summary: String(a.summary ?? ''),
       expiresAt: String(a.expires_at ?? ''),
+      destructive: a.destructive === true,
     }))
     .filter((a) => a.actionId !== '')
 }

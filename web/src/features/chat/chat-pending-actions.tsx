@@ -79,6 +79,8 @@ export function ChatPendingActions({
           serverStatus={
             isSuccess ? (statuses.get(action.actionId)?.status ?? 'expired') : undefined
           }
+          // The hub's flag wins once loaded; the reply's copy covers the first render.
+          destructive={statuses?.get(action.actionId)?.destructive ?? action.destructive}
         />
       ))}
     </div>
@@ -89,11 +91,13 @@ function PendingActionCard({
   conversationId,
   action,
   serverStatus,
+  destructive,
 }: {
   conversationId: string
   action: ProposedAction
   /** Undefined while the conversation's statuses are still loading. */
   serverStatus?: PendingActionStatus
+  destructive: boolean
 }) {
   const queryClient = useQueryClient()
   const { run, isPending } = useToastAction()
@@ -125,13 +129,27 @@ function PendingActionCard({
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-md border border-border bg-background px-3 py-2">
-      <Icon className="mt-0.5 size-4 shrink-0 text-primary" />
+    <div
+      className={cn(
+        'flex items-start gap-3 rounded-md border bg-background px-3 py-2',
+        destructive ? 'border-destructive/40' : 'border-border',
+      )}
+    >
+      <Icon
+        className={cn('mt-0.5 size-4 shrink-0', destructive ? 'text-destructive' : 'text-primary')}
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <p className="text-sm">{action.summary}</p>
+        {destructive && (
+          <p className="flex items-center gap-1.5 text-xs text-destructive">
+            <TriangleAlert className="size-3.5 shrink-0" />
+            This removes something and can't be undone from here.
+          </p>
+        )}
         <div className="flex gap-2">
           <Button
             size="sm"
+            variant={destructive ? 'destructive' : 'default'}
             disabled={isPending || status === undefined}
             onClick={() => decide('confirm')}
           >

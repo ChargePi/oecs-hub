@@ -91,6 +91,7 @@ export interface ProposedAction {
   kind: string
   summary: string
   expiresAt: string
+  destructive: boolean
 }
 
 export interface ChargePointCandidate {

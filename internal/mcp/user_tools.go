@@ -162,19 +162,21 @@ type ProposeRatingInput struct {
 // ProposedActionOutput is what every propose_* tool returns: the pending action awaiting
 // the user's confirmation.
 type ProposedActionOutput struct {
-	ActionID  string `json:"actionId"`
-	Kind      string `json:"kind"`
-	Summary   string `json:"summary"`
-	ExpiresAt string `json:"expiresAt"`
+	ActionID    string `json:"actionId"`
+	Kind        string `json:"kind"`
+	Summary     string `json:"summary"`
+	ExpiresAt   string `json:"expiresAt"`
+	Destructive bool   `json:"destructive"`
 }
 
 type ListConversationActionsInput struct{}
 
 type ConversationActionOutput struct {
-	ActionID string `json:"actionId"`
-	Kind     string `json:"kind"`
-	Summary  string `json:"summary"`
-	Status   string `json:"status"`
+	ActionID    string `json:"actionId"`
+	Kind        string `json:"kind"`
+	Summary     string `json:"summary"`
+	Status      string `json:"status"`
+	Destructive bool   `json:"destructive"`
 }
 
 type ListConversationActionsOutput struct {
@@ -391,10 +393,11 @@ func (h *userToolsHandler) listConversationActions(ctx context.Context, _ mcp.Ca
 	out := ListConversationActionsOutput{Actions: make([]ConversationActionOutput, 0, len(states))}
 	for _, state := range states {
 		out.Actions = append(out.Actions, ConversationActionOutput{
-			ActionID: state.ID.String(),
-			Kind:     string(state.Kind),
-			Summary:  state.Summary,
-			Status:   string(state.Status),
+			ActionID:    state.ID.String(),
+			Kind:        string(state.Kind),
+			Summary:     state.Summary,
+			Status:      string(state.Status),
+			Destructive: state.Destructive(),
 		})
 	}
 
@@ -403,10 +406,11 @@ func (h *userToolsHandler) listConversationActions(ctx context.Context, _ mcp.Ca
 
 func proposedOutput(action *useraction.Action) ProposedActionOutput {
 	return ProposedActionOutput{
-		ActionID:  action.ID.String(),
-		Kind:      string(action.Kind),
-		Summary:   action.Summary,
-		ExpiresAt: action.ExpiresAt.UTC().Format(time.RFC3339),
+		ActionID:    action.ID.String(),
+		Kind:        string(action.Kind),
+		Summary:     action.Summary,
+		ExpiresAt:   action.ExpiresAt.UTC().Format(time.RFC3339),
+		Destructive: action.Destructive(),
 	}
 }
 

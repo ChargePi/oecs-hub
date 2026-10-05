@@ -5701,7 +5701,8 @@ kind: jspb.Message.getFieldWithDefault(msg, 2, 0),
 summary: jspb.Message.getFieldWithDefault(msg, 3, ""),
 status: jspb.Message.getFieldWithDefault(msg, 4, 0),
 expiresAt: (f = msg.getExpiresAt()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
-conversationId: jspb.Message.getFieldWithDefault(msg, 6, "")
+conversationId: jspb.Message.getFieldWithDefault(msg, 6, ""),
+destructive: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -5762,6 +5763,10 @@ proto.userchargers.v1.PendingAction.deserializeBinaryFromReader = function(msg, 
     case 6:
       var value = /** @type {string} */ (reader.readStringRequireUtf8());
       msg.setConversationId(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setDestructive(value);
       break;
     default:
       reader.skipField();
@@ -5832,6 +5837,13 @@ proto.userchargers.v1.PendingAction.serializeBinaryToWriter = function(message, 
   if (f.length > 0) {
     writer.writeString(
       6,
+      f
+    );
+  }
+  f = message.getDestructive();
+  if (f) {
+    writer.writeBool(
+      7,
       f
     );
   }
@@ -5962,6 +5974,24 @@ proto.userchargers.v1.PendingAction.prototype.getConversationId = function() {
  */
 proto.userchargers.v1.PendingAction.prototype.setConversationId = function(value) {
   return jspb.Message.setProto3StringField(this, 6, value);
+};
+
+
+/**
+ * optional bool destructive = 7;
+ * @return {boolean}
+ */
+proto.userchargers.v1.PendingAction.prototype.getDestructive = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.userchargers.v1.PendingAction} returns this
+ */
+proto.userchargers.v1.PendingAction.prototype.setDestructive = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 

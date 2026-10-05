@@ -694,6 +694,9 @@ export class PendingAction extends jspb.Message {
   getConversationId(): string;
   setConversationId(value: string): PendingAction;
 
+  getDestructive(): boolean;
+  setDestructive(value: boolean): PendingAction;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): PendingAction.AsObject;
   static toObject(includeInstance: boolean, msg: PendingAction): PendingAction.AsObject;
@@ -710,6 +713,7 @@ export namespace PendingAction {
     status: PendingActionStatus;
     expiresAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
     conversationId: string;
+    destructive: boolean;
   };
 }
 

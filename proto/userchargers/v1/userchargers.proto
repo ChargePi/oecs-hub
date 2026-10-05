@@ -240,6 +240,8 @@ message PendingAction {
   PendingActionStatus status = 4;
   google.protobuf.Timestamp expires_at = 5;
   string conversation_id = 6;
+  // Confirming removes something, e.g. a favorite or a charger from a project.
+  bool destructive = 7;
 }
 
 message GetPendingActionRequest {

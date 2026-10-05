@@ -122,6 +122,7 @@ func pendingActionToProto(state *useraction.State) *userchargersv1.PendingAction
 		Status:         pendingActionStatusToProto(state.Status),
 		ExpiresAt:      timestamppb.New(state.ExpiresAt),
 		ConversationId: state.ConversationID,
+		Destructive:    state.Destructive(),
 	}
 }
 
