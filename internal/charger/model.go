@@ -25,7 +25,7 @@ const (
 type Charger struct {
 	ID uuid.UUID
 
-	// ManufacturerID is nil until the submission is verified.
+	// ManufacturerID is nil until the submission is verified or an admin reassigns it.
 	ManufacturerID      *uuid.UUID
 	ManufacturerName    string
 	ManufacturerCountry string

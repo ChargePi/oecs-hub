@@ -19,10 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_SearchSchemas_FullMethodName      = "/admin.v1.AdminService/SearchSchemas"
-	AdminService_UpdateSchemaStatus_FullMethodName = "/admin.v1.AdminService/UpdateSchemaStatus"
-	AdminService_UpdateSchemaSpec_FullMethodName   = "/admin.v1.AdminService/UpdateSchemaSpec"
-	AdminService_CreateManufacturer_FullMethodName = "/admin.v1.AdminService/CreateManufacturer"
+	AdminService_SearchSchemas_FullMethodName              = "/admin.v1.AdminService/SearchSchemas"
+	AdminService_UpdateSchemaStatus_FullMethodName         = "/admin.v1.AdminService/UpdateSchemaStatus"
+	AdminService_UpdateSchemaSpec_FullMethodName           = "/admin.v1.AdminService/UpdateSchemaSpec"
+	AdminService_CreateManufacturer_FullMethodName         = "/admin.v1.AdminService/CreateManufacturer"
+	AdminService_ListManufacturers_FullMethodName          = "/admin.v1.AdminService/ListManufacturers"
+	AdminService_ReassignSchemaManufacturer_FullMethodName = "/admin.v1.AdminService/ReassignSchemaManufacturer"
+	AdminService_SetManufacturerOwner_FullMethodName       = "/admin.v1.AdminService/SetManufacturerOwner"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -33,6 +36,9 @@ type AdminServiceClient interface {
 	UpdateSchemaStatus(ctx context.Context, in *UpdateSchemaStatusRequest, opts ...grpc.CallOption) (*UpdateSchemaStatusResponse, error)
 	UpdateSchemaSpec(ctx context.Context, in *UpdateSchemaSpecRequest, opts ...grpc.CallOption) (*UpdateSchemaSpecResponse, error)
 	CreateManufacturer(ctx context.Context, in *CreateManufacturerRequest, opts ...grpc.CallOption) (*CreateManufacturerResponse, error)
+	ListManufacturers(ctx context.Context, in *ListManufacturersRequest, opts ...grpc.CallOption) (*ListManufacturersResponse, error)
+	ReassignSchemaManufacturer(ctx context.Context, in *ReassignSchemaManufacturerRequest, opts ...grpc.CallOption) (*ReassignSchemaManufacturerResponse, error)
+	SetManufacturerOwner(ctx context.Context, in *SetManufacturerOwnerRequest, opts ...grpc.CallOption) (*SetManufacturerOwnerResponse, error)
 }
 
 type adminServiceClient struct {
@@ -83,6 +89,36 @@ func (c *adminServiceClient) CreateManufacturer(ctx context.Context, in *CreateM
 	return out, nil
 }
 
+func (c *adminServiceClient) ListManufacturers(ctx context.Context, in *ListManufacturersRequest, opts ...grpc.CallOption) (*ListManufacturersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListManufacturersResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListManufacturers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) ReassignSchemaManufacturer(ctx context.Context, in *ReassignSchemaManufacturerRequest, opts ...grpc.CallOption) (*ReassignSchemaManufacturerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReassignSchemaManufacturerResponse)
+	err := c.cc.Invoke(ctx, AdminService_ReassignSchemaManufacturer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) SetManufacturerOwner(ctx context.Context, in *SetManufacturerOwnerRequest, opts ...grpc.CallOption) (*SetManufacturerOwnerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetManufacturerOwnerResponse)
+	err := c.cc.Invoke(ctx, AdminService_SetManufacturerOwner_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -91,6 +127,9 @@ type AdminServiceServer interface {
 	UpdateSchemaStatus(context.Context, *UpdateSchemaStatusRequest) (*UpdateSchemaStatusResponse, error)
 	UpdateSchemaSpec(context.Context, *UpdateSchemaSpecRequest) (*UpdateSchemaSpecResponse, error)
 	CreateManufacturer(context.Context, *CreateManufacturerRequest) (*CreateManufacturerResponse, error)
+	ListManufacturers(context.Context, *ListManufacturersRequest) (*ListManufacturersResponse, error)
+	ReassignSchemaManufacturer(context.Context, *ReassignSchemaManufacturerRequest) (*ReassignSchemaManufacturerResponse, error)
+	SetManufacturerOwner(context.Context, *SetManufacturerOwnerRequest) (*SetManufacturerOwnerResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -112,6 +151,15 @@ func (UnimplementedAdminServiceServer) UpdateSchemaSpec(context.Context, *Update
 }
 func (UnimplementedAdminServiceServer) CreateManufacturer(context.Context, *CreateManufacturerRequest) (*CreateManufacturerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateManufacturer not implemented")
+}
+func (UnimplementedAdminServiceServer) ListManufacturers(context.Context, *ListManufacturersRequest) (*ListManufacturersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListManufacturers not implemented")
+}
+func (UnimplementedAdminServiceServer) ReassignSchemaManufacturer(context.Context, *ReassignSchemaManufacturerRequest) (*ReassignSchemaManufacturerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReassignSchemaManufacturer not implemented")
+}
+func (UnimplementedAdminServiceServer) SetManufacturerOwner(context.Context, *SetManufacturerOwnerRequest) (*SetManufacturerOwnerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetManufacturerOwner not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -206,6 +254,60 @@ func _AdminService_CreateManufacturer_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_ListManufacturers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListManufacturersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListManufacturers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListManufacturers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListManufacturers(ctx, req.(*ListManufacturersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_ReassignSchemaManufacturer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReassignSchemaManufacturerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ReassignSchemaManufacturer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ReassignSchemaManufacturer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ReassignSchemaManufacturer(ctx, req.(*ReassignSchemaManufacturerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_SetManufacturerOwner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetManufacturerOwnerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).SetManufacturerOwner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_SetManufacturerOwner_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).SetManufacturerOwner(ctx, req.(*SetManufacturerOwnerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,6 +330,18 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateManufacturer",
 			Handler:    _AdminService_CreateManufacturer_Handler,
+		},
+		{
+			MethodName: "ListManufacturers",
+			Handler:    _AdminService_ListManufacturers_Handler,
+		},
+		{
+			MethodName: "ReassignSchemaManufacturer",
+			Handler:    _AdminService_ReassignSchemaManufacturer_Handler,
+		},
+		{
+			MethodName: "SetManufacturerOwner",
+			Handler:    _AdminService_SetManufacturerOwner_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -504,6 +504,389 @@ func (x *CreateManufacturerResponse) GetManufacturer() *v1.Manufacturer {
 	return nil
 }
 
+type ReassignSchemaManufacturerRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ManufacturerId string                 `protobuf:"bytes,2,opt,name=manufacturer_id,json=manufacturerId,proto3" json:"manufacturer_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ReassignSchemaManufacturerRequest) Reset() {
+	*x = ReassignSchemaManufacturerRequest{}
+	mi := &file_admin_v1_admin_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReassignSchemaManufacturerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReassignSchemaManufacturerRequest) ProtoMessage() {}
+
+func (x *ReassignSchemaManufacturerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReassignSchemaManufacturerRequest.ProtoReflect.Descriptor instead.
+func (*ReassignSchemaManufacturerRequest) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ReassignSchemaManufacturerRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ReassignSchemaManufacturerRequest) GetManufacturerId() string {
+	if x != nil {
+		return x.ManufacturerId
+	}
+	return ""
+}
+
+type ReassignSchemaManufacturerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Variant       *v1.ChargerVariant     `protobuf:"bytes,1,opt,name=variant,proto3" json:"variant,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReassignSchemaManufacturerResponse) Reset() {
+	*x = ReassignSchemaManufacturerResponse{}
+	mi := &file_admin_v1_admin_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReassignSchemaManufacturerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReassignSchemaManufacturerResponse) ProtoMessage() {}
+
+func (x *ReassignSchemaManufacturerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReassignSchemaManufacturerResponse.ProtoReflect.Descriptor instead.
+func (*ReassignSchemaManufacturerResponse) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ReassignSchemaManufacturerResponse) GetVariant() *v1.ChargerVariant {
+	if x != nil {
+		return x.Variant
+	}
+	return nil
+}
+
+type ListManufacturersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         *string                `protobuf:"bytes,1,opt,name=query,proto3,oneof" json:"query,omitempty"`
+	Country       *string                `protobuf:"bytes,2,opt,name=country,proto3,oneof" json:"country,omitempty"`
+	PageSize      int32                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListManufacturersRequest) Reset() {
+	*x = ListManufacturersRequest{}
+	mi := &file_admin_v1_admin_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListManufacturersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListManufacturersRequest) ProtoMessage() {}
+
+func (x *ListManufacturersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListManufacturersRequest.ProtoReflect.Descriptor instead.
+func (*ListManufacturersRequest) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListManufacturersRequest) GetQuery() string {
+	if x != nil && x.Query != nil {
+		return *x.Query
+	}
+	return ""
+}
+
+func (x *ListManufacturersRequest) GetCountry() string {
+	if x != nil && x.Country != nil {
+		return *x.Country
+	}
+	return ""
+}
+
+func (x *ListManufacturersRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListManufacturersRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type AdminManufacturer struct {
+	state   protoimpl.MessageState  `protogen:"open.v1"`
+	Summary *v1.ManufacturerSummary `protobuf:"bytes,1,opt,name=summary,proto3" json:"summary,omitempty"`
+	// Kratos identity of the manufacturer account that owns this manufacturer, if any.
+	OwnerIdentityId *string `protobuf:"bytes,2,opt,name=owner_identity_id,json=ownerIdentityId,proto3,oneof" json:"owner_identity_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *AdminManufacturer) Reset() {
+	*x = AdminManufacturer{}
+	mi := &file_admin_v1_admin_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AdminManufacturer) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AdminManufacturer) ProtoMessage() {}
+
+func (x *AdminManufacturer) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AdminManufacturer.ProtoReflect.Descriptor instead.
+func (*AdminManufacturer) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AdminManufacturer) GetSummary() *v1.ManufacturerSummary {
+	if x != nil {
+		return x.Summary
+	}
+	return nil
+}
+
+func (x *AdminManufacturer) GetOwnerIdentityId() string {
+	if x != nil && x.OwnerIdentityId != nil {
+		return *x.OwnerIdentityId
+	}
+	return ""
+}
+
+type ListManufacturersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Manufacturers []*AdminManufacturer   `protobuf:"bytes,1,rep,name=manufacturers,proto3" json:"manufacturers,omitempty"`
+	TotalSize     int64                  `protobuf:"varint,2,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,3,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListManufacturersResponse) Reset() {
+	*x = ListManufacturersResponse{}
+	mi := &file_admin_v1_admin_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListManufacturersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListManufacturersResponse) ProtoMessage() {}
+
+func (x *ListManufacturersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListManufacturersResponse.ProtoReflect.Descriptor instead.
+func (*ListManufacturersResponse) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ListManufacturersResponse) GetManufacturers() []*AdminManufacturer {
+	if x != nil {
+		return x.Manufacturers
+	}
+	return nil
+}
+
+func (x *ListManufacturersResponse) GetTotalSize() int64 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
+}
+
+func (x *ListManufacturersResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+// Links a manufacturer to a manufacturer account, replacing any current owner. An owner
+// can be replaced but never removed.
+type SetManufacturerOwnerRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ManufacturerId  string                 `protobuf:"bytes,1,opt,name=manufacturer_id,json=manufacturerId,proto3" json:"manufacturer_id,omitempty"`
+	OwnerIdentityId string                 `protobuf:"bytes,2,opt,name=owner_identity_id,json=ownerIdentityId,proto3" json:"owner_identity_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SetManufacturerOwnerRequest) Reset() {
+	*x = SetManufacturerOwnerRequest{}
+	mi := &file_admin_v1_admin_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetManufacturerOwnerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetManufacturerOwnerRequest) ProtoMessage() {}
+
+func (x *SetManufacturerOwnerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetManufacturerOwnerRequest.ProtoReflect.Descriptor instead.
+func (*SetManufacturerOwnerRequest) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SetManufacturerOwnerRequest) GetManufacturerId() string {
+	if x != nil {
+		return x.ManufacturerId
+	}
+	return ""
+}
+
+func (x *SetManufacturerOwnerRequest) GetOwnerIdentityId() string {
+	if x != nil {
+		return x.OwnerIdentityId
+	}
+	return ""
+}
+
+type SetManufacturerOwnerResponse struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Manufacturer    *v1.Manufacturer       `protobuf:"bytes,1,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
+	OwnerIdentityId string                 `protobuf:"bytes,2,opt,name=owner_identity_id,json=ownerIdentityId,proto3" json:"owner_identity_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SetManufacturerOwnerResponse) Reset() {
+	*x = SetManufacturerOwnerResponse{}
+	mi := &file_admin_v1_admin_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetManufacturerOwnerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetManufacturerOwnerResponse) ProtoMessage() {}
+
+func (x *SetManufacturerOwnerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetManufacturerOwnerResponse.ProtoReflect.Descriptor instead.
+func (*SetManufacturerOwnerResponse) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SetManufacturerOwnerResponse) GetManufacturer() *v1.Manufacturer {
+	if x != nil {
+		return x.Manufacturer
+	}
+	return nil
+}
+
+func (x *SetManufacturerOwnerResponse) GetOwnerIdentityId() string {
+	if x != nil {
+		return x.OwnerIdentityId
+	}
+	return ""
+}
+
 var File_admin_v1_admin_proto protoreflect.FileDescriptor
 
 const file_admin_v1_admin_proto_rawDesc = "" +
@@ -553,12 +936,44 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\n" +
 	"\b_country\"[\n" +
 	"\x1aCreateManufacturerResponse\x12=\n" +
-	"\fmanufacturer\x18\x01 \x01(\v2\x19.registry.v1.ManufacturerR\fmanufacturer2\xfd\x02\n" +
+	"\fmanufacturer\x18\x01 \x01(\v2\x19.registry.v1.ManufacturerR\fmanufacturer\"\\\n" +
+	"!ReassignSchemaManufacturerRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
+	"\x0fmanufacturer_id\x18\x02 \x01(\tR\x0emanufacturerId\"[\n" +
+	"\"ReassignSchemaManufacturerResponse\x125\n" +
+	"\avariant\x18\x01 \x01(\v2\x1b.registry.v1.ChargerVariantR\avariant\"\xa6\x01\n" +
+	"\x18ListManufacturersRequest\x12\x19\n" +
+	"\x05query\x18\x01 \x01(\tH\x00R\x05query\x88\x01\x01\x12\x1d\n" +
+	"\acountry\x18\x02 \x01(\tH\x01R\acountry\x88\x01\x01\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageTokenB\b\n" +
+	"\x06_queryB\n" +
+	"\n" +
+	"\b_country\"\x96\x01\n" +
+	"\x11AdminManufacturer\x12:\n" +
+	"\asummary\x18\x01 \x01(\v2 .registry.v1.ManufacturerSummaryR\asummary\x12/\n" +
+	"\x11owner_identity_id\x18\x02 \x01(\tH\x00R\x0fownerIdentityId\x88\x01\x01B\x14\n" +
+	"\x12_owner_identity_id\"\xa5\x01\n" +
+	"\x19ListManufacturersResponse\x12A\n" +
+	"\rmanufacturers\x18\x01 \x03(\v2\x1b.admin.v1.AdminManufacturerR\rmanufacturers\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x02 \x01(\x03R\ttotalSize\x12&\n" +
+	"\x0fnext_page_token\x18\x03 \x01(\tR\rnextPageToken\"r\n" +
+	"\x1bSetManufacturerOwnerRequest\x12'\n" +
+	"\x0fmanufacturer_id\x18\x01 \x01(\tR\x0emanufacturerId\x12*\n" +
+	"\x11owner_identity_id\x18\x02 \x01(\tR\x0fownerIdentityId\"\x89\x01\n" +
+	"\x1cSetManufacturerOwnerResponse\x12=\n" +
+	"\fmanufacturer\x18\x01 \x01(\v2\x19.registry.v1.ManufacturerR\fmanufacturer\x12*\n" +
+	"\x11owner_identity_id\x18\x02 \x01(\tR\x0fownerIdentityId2\xbb\x05\n" +
 	"\fAdminService\x12P\n" +
 	"\rSearchSchemas\x12\x1e.admin.v1.SearchSchemasRequest\x1a\x1f.admin.v1.SearchSchemasResponse\x12_\n" +
 	"\x12UpdateSchemaStatus\x12#.admin.v1.UpdateSchemaStatusRequest\x1a$.admin.v1.UpdateSchemaStatusResponse\x12Y\n" +
 	"\x10UpdateSchemaSpec\x12!.admin.v1.UpdateSchemaSpecRequest\x1a\".admin.v1.UpdateSchemaSpecResponse\x12_\n" +
-	"\x12CreateManufacturer\x12#.admin.v1.CreateManufacturerRequest\x1a$.admin.v1.CreateManufacturerResponseB\x94\x01\n" +
+	"\x12CreateManufacturer\x12#.admin.v1.CreateManufacturerRequest\x1a$.admin.v1.CreateManufacturerResponse\x12\\\n" +
+	"\x11ListManufacturers\x12\".admin.v1.ListManufacturersRequest\x1a#.admin.v1.ListManufacturersResponse\x12w\n" +
+	"\x1aReassignSchemaManufacturer\x12+.admin.v1.ReassignSchemaManufacturerRequest\x1a,.admin.v1.ReassignSchemaManufacturerResponse\x12e\n" +
+	"\x14SetManufacturerOwner\x12%.admin.v1.SetManufacturerOwnerRequest\x1a&.admin.v1.SetManufacturerOwnerResponseB\x94\x01\n" +
 	"\fcom.admin.v1B\n" +
 	"AdminProtoP\x01Z7github.com/ChargePi/oecs-hub/gen/proto/admin/v1;adminv1\xa2\x02\x03AXX\xaa\x02\bAdmin.V1\xca\x02\bAdmin\\V1\xe2\x02\x14Admin\\V1\\GPBMetadata\xea\x02\tAdmin::V1b\x06proto3"
 
@@ -574,46 +989,64 @@ func file_admin_v1_admin_proto_rawDescGZIP() []byte {
 	return file_admin_v1_admin_proto_rawDescData
 }
 
-var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_admin_v1_admin_proto_goTypes = []any{
-	(*SearchSchemasRequest)(nil),       // 0: admin.v1.SearchSchemasRequest
-	(*SearchSchemasResponse)(nil),      // 1: admin.v1.SearchSchemasResponse
-	(*UpdateSchemaStatusRequest)(nil),  // 2: admin.v1.UpdateSchemaStatusRequest
-	(*UpdateSchemaStatusResponse)(nil), // 3: admin.v1.UpdateSchemaStatusResponse
-	(*UpdateSchemaSpecRequest)(nil),    // 4: admin.v1.UpdateSchemaSpecRequest
-	(*UpdateSchemaSpecResponse)(nil),   // 5: admin.v1.UpdateSchemaSpecResponse
-	(*CreateManufacturerRequest)(nil),  // 6: admin.v1.CreateManufacturerRequest
-	(*CreateManufacturerResponse)(nil), // 7: admin.v1.CreateManufacturerResponse
-	(v1.ChargerType)(0),                // 8: registry.v1.ChargerType
-	(v1.ConnectorType)(0),              // 9: registry.v1.ConnectorType
-	(v1.SubmissionStatus)(0),           // 10: registry.v1.SubmissionStatus
-	(*v1.ChargerVariant)(nil),          // 11: registry.v1.ChargerVariant
-	(*v1.Contact)(nil),                 // 12: registry.v1.Contact
-	(*v1.Manufacturer)(nil),            // 13: registry.v1.Manufacturer
+	(*SearchSchemasRequest)(nil),               // 0: admin.v1.SearchSchemasRequest
+	(*SearchSchemasResponse)(nil),              // 1: admin.v1.SearchSchemasResponse
+	(*UpdateSchemaStatusRequest)(nil),          // 2: admin.v1.UpdateSchemaStatusRequest
+	(*UpdateSchemaStatusResponse)(nil),         // 3: admin.v1.UpdateSchemaStatusResponse
+	(*UpdateSchemaSpecRequest)(nil),            // 4: admin.v1.UpdateSchemaSpecRequest
+	(*UpdateSchemaSpecResponse)(nil),           // 5: admin.v1.UpdateSchemaSpecResponse
+	(*CreateManufacturerRequest)(nil),          // 6: admin.v1.CreateManufacturerRequest
+	(*CreateManufacturerResponse)(nil),         // 7: admin.v1.CreateManufacturerResponse
+	(*ReassignSchemaManufacturerRequest)(nil),  // 8: admin.v1.ReassignSchemaManufacturerRequest
+	(*ReassignSchemaManufacturerResponse)(nil), // 9: admin.v1.ReassignSchemaManufacturerResponse
+	(*ListManufacturersRequest)(nil),           // 10: admin.v1.ListManufacturersRequest
+	(*AdminManufacturer)(nil),                  // 11: admin.v1.AdminManufacturer
+	(*ListManufacturersResponse)(nil),          // 12: admin.v1.ListManufacturersResponse
+	(*SetManufacturerOwnerRequest)(nil),        // 13: admin.v1.SetManufacturerOwnerRequest
+	(*SetManufacturerOwnerResponse)(nil),       // 14: admin.v1.SetManufacturerOwnerResponse
+	(v1.ChargerType)(0),                        // 15: registry.v1.ChargerType
+	(v1.ConnectorType)(0),                      // 16: registry.v1.ConnectorType
+	(v1.SubmissionStatus)(0),                   // 17: registry.v1.SubmissionStatus
+	(*v1.ChargerVariant)(nil),                  // 18: registry.v1.ChargerVariant
+	(*v1.Contact)(nil),                         // 19: registry.v1.Contact
+	(*v1.Manufacturer)(nil),                    // 20: registry.v1.Manufacturer
+	(*v1.ManufacturerSummary)(nil),             // 21: registry.v1.ManufacturerSummary
 }
 var file_admin_v1_admin_proto_depIdxs = []int32{
-	8,  // 0: admin.v1.SearchSchemasRequest.charger_type:type_name -> registry.v1.ChargerType
-	9,  // 1: admin.v1.SearchSchemasRequest.connector_types:type_name -> registry.v1.ConnectorType
-	10, // 2: admin.v1.SearchSchemasRequest.status:type_name -> registry.v1.SubmissionStatus
-	11, // 3: admin.v1.SearchSchemasResponse.variants:type_name -> registry.v1.ChargerVariant
-	10, // 4: admin.v1.UpdateSchemaStatusRequest.status:type_name -> registry.v1.SubmissionStatus
-	11, // 5: admin.v1.UpdateSchemaStatusResponse.variant:type_name -> registry.v1.ChargerVariant
-	11, // 6: admin.v1.UpdateSchemaSpecResponse.variant:type_name -> registry.v1.ChargerVariant
-	12, // 7: admin.v1.CreateManufacturerRequest.contact:type_name -> registry.v1.Contact
-	13, // 8: admin.v1.CreateManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
-	0,  // 9: admin.v1.AdminService.SearchSchemas:input_type -> admin.v1.SearchSchemasRequest
-	2,  // 10: admin.v1.AdminService.UpdateSchemaStatus:input_type -> admin.v1.UpdateSchemaStatusRequest
-	4,  // 11: admin.v1.AdminService.UpdateSchemaSpec:input_type -> admin.v1.UpdateSchemaSpecRequest
-	6,  // 12: admin.v1.AdminService.CreateManufacturer:input_type -> admin.v1.CreateManufacturerRequest
-	1,  // 13: admin.v1.AdminService.SearchSchemas:output_type -> admin.v1.SearchSchemasResponse
-	3,  // 14: admin.v1.AdminService.UpdateSchemaStatus:output_type -> admin.v1.UpdateSchemaStatusResponse
-	5,  // 15: admin.v1.AdminService.UpdateSchemaSpec:output_type -> admin.v1.UpdateSchemaSpecResponse
-	7,  // 16: admin.v1.AdminService.CreateManufacturer:output_type -> admin.v1.CreateManufacturerResponse
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	15, // 0: admin.v1.SearchSchemasRequest.charger_type:type_name -> registry.v1.ChargerType
+	16, // 1: admin.v1.SearchSchemasRequest.connector_types:type_name -> registry.v1.ConnectorType
+	17, // 2: admin.v1.SearchSchemasRequest.status:type_name -> registry.v1.SubmissionStatus
+	18, // 3: admin.v1.SearchSchemasResponse.variants:type_name -> registry.v1.ChargerVariant
+	17, // 4: admin.v1.UpdateSchemaStatusRequest.status:type_name -> registry.v1.SubmissionStatus
+	18, // 5: admin.v1.UpdateSchemaStatusResponse.variant:type_name -> registry.v1.ChargerVariant
+	18, // 6: admin.v1.UpdateSchemaSpecResponse.variant:type_name -> registry.v1.ChargerVariant
+	19, // 7: admin.v1.CreateManufacturerRequest.contact:type_name -> registry.v1.Contact
+	20, // 8: admin.v1.CreateManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
+	18, // 9: admin.v1.ReassignSchemaManufacturerResponse.variant:type_name -> registry.v1.ChargerVariant
+	21, // 10: admin.v1.AdminManufacturer.summary:type_name -> registry.v1.ManufacturerSummary
+	11, // 11: admin.v1.ListManufacturersResponse.manufacturers:type_name -> admin.v1.AdminManufacturer
+	20, // 12: admin.v1.SetManufacturerOwnerResponse.manufacturer:type_name -> registry.v1.Manufacturer
+	0,  // 13: admin.v1.AdminService.SearchSchemas:input_type -> admin.v1.SearchSchemasRequest
+	2,  // 14: admin.v1.AdminService.UpdateSchemaStatus:input_type -> admin.v1.UpdateSchemaStatusRequest
+	4,  // 15: admin.v1.AdminService.UpdateSchemaSpec:input_type -> admin.v1.UpdateSchemaSpecRequest
+	6,  // 16: admin.v1.AdminService.CreateManufacturer:input_type -> admin.v1.CreateManufacturerRequest
+	10, // 17: admin.v1.AdminService.ListManufacturers:input_type -> admin.v1.ListManufacturersRequest
+	8,  // 18: admin.v1.AdminService.ReassignSchemaManufacturer:input_type -> admin.v1.ReassignSchemaManufacturerRequest
+	13, // 19: admin.v1.AdminService.SetManufacturerOwner:input_type -> admin.v1.SetManufacturerOwnerRequest
+	1,  // 20: admin.v1.AdminService.SearchSchemas:output_type -> admin.v1.SearchSchemasResponse
+	3,  // 21: admin.v1.AdminService.UpdateSchemaStatus:output_type -> admin.v1.UpdateSchemaStatusResponse
+	5,  // 22: admin.v1.AdminService.UpdateSchemaSpec:output_type -> admin.v1.UpdateSchemaSpecResponse
+	7,  // 23: admin.v1.AdminService.CreateManufacturer:output_type -> admin.v1.CreateManufacturerResponse
+	12, // 24: admin.v1.AdminService.ListManufacturers:output_type -> admin.v1.ListManufacturersResponse
+	9,  // 25: admin.v1.AdminService.ReassignSchemaManufacturer:output_type -> admin.v1.ReassignSchemaManufacturerResponse
+	14, // 26: admin.v1.AdminService.SetManufacturerOwner:output_type -> admin.v1.SetManufacturerOwnerResponse
+	20, // [20:27] is the sub-list for method output_type
+	13, // [13:20] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_admin_v1_admin_proto_init() }
@@ -623,13 +1056,15 @@ func file_admin_v1_admin_proto_init() {
 	}
 	file_admin_v1_admin_proto_msgTypes[0].OneofWrappers = []any{}
 	file_admin_v1_admin_proto_msgTypes[6].OneofWrappers = []any{}
+	file_admin_v1_admin_proto_msgTypes[10].OneofWrappers = []any{}
+	file_admin_v1_admin_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_admin_v1_admin_proto_rawDesc), len(file_admin_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"strings"
 
 	adminv1 "github.com/ChargePi/oecs-hub/gen/proto/admin/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
@@ -19,12 +20,15 @@ type AdminChargerService interface {
 	Search(ctx context.Context, filters charger.SearchFilters, limit, offset uint32) ([]*charger.Charger, int64, error)
 	ChangeStatus(ctx context.Context, id uuid.UUID, status charger.Status) (*charger.Charger, error)
 	AdminEditSpecification(ctx context.Context, id uuid.UUID, raw []byte) (*charger.Charger, error)
+	ReassignManufacturer(ctx context.Context, id, manufacturerID uuid.UUID) (*charger.Charger, error)
 }
 
 // AdminManufacturerService is the subset of manufacturer.Service the admin handler
 // depends on.
 type AdminManufacturerService interface {
 	Create(ctx context.Context, m *manufacturer.Manufacturer) (*manufacturer.Manufacturer, error)
+	List(ctx context.Context, query, country *string, limit, offset uint32) ([]*manufacturer.Summary, int64, error)
+	SetOwner(ctx context.Context, id, ownerIdentityID uuid.UUID) (*manufacturer.Manufacturer, error)
 }
 
 type AdminHandler struct {
@@ -178,22 +182,123 @@ func (h *AdminHandler) UpdateSchemaSpec(ctx context.Context, req *adminv1.Update
 }
 
 func (h *AdminHandler) CreateManufacturer(ctx context.Context, req *adminv1.CreateManufacturerRequest) (*adminv1.CreateManufacturerResponse, error) {
-	if req.GetName() == "" {
+	name := strings.TrimSpace(req.GetName())
+	if name == "" {
 		return nil, status.Error(codes.InvalidArgument, "name is required")
 	}
 
 	m := &manufacturer.Manufacturer{
-		Name:    req.GetName(),
+		Name:    name,
+		Country: strings.TrimSpace(req.GetCountry()),
 		Contact: contactToDomain(req.GetContact()),
-	}
-	if req.Country != nil {
-		m.Country = req.GetCountry()
 	}
 
 	created, err := h.manufacturer.Create(ctx, m)
-	if err != nil {
+	switch {
+	case errors.Is(err, manufacturer.ErrAlreadyExists):
+		return nil, status.Error(codes.AlreadyExists, "a manufacturer with this name and country already exists")
+	case err != nil:
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &adminv1.CreateManufacturerResponse{Manufacturer: manufacturerToProto(created)}, nil
+}
+
+func (h *AdminHandler) ListManufacturers(ctx context.Context, req *adminv1.ListManufacturersRequest) (*adminv1.ListManufacturersResponse, error) {
+	offset, err := pagination.DecodeOffset(req.GetPageToken())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid page_token")
+	}
+
+	limit := pagination.ClampPageSize(int(req.GetPageSize()), manufacturer.DefaultPageSize, manufacturer.MaxPageSize)
+
+	summaries, total, err := h.manufacturer.List(ctx, req.Query, req.Country, limit, offset)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &adminv1.ListManufacturersResponse{
+		Manufacturers: adminManufacturersToProto(summaries),
+		TotalSize:     total,
+		NextPageToken: pagination.NextToken(offset, len(summaries), total),
+	}, nil
+}
+
+// SetManufacturerOwner links a manufacturer to a manufacturer account's Kratos identity,
+// replacing any current owner.
+func (h *AdminHandler) SetManufacturerOwner(ctx context.Context, req *adminv1.SetManufacturerOwnerRequest) (*adminv1.SetManufacturerOwnerResponse, error) {
+	id, err := uuid.Parse(req.GetManufacturerId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid manufacturer_id")
+	}
+
+	ownerIdentityID, err := uuid.Parse(req.GetOwnerIdentityId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "owner_identity_id is required and must be a valid id")
+	}
+
+	m, err := h.manufacturer.SetOwner(ctx, id, ownerIdentityID)
+	switch {
+	case errors.Is(err, manufacturer.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "manufacturer not found")
+	case errors.Is(err, manufacturer.ErrOwnershipConflict):
+		return nil, status.Error(codes.FailedPrecondition, "this account already owns a different manufacturer")
+	case err != nil:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &adminv1.SetManufacturerOwnerResponse{
+		Manufacturer:    manufacturerToProto(m),
+		OwnerIdentityId: ownerIdentityID.String(),
+	}, nil
+}
+
+func adminManufacturersToProto(summaries []*manufacturer.Summary) []*adminv1.AdminManufacturer {
+	out := make([]*adminv1.AdminManufacturer, len(summaries))
+	for i, s := range summaries {
+		out[i] = &adminv1.AdminManufacturer{
+			Summary:         manufacturerSummaryToProto(s),
+			OwnerIdentityId: ownerIdentityIDToProto(s.Manufacturer.OwnerIdentityID),
+		}
+	}
+
+	return out
+}
+
+func ownerIdentityIDToProto(id *uuid.UUID) *string {
+	if id == nil {
+		return nil
+	}
+
+	s := id.String()
+
+	return &s
+}
+
+// ReassignSchemaManufacturer links a submission to a different manufacturer regardless
+// of its status, rewriting the spec's manufacturer name/country to match.
+func (h *AdminHandler) ReassignSchemaManufacturer(ctx context.Context, req *adminv1.ReassignSchemaManufacturerRequest) (*adminv1.ReassignSchemaManufacturerResponse, error) {
+	id, err := uuid.Parse(req.GetId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid id")
+	}
+
+	manufacturerID, err := uuid.Parse(req.GetManufacturerId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid manufacturer_id")
+	}
+
+	c, err := h.charger.ReassignManufacturer(ctx, id, manufacturerID)
+	switch {
+	case errors.Is(err, charger.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "charger not found")
+	case errors.Is(err, manufacturer.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "manufacturer not found")
+	case errors.Is(err, charger.ErrInvalidSpec):
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	case err != nil:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &adminv1.ReassignSchemaManufacturerResponse{Variant: chargerToProto(c)}, nil
 }
