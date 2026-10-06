@@ -54,9 +54,52 @@ message CreateManufacturerResponse {
   registry.v1.Manufacturer manufacturer = 1;
 }
 
+message ReassignSchemaManufacturerRequest {
+  string id = 1;
+  string manufacturer_id = 2;
+}
+
+message ReassignSchemaManufacturerResponse {
+  registry.v1.ChargerVariant variant = 1;
+}
+
+message ListManufacturersRequest {
+  optional string query = 1;
+  optional string country = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message AdminManufacturer {
+  registry.v1.ManufacturerSummary summary = 1;
+  // Kratos identity of the manufacturer account that owns this manufacturer, if any.
+  optional string owner_identity_id = 2;
+}
+
+message ListManufacturersResponse {
+  repeated AdminManufacturer manufacturers = 1;
+  int64 total_size = 2;
+  string next_page_token = 3;
+}
+
+// Links a manufacturer to a manufacturer account, replacing any current owner. An owner
+// can be replaced but never removed.
+message SetManufacturerOwnerRequest {
+  string manufacturer_id = 1;
+  string owner_identity_id = 2;
+}
+
+message SetManufacturerOwnerResponse {
+  registry.v1.Manufacturer manufacturer = 1;
+  string owner_identity_id = 2;
+}
+
 service AdminService {
   rpc SearchSchemas(SearchSchemasRequest) returns (SearchSchemasResponse);
   rpc UpdateSchemaStatus(UpdateSchemaStatusRequest) returns (UpdateSchemaStatusResponse);
   rpc UpdateSchemaSpec(UpdateSchemaSpecRequest) returns (UpdateSchemaSpecResponse);
   rpc CreateManufacturer(CreateManufacturerRequest) returns (CreateManufacturerResponse);
+  rpc ListManufacturers(ListManufacturersRequest) returns (ListManufacturersResponse);
+  rpc ReassignSchemaManufacturer(ReassignSchemaManufacturerRequest) returns (ReassignSchemaManufacturerResponse);
+  rpc SetManufacturerOwner(SetManufacturerOwnerRequest) returns (SetManufacturerOwnerResponse);
 }

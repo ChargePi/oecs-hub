@@ -9,6 +9,9 @@ import (
 
 var ErrNotFound = errors.New("manufacturer not found")
 
+// ErrAlreadyExists is returned by Create when (name, country) is already taken.
+var ErrAlreadyExists = errors.New("manufacturer already exists")
+
 // ErrOwnershipConflict is returned by FindOrCreateForIdentity when the (name, country)
 // requested is already owned by a different identity - the caller can't silently attach
 // to or overwrite someone else's manufacturer row.
@@ -24,17 +27,20 @@ const (
 type Repository interface {
 	// Get retrieves a manufacturer by ID.
 	Get(ctx context.Context, id uuid.UUID) (*Manufacturer, error)
-	// FindOrCreate finds a manufacturer by (name, country) or creates one from m if none
-	// exists. On return, m.ID (and other server-assigned fields) are populated. Used only
-	// for admin-authored rows (no owning identity) - see FindOrCreateForIdentity for the
-	// self-service path.
-	FindOrCreate(ctx context.Context, m *Manufacturer) error
+	// Create inserts m as an unowned, admin-authored manufacturer. Returns
+	// ErrAlreadyExists if (name, country) is taken. On return, m.ID (and other
+	// server-assigned fields) are populated.
+	Create(ctx context.Context, m *Manufacturer) error
 	// FindOrCreateForIdentity resolves (name, country) to a manufacturer row owned by
 	// ownerIdentityID: reuses a row this identity already owns, claims an unowned row
 	// matching (name, country), creates a new owned row, or returns ErrOwnershipConflict
 	// if (name, country) is already owned by a different identity. On return, m.ID (and
 	// other server-assigned fields) are populated.
 	FindOrCreateForIdentity(ctx context.Context, ownerIdentityID uuid.UUID, m *Manufacturer) error
+	// SetOwner links id to ownerIdentityID, replacing any current owner. Returns
+	// ErrNotFound if id doesn't exist, or ErrOwnershipConflict if ownerIdentityID already
+	// owns a different manufacturer.
+	SetOwner(ctx context.Context, id, ownerIdentityID uuid.UUID) (*Manufacturer, error)
 	// List returns manufacturers matching query/country, paginated, together with
 	// product/variant counts derived from verified charger_variants. Returns the page
 	// of results plus the total count of matching manufacturers, ignoring limit/offset.

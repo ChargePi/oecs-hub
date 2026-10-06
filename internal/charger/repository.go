@@ -66,6 +66,10 @@ type Repository interface {
 	// owner or status. Returns ErrNotFound if id doesn't exist. Used by the admin
 	// UpdateSchemaSpec RPC.
 	AdminUpdateSpec(ctx context.Context, id uuid.UUID, c *Charger) (*Charger, error)
+	// Reassign overwrites id's spec, extracted fields and manufacturer link with c's
+	// regardless of owner or status. Returns ErrNotFound if id doesn't exist. Used by
+	// the admin ReassignSchemaManufacturer RPC.
+	Reassign(ctx context.Context, id uuid.UUID, c *Charger) (*Charger, error)
 	// CancelSubmission sets id's Status to StatusCancelled, but only while id is still
 	// owned by submitterIdentityID and has Status == StatusSubmitted. Returns ErrNotFound
 	// otherwise, same ambiguity as UpdateSpec. Used by the manufacturer self-service

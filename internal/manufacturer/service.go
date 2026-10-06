@@ -75,14 +75,17 @@ func (s *Service) List(ctx context.Context, query, country *string, limit, offse
 	return summaries, total, nil
 }
 
-// Create creates (or idempotently returns) the manufacturer described by m, used by the
-// admin CreateManufacturer RPC. Also upserts the corresponding Memgraph node.
+// Create creates the admin-authored manufacturer described by m and its Memgraph node.
+// Returns ErrAlreadyExists if (name, country) is taken.
 func (s *Service) Create(ctx context.Context, m *Manufacturer) (*Manufacturer, error) {
 	ctx, span := tracer.Start(ctx, "manufacturer.Create", trace.WithAttributes(nameAttr(m.Name)))
 	defer span.End()
 
-	err := s.repo.FindOrCreate(ctx, m)
-	if err != nil {
+	err := s.repo.Create(ctx, m)
+	switch {
+	case errors.Is(err, ErrAlreadyExists):
+		return nil, fmt.Errorf("create manufacturer: %w", err)
+	case err != nil:
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 
@@ -97,19 +100,31 @@ func (s *Service) Create(ctx context.Context, m *Manufacturer) (*Manufacturer, e
 		return nil, fmt.Errorf("upsert manufacturer graph node: %w", err)
 	}
 
+	_ = s.cache.Set(ctx, m)
+
 	return m, nil
 }
 
-// ResolveID resolves (name, country) to a manufacturer ID, creating the manufacturer -
-// in Postgres and in the graph projection - if it doesn't already exist. Used by
-// charger.Service when a submitted spec is verified.
-func (s *Service) ResolveID(ctx context.Context, name, country string) (uuid.UUID, error) {
-	m, err := s.Create(ctx, &Manufacturer{Name: name, Country: country})
-	if err != nil {
-		return uuid.Nil, err
+// SetOwner links id to ownerIdentityID, replacing any current owner. Returns
+// ErrNotFound or ErrOwnershipConflict - see Repository.SetOwner.
+func (s *Service) SetOwner(ctx context.Context, id, ownerIdentityID uuid.UUID) (*Manufacturer, error) {
+	ctx, span := tracer.Start(ctx, "manufacturer.SetOwner", trace.WithAttributes(idAttr(id)))
+	defer span.End()
+
+	m, err := s.repo.SetOwner(ctx, id, ownerIdentityID)
+	switch {
+	case errors.Is(err, ErrNotFound), errors.Is(err, ErrOwnershipConflict):
+		return nil, fmt.Errorf("set manufacturer owner: %w", err)
+	case err != nil:
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("set manufacturer owner: %w", err)
 	}
 
-	return m.ID, nil
+	_ = s.cache.Delete(ctx, id)
+
+	return m, nil
 }
 
 // ResolveIDForIdentity resolves (name, country) to a manufacturer ID owned by

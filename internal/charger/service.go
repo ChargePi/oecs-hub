@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
@@ -15,16 +16,18 @@ import (
 var tracer = otel.Tracer("charger.service")
 
 // ManufacturerResolver resolves a manufacturer name/country to an ID, creating or
-// claiming the manufacturer - owned by ownerIdentityID - if needed. Implemented by
-// manufacturer.Service.
+// claiming the manufacturer - owned by ownerIdentityID - if needed, and looks
+// manufacturers up by ID. Implemented by manufacturer.Service.
 type ManufacturerResolver interface {
 	ResolveIDForIdentity(ctx context.Context, ownerIdentityID uuid.UUID, name, country string) (uuid.UUID, error)
+	Get(ctx context.Context, id uuid.UUID) (*manufacturer.Manufacturer, error)
 }
 
 // GraphProjector upserts/removes the read-side Memgraph projection. Implemented by
 // internal/graph.Client.
 type GraphProjector interface {
 	UpsertVariant(ctx context.Context, manufacturerID uuid.UUID, c *Charger) error
+	MoveVariant(ctx context.Context, manufacturerID uuid.UUID, c *Charger) error
 	RemoveVariant(ctx context.Context, variantID uuid.UUID) error
 }
 
@@ -153,6 +156,65 @@ func (s *Service) AdminEditSpecification(ctx context.Context, id uuid.UUID, raw 
 			span.SetStatus(codes.Error, err.Error())
 
 			return nil, fmt.Errorf("upsert variant graph node: %w", err)
+		}
+	}
+
+	return updated, nil
+}
+
+// ReassignManufacturer links id to manufacturerID regardless of its status, rewriting
+// the spec's manufacturer name/country to match. If id is verified, its Memgraph variant
+// is moved under the new manufacturer. Returns an error wrapping ErrNotFound or
+// manufacturer.ErrNotFound if either doesn't exist.
+func (s *Service) ReassignManufacturer(ctx context.Context, id, manufacturerID uuid.UUID) (*Charger, error) {
+	ctx, span := tracer.Start(ctx, "charger.ReassignManufacturer", trace.WithAttributes(idAttr(id)))
+	defer span.End()
+
+	updated, err := s.reassignManufacturer(ctx, id, manufacturerID)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return nil, fmt.Errorf("reassign manufacturer: %w", err)
+	}
+
+	return updated, nil
+}
+
+func (s *Service) reassignManufacturer(ctx context.Context, id, manufacturerID uuid.UUID) (*Charger, error) {
+	m, err := s.manufacturer.Get(ctx, manufacturerID)
+	if err != nil {
+		return nil, fmt.Errorf("get manufacturer: %w", err)
+	}
+
+	existing, err := s.repo.GetForReview(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get charger for review: %w", err)
+	}
+
+	raw, err := withManufacturer(existing.Spec, m.Name, m.Country)
+	if err != nil {
+		return nil, fmt.Errorf("rewrite spec manufacturer: %w", err)
+	}
+
+	c, err := s.buildFromSpec(raw)
+	if err != nil {
+		return nil, fmt.Errorf("build charger from spec: %w", err)
+	}
+
+	c.ManufacturerID = &m.ID
+
+	updated, err := s.repo.Reassign(ctx, id, c)
+	if err != nil {
+		return nil, fmt.Errorf("update charger manufacturer: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, id)
+
+	if updated.Status == StatusVerified {
+		err := s.graph.MoveVariant(ctx, m.ID, updated)
+		if err != nil {
+			return nil, fmt.Errorf("move variant graph node: %w", err)
 		}
 	}
 
@@ -305,7 +367,10 @@ func (s *Service) ChangeStatus(ctx context.Context, id uuid.UUID, status Status)
 
 	var manufacturerID *uuid.UUID
 
-	if status == StatusVerified {
+	switch {
+	case status == StatusVerified && existing.ManufacturerID != nil:
+		manufacturerID = existing.ManufacturerID
+	case status == StatusVerified:
 		mID, err := s.manufacturer.ResolveIDForIdentity(ctx, existing.SubmittedByIdentityID, existing.ManufacturerName, existing.ManufacturerCountry)
 		if err != nil {
 			span.RecordError(err)

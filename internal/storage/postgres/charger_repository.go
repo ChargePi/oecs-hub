@@ -192,8 +192,15 @@ func (r *ChargerRepository) AdminUpdateSpec(ctx context.Context, id uuid.UUID, c
 	return r.updateSpec(ctx, id, c)
 }
 
+// Reassign overwrites id's spec, extracted fields and manufacturer link with c's
+// regardless of owner or status.
+func (r *ChargerRepository) Reassign(ctx context.Context, id uuid.UUID, c *charger.Charger) (*charger.Charger, error) {
+	return r.updateSpec(ctx, id, c)
+}
+
 // updateSpec overwrites id's spec and extracted fields with c's, further narrowed by
-// scopes. Returns charger.ErrNotFound if no row matched.
+// scopes. The manufacturer link is only overwritten when c.ManufacturerID is set.
+// Returns charger.ErrNotFound if no row matched.
 func (r *ChargerRepository) updateSpec(ctx context.Context, id uuid.UUID, c *charger.Charger, scopes ...func(*gorm.DB) *gorm.DB) (*charger.Charger, error) {
 	entity := chargerToEntity(c)
 
@@ -213,6 +220,9 @@ func (r *ChargerRepository) updateSpec(ctx context.Context, id uuid.UUID, c *cha
 		"schema_version":       entity.SchemaVersion,
 		"spec":                 entity.Spec,
 		"updated_at":           gorm.Expr("NOW()"),
+	}
+	if c.ManufacturerID != nil {
+		updates["manufacturer_id"] = *c.ManufacturerID
 	}
 
 	result := r.db.WithContext(ctx).Model(&chargerVariantEntity{}).

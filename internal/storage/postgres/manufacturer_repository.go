@@ -8,6 +8,7 @@ import (
 
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -33,15 +34,23 @@ func (r *ManufacturerRepository) Get(ctx context.Context, id uuid.UUID) (*manufa
 	return manufacturerToDomain(&entity), nil
 }
 
-// FindOrCreate finds a manufacturer by (name, country) or creates one from m.
-func (r *ManufacturerRepository) FindOrCreate(ctx context.Context, m *manufacturer.Manufacturer) error {
+const uniqueViolation = "23505"
+
+func isUniqueViolation(err error) bool {
+	var pgErr *pgconn.PgError
+
+	return errors.As(err, &pgErr) && pgErr.Code == uniqueViolation
+}
+
+func (r *ManufacturerRepository) Create(ctx context.Context, m *manufacturer.Manufacturer) error {
 	entity := manufacturerToEntity(m)
 
-	err := r.db.WithContext(ctx).
-		Where("name = ? AND country IS NOT DISTINCT FROM ?", m.Name, strPtrOrNil(m.Country)).
-		FirstOrCreate(entity).Error
-	if err != nil {
-		return fmt.Errorf("find or create manufacturer: %w", err)
+	err := r.db.WithContext(ctx).Create(entity).Error
+	switch {
+	case isUniqueViolation(err):
+		return manufacturer.ErrAlreadyExists
+	case err != nil:
+		return fmt.Errorf("create manufacturer: %w", err)
 	}
 
 	*m = *manufacturerToDomain(entity)
@@ -100,35 +109,81 @@ func (r *ManufacturerRepository) FindOrCreateForIdentity(ctx context.Context, ow
 	})
 }
 
+// SetOwner links id to ownerIdentityID, replacing any current owner.
+func (r *ManufacturerRepository) SetOwner(ctx context.Context, id, ownerIdentityID uuid.UUID) (*manufacturer.Manufacturer, error) {
+	var entity manufacturerEntity
+
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		err := tx.First(&entity, "id = ?", id).Error
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return manufacturer.ErrNotFound
+		case err != nil:
+			return fmt.Errorf("get manufacturer: %w", err)
+		}
+
+		var owned int64
+
+		err = tx.Model(&manufacturerEntity{}).
+			Where("owner_identity_id = ? AND id <> ?", ownerIdentityID, id).
+			Count(&owned).Error
+		switch {
+		case err != nil:
+			return fmt.Errorf("count manufacturers owned by identity: %w", err)
+		case owned > 0:
+			return manufacturer.ErrOwnershipConflict
+		}
+
+		err = tx.Model(&entity).Update("owner_identity_id", ownerIdentityID).Error
+		switch {
+		case isUniqueViolation(err):
+			return manufacturer.ErrOwnershipConflict
+		case err != nil:
+			return fmt.Errorf("update manufacturer owner: %w", err)
+		}
+
+		entity.OwnerIdentityID = &ownerIdentityID
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("set manufacturer owner: %w", err)
+	}
+
+	return manufacturerToDomain(&entity), nil
+}
+
 // manufacturerListRow is deliberately a flat struct (not an embedded manufacturerEntity)
 // - gorm does not reliably scan into an embedded struct's promoted fields when the
 // query is built from a different .Model() type than the destination slice's element
 // type, as happens here (base is modeled on manufacturerEntity, scanned into this type).
 type manufacturerListRow struct {
-	ID             uuid.UUID
-	Name           string
-	Country        *string
-	ContactName    *string
-	ContactEmail   *string
-	ContactPhone   *string
-	ContactWebsite *string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	ProductCount   int64
-	VariantCount   int64
+	ID              uuid.UUID
+	OwnerIdentityID *uuid.UUID
+	Name            string
+	Country         *string
+	ContactName     *string
+	ContactEmail    *string
+	ContactPhone    *string
+	ContactWebsite  *string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	ProductCount    int64
+	VariantCount    int64
 }
 
 func (row *manufacturerListRow) entity() *manufacturerEntity {
 	return &manufacturerEntity{
-		ID:             row.ID,
-		Name:           row.Name,
-		Country:        row.Country,
-		ContactName:    row.ContactName,
-		ContactEmail:   row.ContactEmail,
-		ContactPhone:   row.ContactPhone,
-		ContactWebsite: row.ContactWebsite,
-		CreatedAt:      row.CreatedAt,
-		UpdatedAt:      row.UpdatedAt,
+		ID:              row.ID,
+		OwnerIdentityID: row.OwnerIdentityID,
+		Name:            row.Name,
+		Country:         row.Country,
+		ContactName:     row.ContactName,
+		ContactEmail:    row.ContactEmail,
+		ContactPhone:    row.ContactPhone,
+		ContactWebsite:  row.ContactWebsite,
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
 	}
 }
 
