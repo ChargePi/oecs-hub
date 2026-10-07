@@ -41,10 +41,27 @@ type SearchFilters struct {
 	MaxPowerWatts  *float64
 	Statuses       []Status
 	FieldFilters   []FieldFilter
+	Price          *PriceRange
+	Protocols      []ProtocolFilter
 	// SubmitterIdentityID, if set, matches only chargers submitted by this Kratos
 	// identity - used by the manufacturer self-service API to scope results to the
 	// caller's own submissions, regardless of status.
 	SubmitterIdentityID *uuid.UUID
+}
+
+// PriceRange matches chargers with a fixed MSRP in Currency between Min and Max (each
+// bound optional).
+type PriceRange struct {
+	Currency string
+	Min      *float64
+	Max      *float64
+}
+
+// ProtocolFilter matches a software.protocols entry by name and, if Version is set, by
+// version prefix.
+type ProtocolFilter struct {
+	Name    string
+	Version string
 }
 
 type Repository interface {

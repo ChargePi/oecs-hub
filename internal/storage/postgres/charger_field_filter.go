@@ -50,6 +50,60 @@ func fieldFilterPredicate(f charger.FieldFilter) (path string, vars []byte, err 
 	return path, varsJSON, nil
 }
 
+func priceRangePredicate(p charger.PriceRange) (path string, vars []byte, err error) {
+	varValues := map[string]any{"currency": p.Currency}
+	conds := []string{"@.currency == $currency"}
+
+	if p.Min != nil {
+		varValues["min"] = *p.Min
+		conds = append(conds, "@.value >= $min")
+	}
+
+	if p.Max != nil {
+		varValues["max"] = *p.Max
+		conds = append(conds, "@.value <= $max")
+	}
+
+	varsJSON, err := json.Marshal(varValues)
+	if err != nil {
+		return "", nil, fmt.Errorf("marshal price range values: %w", err)
+	}
+
+	path = fmt.Sprintf(`lax $.pricing ? (@.pricingModel == "fixed").prices[*] ? (%s)`, strings.Join(conds, " && "))
+
+	return path, varsJSON, nil
+}
+
+func protocolsPredicate(protocols []charger.ProtocolFilter) (path string, vars []byte, err error) {
+	varValues := make(map[string]any, len(protocols)*4)
+	conds := make([]string, len(protocols))
+
+	for i, p := range protocols {
+		n := fmt.Sprintf("n%d", i)
+		varValues[n] = p.Name
+
+		if p.Version == "" {
+			conds[i] = "@.name == $" + n
+			continue
+		}
+
+		v, dot, colon := fmt.Sprintf("v%d", i), fmt.Sprintf("d%d", i), fmt.Sprintf("c%d", i)
+		varValues[v] = p.Version
+		varValues[dot] = p.Version + "."
+		varValues[colon] = p.Version + ":"
+		conds[i] = fmt.Sprintf("(@.name == $%s && (@.version == $%s || @.version starts with $%s || @.version starts with $%s))", n, v, dot, colon)
+	}
+
+	varsJSON, err := json.Marshal(varValues)
+	if err != nil {
+		return "", nil, fmt.Errorf("marshal protocol filter values: %w", err)
+	}
+
+	path = fmt.Sprintf("lax $.software.protocols ? (%s)", strings.Join(conds, " || "))
+
+	return path, varsJSON, nil
+}
+
 // typedJSONValue best-effort coerces a user-supplied filter value to the JSON type it's
 // likely comparing against, since jsonpath equality is type-sensitive (a JSON boolean
 // never equals the string "true"). OECS enum/string fields don't collide with this - they

@@ -336,6 +336,68 @@ export namespace FieldFilter {
   };
 }
 
+export class ProtocolFilter extends jspb.Message {
+  getName(): string;
+  setName(value: string): ProtocolFilter;
+
+  getVersion(): ProtocolVersion;
+  setVersion(value: ProtocolVersion): ProtocolFilter;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProtocolFilter.AsObject;
+  static toObject(includeInstance: boolean, msg: ProtocolFilter): ProtocolFilter.AsObject;
+  static serializeBinaryToWriter(message: ProtocolFilter, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ProtocolFilter;
+  static deserializeBinaryFromReader(message: ProtocolFilter, reader: jspb.BinaryReader): ProtocolFilter;
+}
+
+export namespace ProtocolFilter {
+  export type AsObject = {
+    name: string;
+    version: ProtocolVersion;
+  };
+}
+
+export class PriceRange extends jspb.Message {
+  getCurrency(): string;
+  setCurrency(value: string): PriceRange;
+
+  getMin(): number;
+  setMin(value: number): PriceRange;
+  hasMin(): boolean;
+  clearMin(): PriceRange;
+
+  getMax(): number;
+  setMax(value: number): PriceRange;
+  hasMax(): boolean;
+  clearMax(): PriceRange;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PriceRange.AsObject;
+  static toObject(includeInstance: boolean, msg: PriceRange): PriceRange.AsObject;
+  static serializeBinaryToWriter(message: PriceRange, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PriceRange;
+  static deserializeBinaryFromReader(message: PriceRange, reader: jspb.BinaryReader): PriceRange;
+}
+
+export namespace PriceRange {
+  export type AsObject = {
+    currency: string;
+    min?: number;
+    max?: number;
+  };
+
+  export enum MinCase {
+    _MIN_NOT_SET = 0,
+    MIN = 2,
+  }
+
+  export enum MaxCase {
+    _MAX_NOT_SET = 0,
+    MAX = 3,
+  }
+}
+
 export class SearchChargersRequest extends jspb.Message {
   getQuery(): string;
   setQuery(value: string): SearchChargersRequest;
@@ -368,6 +430,16 @@ export class SearchChargersRequest extends jspb.Message {
   clearFieldFiltersList(): SearchChargersRequest;
   addFieldFilters(value?: FieldFilter, index?: number): FieldFilter;
 
+  getPrice(): PriceRange | undefined;
+  setPrice(value?: PriceRange): SearchChargersRequest;
+  hasPrice(): boolean;
+  clearPrice(): SearchChargersRequest;
+
+  getProtocolFiltersList(): Array<ProtocolFilter>;
+  setProtocolFiltersList(value: Array<ProtocolFilter>): SearchChargersRequest;
+  clearProtocolFiltersList(): SearchChargersRequest;
+  addProtocolFilters(value?: ProtocolFilter, index?: number): ProtocolFilter;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SearchChargersRequest.AsObject;
   static toObject(includeInstance: boolean, msg: SearchChargersRequest): SearchChargersRequest.AsObject;
@@ -385,6 +457,8 @@ export namespace SearchChargersRequest {
     pageSize: number;
     pageToken: string;
     fieldFiltersList: Array<FieldFilter.AsObject>;
+    price?: PriceRange.AsObject;
+    protocolFiltersList: Array<ProtocolFilter.AsObject>;
   };
 
   export enum QueryCase {
@@ -405,6 +479,11 @@ export namespace SearchChargersRequest {
   export enum MaxPowerKwCase {
     _MAX_POWER_KW_NOT_SET = 0,
     MAX_POWER_KW = 6,
+  }
+
+  export enum PriceCase {
+    _PRICE_NOT_SET = 0,
+    PRICE = 12,
   }
 }
 
@@ -750,4 +829,15 @@ export enum SubmissionStatus {
   SUBMISSION_STATUS_REJECTED = 3,
   SUBMISSION_STATUS_CANCELLED = 4,
   SUBMISSION_STATUS_ARCHIVED = 5,
+}
+export enum ProtocolVersion {
+  PROTOCOL_VERSION_UNSPECIFIED = 0,
+  PROTOCOL_VERSION_OCPP_1_5 = 1,
+  PROTOCOL_VERSION_OCPP_1_6 = 2,
+  PROTOCOL_VERSION_OCPP_2_0_1 = 3,
+  PROTOCOL_VERSION_OCPP_2_1 = 4,
+  PROTOCOL_VERSION_ISO15118_2 = 5,
+  PROTOCOL_VERSION_ISO15118_20 = 6,
+  PROTOCOL_VERSION_MQTT_3_1_1 = 7,
+  PROTOCOL_VERSION_MQTT_5_0 = 8,
 }

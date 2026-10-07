@@ -118,6 +118,34 @@ message FieldFilter {
   repeated string values = 2;
 }
 
+// ProtocolVersion is a well-known protocol version; it must belong to the filter's name.
+enum ProtocolVersion {
+  PROTOCOL_VERSION_UNSPECIFIED = 0;
+  PROTOCOL_VERSION_OCPP_1_5 = 1;
+  PROTOCOL_VERSION_OCPP_1_6 = 2;
+  PROTOCOL_VERSION_OCPP_2_0_1 = 3;
+  PROTOCOL_VERSION_OCPP_2_1 = 4;
+  PROTOCOL_VERSION_ISO15118_2 = 5;
+  PROTOCOL_VERSION_ISO15118_20 = 6;
+  PROTOCOL_VERSION_MQTT_3_1_1 = 7;
+  PROTOCOL_VERSION_MQTT_5_0 = 8;
+}
+
+// ProtocolFilter matches chargers implementing protocol name (an OECS protocolName),
+// optionally narrowed to a version.
+message ProtocolFilter {
+  string name = 1;
+  ProtocolVersion version = 2;
+}
+
+// PriceRange matches chargers with a fixed MSRP published in currency (ISO 4217) within
+// [min, max]; either bound may be omitted.
+message PriceRange {
+  string currency = 1;
+  optional double min = 2;
+  optional double max = 3;
+}
+
 message SearchChargersRequest {
   optional string query = 1;
   optional string manufacturer_id = 2;
@@ -132,6 +160,9 @@ message SearchChargersRequest {
   // (charger type, connector type, country, protocol, etc.) - those no longer have
   // dedicated fields above.
   repeated FieldFilter field_filters = 11;
+  optional PriceRange price = 12;
+  // OR-matched: a charger matches if it implements any of these.
+  repeated ProtocolFilter protocol_filters = 13;
 }
 
 message SearchChargersResponse {

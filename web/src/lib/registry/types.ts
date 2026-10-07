@@ -28,13 +28,29 @@ export interface FieldFilterValue {
 
 /** Filters accepted by RegistryClient.searchChargers. Every OECS-schema-derived facet is
  *  expressed via `fields` (see features/explore-chargers/filter-manifest.ts); query,
- *  manufacturerId, and the power range are dedicated since they aren't OECS field_filters. */
+ *  manufacturerId, and the power and price ranges are dedicated since they aren't OECS
+ *  field_filters. */
 export interface ChargerFilters {
   query?: string
   manufacturerId?: string
   minPowerKw?: number
   maxPowerKw?: number
+  price?: PriceRangeFilter
+  protocols?: ProtocolFilterValue[]
   fields: FieldFilterValue[]
+}
+
+/** Matches chargers implementing `name`, narrowed to a version prefix when `version` is set. */
+export interface ProtocolFilterValue {
+  name: string
+  version?: string
+}
+
+/** Matches chargers with a fixed MSRP in `currency` (ISO 4217) within [min, max]. */
+export interface PriceRangeFilter {
+  currency: string
+  min?: number
+  max?: number
 }
 
 export interface ChargerSearchPage {
