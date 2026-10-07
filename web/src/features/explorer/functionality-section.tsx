@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Reveal } from '@/components/reveal'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 import { cn } from '@/lib/utils'
+import { useChatDrawerStore } from '@/stores/chat-drawer-store'
 
 function StepCard({
   icon: Icon,
@@ -79,16 +80,17 @@ export function FunctionalitySection() {
 
           <Reveal delay={300}>
             {CHAT_ENABLED ? (
-              <Link
-                to="/chat"
-                className="block h-full transition-colors hover:bg-muted/40 rounded-xl"
+              <button
+                type="button"
+                onClick={() => useChatDrawerStore.getState().setOpen(true)}
+                className="block h-full w-full rounded-xl text-left transition-colors hover:bg-muted/40"
               >
                 <StepCard
                   icon={Sparkles}
                   title="Ask the assistant"
                   body="Overwhelmed by the selection? Ask the assistant to help you find the best charger for your use case. Compare, discover and decide with confidence."
                 />
-              </Link>
+              </button>
             ) : (
               <Card className="h-full border-dashed border-border/60 bg-transparent opacity-80">
                 <CardHeader className="flex-row items-center gap-3">
@@ -101,7 +103,8 @@ export function FunctionalitySection() {
                   </div>
                 </CardHeader>
                 <CardContent className="text-sm text-muted-foreground">
-                  Ask the assistant to help you find the best charger for your use case. Coming soon.
+                  Ask the assistant to help you find the best charger for your use case. Coming
+                  soon.
                 </CardContent>
               </Card>
             )}

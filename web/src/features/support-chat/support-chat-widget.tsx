@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
 
 import { useSession } from '@/lib/auth/use-session'
+import { CHAT_ENABLED } from '@/lib/chat/config'
 import {
   CHATWOOT_BASE_URL,
   CHATWOOT_WEBSITE_TOKEN,
@@ -10,8 +11,9 @@ import {
 import { resetSupportChat, type ChatwootColorScheme } from '@/lib/support-chat/chatwoot'
 import { buildChatwootContact } from '@/lib/support-chat/contact'
 import { useSupportChatIdentity } from '@/lib/support-chat/use-support-chat-identity'
+import { useChatDrawerStore } from '@/stores/chat-drawer-store'
 
-const HIDDEN_PATH_PREFIXES = ['/chat', '/auth']
+const HIDDEN_PATH_PREFIXES = ['/auth']
 
 let sdkRequested = false
 
@@ -48,6 +50,8 @@ function ChatwootBridge() {
   const { data: session, isSuccess } = useSession()
   const identity = session?.identity
   const { data: chatIdentity } = useSupportChatIdentity(identity?.id)
+  // Its bubble would sit on top of the assistant drawer's composer.
+  const assistantOpen = useChatDrawerStore((s) => s.open) && CHAT_ENABLED
   const [ready, setReady] = useState(() => !!window.$chatwoot)
   const identifiedAs = useRef<string | null>(null)
 
@@ -88,7 +92,9 @@ function ChatwootBridge() {
     return () => observer.disconnect()
   }, [ready])
 
-  const hidden = HIDDEN_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  const hidden =
+    assistantOpen ||
+    HIDDEN_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))
 
   useEffect(() => {
     if (ready) window.$chatwoot?.toggleBubbleVisibility(hidden ? 'hide' : 'show')

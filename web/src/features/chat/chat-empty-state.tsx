@@ -13,13 +13,13 @@ export function ChatEmptyState({
   const suggestedPrompts = useSuggestedPrompts()
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-xl flex-col items-center justify-center gap-8 px-4 text-center">
+    <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-6 text-center">
       <div className="flex flex-col items-center gap-4">
         <div className="flex size-12 items-center justify-center rounded-full bg-primary/10">
           <Sparkles className="size-6 text-primary" />
         </div>
         <div>
-          <h1 className="font-heading text-xl font-semibold">Start a new conversation</h1>
+          <h2 className="font-heading text-lg font-semibold">Start a new conversation</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Ask me anything about the chargers, get a recommendation for your use case.
           </p>

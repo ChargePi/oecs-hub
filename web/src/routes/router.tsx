@@ -23,14 +23,8 @@ const ManufacturersPage = lazy(() =>
     default: m.ManufacturersPage,
   })),
 )
-const ChatLayout = lazy(() =>
-  import('@/features/chat/chat-layout').then((m) => ({ default: m.ChatLayout })),
-)
-const ChatAccessGate = lazy(() =>
-  import('@/features/chat/chat-access-gate').then((m) => ({ default: m.ChatAccessGate })),
-)
-const ChatDashboardPage = lazy(() =>
-  import('@/features/chat/chat-dashboard-page').then((m) => ({ default: m.ChatDashboardPage })),
+const ChatRedirect = lazy(() =>
+  import('@/features/chat/chat-redirect').then((m) => ({ default: m.ChatRedirect })),
 )
 
 const LoginPage = lazy(() =>
@@ -85,18 +79,13 @@ export const router = createBrowserRouter([
       ...(CHAT_ENABLED
         ? [
             {
-              path: 'chat',
+              // The assistant lives in a drawer now (see ChatDrawer); these just open it.
+              path: 'chat/:conversationId?',
               element: (
                 <RequireAuth>
-                  <ChatAccessGate>
-                    <ChatLayout />
-                  </ChatAccessGate>
+                  <ChatRedirect />
                 </RequireAuth>
               ),
-              children: [
-                { index: true, element: <ChatDashboardPage /> },
-                { path: ':conversationId', element: <ChatDashboardPage /> },
-              ],
             },
           ]
         : []),

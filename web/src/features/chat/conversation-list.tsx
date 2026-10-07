@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router'
-import { ListChecks, MessageSquarePlus, PanelLeftClose, Trash2, X } from 'lucide-react'
+import { ListChecks, MessageSquarePlus, Trash2, X } from 'lucide-react'
 
 import {
   AlertDialog,
@@ -19,11 +18,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useIdentity } from '@/lib/auth/use-identity'
 import { deleteConversations, listConversations } from '@/lib/chat/client'
 import { useChatActivityStore } from '@/stores/chat-activity-store'
+import { useChatDrawerStore } from '@/stores/chat-drawer-store'
 import { ConversationListItem } from './conversation-list-item'
 
-export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void }) {
+/** The drawer's history view. Picking a conversation (or starting a new one) hands
+ *  control back to the chat view through chat-drawer-store. */
+export function ConversationList() {
   const { identity } = useIdentity()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const streamingConversationIds = useChatActivityStore((s) => s.streamingConversationIds)
 
@@ -65,11 +66,8 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
 
   async function confirmBulkDelete() {
     const ids = [...selectedIds]
-    // Same rationale as ConversationListItem.confirmDelete: the live URL, not
-    // router param state, since a just-started conversation's URL is set via
-    // history.replaceState rather than navigation.
-    const activePath = window.location.pathname
-    const deletingActive = ids.some((id) => activePath === `/chat/${id}`)
+    const activeId = useChatDrawerStore.getState().activeConversationId
+    const deletingActive = !!activeId && ids.includes(activeId)
 
     setIsBulkDeleting(true)
     try {
@@ -77,7 +75,7 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
       await queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
       setShowBulkDeleteDialog(false)
       exitSelectMode()
-      if (deletingActive) navigate('/chat')
+      if (deletingActive) useChatDrawerStore.getState().newConversation()
     } catch {
       // Left the dialog open so the user can see it failed and retry or cancel.
     } finally {
@@ -89,14 +87,16 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
   const allSelected = hasConversations && selectedIds.size === conversations.length
 
   return (
-    <aside className="sticky top-14 flex h-[calc(100svh-3.5rem)] w-72 shrink-0 flex-col border-r border-border bg-card/50">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 p-3">
         <div className="min-w-0 flex-1">
-          <Button asChild className="w-full" size="sm">
-            <Link to="/chat">
-              <MessageSquarePlus />
-              New conversation
-            </Link>
+          <Button
+            className="w-full"
+            size="sm"
+            onClick={() => useChatDrawerStore.getState().newConversation()}
+          >
+            <MessageSquarePlus />
+            New conversation
           </Button>
         </div>
         {hasConversations && !selectMode && (
@@ -107,16 +107,6 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
             aria-label="Select conversations"
           >
             <ListChecks />
-          </Button>
-        )}
-        {!selectMode && (
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            onClick={onCollapse}
-            aria-label="Hide conversation history"
-          >
-            <PanelLeftClose />
           </Button>
         )}
       </div>
@@ -211,6 +201,6 @@ export function ConversationListSidebar({ onCollapse }: { onCollapse: () => void
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </aside>
+    </div>
   )
 }

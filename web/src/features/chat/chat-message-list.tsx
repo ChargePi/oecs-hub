@@ -13,7 +13,7 @@ import { ChatMessageBubble } from './chat-message-bubble'
 function LiveAssistantBubble({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-start gap-1">
-      <div className="max-w-[75%] rounded-lg border border-border bg-card px-3 py-2 text-sm text-card-foreground">
+      <div className="max-w-[85%] rounded-lg border border-border bg-card px-3 py-2 text-sm text-card-foreground">
         <Markdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>
           {text}
         </Markdown>
@@ -41,15 +41,18 @@ export function ChatMessageList({
    *  ChatMessageBubble's onResend. */
   onResend?: (text: string) => void
 }) {
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
+  // Scrolls only the list itself - scrollIntoView would also scroll the page the
+  // drawer sits beside.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: 'end' })
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [messages.length, isStreaming, streamingText])
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-6">
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-4">
         {messages.map((message, i) => {
           // A clarification prompt's answer lives on the very next message (its
           // reply's own "selected_choices" metadata - see
@@ -82,8 +85,6 @@ export function ChatMessageList({
               Thinking…
             </div>
           ))}
-
-        <div ref={bottomRef} />
       </div>
     </div>
   )

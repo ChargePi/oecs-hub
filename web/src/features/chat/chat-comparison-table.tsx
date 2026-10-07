@@ -25,27 +25,30 @@ export function ChatComparisonTable({ table }: { table: ComparisonTableData }) {
   if (table.chargers.length === 0) return null
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Attribute</TableHead>
-          {table.chargers.map((charger) => (
-            <TableHead key={charger.id}>
-              {charger.manufacturerName} {charger.modelName}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {table.rows.map((row) => (
-          <TableRow key={row.attribute}>
-            <TableCell className="font-medium">{humanizeAttribute(row.attribute)}</TableCell>
-            {row.values.map((value, i) => (
-              <TableCell key={table.chargers[i]?.id ?? i}>{value || '—'}</TableCell>
+    // Scrolls sideways rather than squeezing columns when the drawer is narrow.
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Attribute</TableHead>
+            {table.chargers.map((charger) => (
+              <TableHead key={charger.id}>
+                {charger.manufacturerName} {charger.modelName}
+              </TableHead>
             ))}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {table.rows.map((row) => (
+            <TableRow key={row.attribute}>
+              <TableCell className="font-medium">{humanizeAttribute(row.attribute)}</TableCell>
+              {row.values.map((value, i) => (
+                <TableCell key={table.chargers[i]?.id ?? i}>{value || '—'}</TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }
