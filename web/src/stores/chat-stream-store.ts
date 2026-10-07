@@ -14,6 +14,7 @@ import type {
 import { GENERIC_ERROR_MESSAGE } from '@/lib/errors'
 import { toastError } from '@/stores/toast-store'
 import { useChatActivityStore } from './chat-activity-store'
+import { isDraftKey } from './chat-draft-key'
 
 export type ChatStreamPhase = 'idle' | 'streaming' | 'error'
 
@@ -54,15 +55,6 @@ function makeOptimisticMessage(message: string, selectedChoices?: SelectedChoice
     metadata: selectedChoices?.length ? { selected_choices: selectedChoices } : undefined,
     createdAt: new Date().toISOString(),
   }
-}
-
-/** Placeholder key for a conversation with no server-assigned id yet. */
-function makeDraftKey(): string {
-  return `draft:${crypto.randomUUID()}`
-}
-
-export function isDraftKey(key: string): boolean {
-  return key.startsWith('draft:')
 }
 
 interface ChatStreamStoreState {
@@ -232,5 +224,3 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
     })
   },
 }))
-
-export { makeDraftKey }

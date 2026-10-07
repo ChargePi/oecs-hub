@@ -9,9 +9,9 @@ import { getUsage } from '@/lib/billing/client'
 
 function LockedScreen({ reason }: { reason: string }) {
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 py-16 text-center">
+    <div className="flex w-full flex-col items-center gap-4 px-6 py-12 text-center">
       <Lock className="size-8 text-muted-foreground" aria-hidden="true" />
-      <h1 className="font-heading text-xl font-semibold">Chat is locked</h1>
+      <h2 className="font-heading text-lg font-semibold">Chat is locked</h2>
       <p className="text-sm text-muted-foreground">{reason}</p>
       <Button asChild>
         <Link to="/profile?tab=billing">Upgrade plan</Link>
@@ -24,11 +24,15 @@ function LockedScreen({ reason }: { reason: string }) {
 // accounts are never limited. Fails open (usage unknown/unreachable) rather than
 // blocking a legitimate user over a transient hiccup.
 export function ChatAccessGate({ children }: PropsWithChildren) {
-  const { data, isLoading } = useQuery({ queryKey: ['billing', 'usage'], queryFn: getUsage, retry: false })
+  const { data, isLoading } = useQuery({
+    queryKey: ['billing', 'usage'],
+    queryFn: getUsage,
+    retry: false,
+  })
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-col gap-3 py-16">
+      <div className="flex w-full flex-col gap-3 p-4">
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-32 w-full" />
       </div>

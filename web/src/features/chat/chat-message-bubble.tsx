@@ -102,7 +102,7 @@ export function ChatMessageBubble({
       <div
         className={cn(
           'rounded-lg px-3 py-2 text-sm',
-          isWide ? 'max-w-[90%]' : 'max-w-[75%]',
+          isWide ? 'max-w-[95%]' : 'max-w-[85%]',
           isUser
             ? 'bg-primary text-primary-foreground whitespace-pre-wrap'
             : 'border border-border bg-card text-card-foreground',

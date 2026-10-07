@@ -1,5 +1,4 @@
 import { type KeyboardEvent, type MouseEvent, useState } from 'react'
-import { NavLink, useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { Loader2, Pencil, Trash2 } from 'lucide-react'
 
@@ -19,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { formatRelativeTime } from '@/lib/format-relative-time'
 import { deleteConversation, renameConversation } from '@/lib/chat/client'
 import type { ConversationSummary } from '@/lib/chat/types'
+import { useChatDrawerStore } from '@/stores/chat-drawer-store'
 
 export function ConversationListItem({
   conversation,
@@ -33,8 +33,8 @@ export function ConversationListItem({
   selected?: boolean
   onToggleSelected?: () => void
 }) {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const isActive = useChatDrawerStore((s) => s.activeConversationId === conversation.id)
 
   const [isEditing, setIsEditing] = useState(false)
   const [draftTitle, setDraftTitle] = useState(conversation.title)
@@ -76,20 +76,19 @@ export function ConversationListItem({
     }
   }
 
-  async function confirmDelete() {
-    // Read the real URL rather than useParams(): a conversation just started from the
-    // empty-state composer gets its /chat/<id> URL via history.replaceState (see
-    // chat-dashboard-page.tsx), not a router navigation, specifically so starting a
-    // conversation doesn't remount the page and interrupt its live stream - but that
-    // also means react-router's own param state never picks it up.
-    const isActive = window.location.pathname === `/chat/${conversation.id}`
+  function activate() {
+    if (isEditing) return
+    if (selectMode) onToggleSelected?.()
+    else useChatDrawerStore.getState().openConversation(conversation.id)
+  }
 
+  async function confirmDelete() {
     setIsBusy(true)
     try {
       await deleteConversation(conversation.id)
       await invalidateList()
       setShowDeleteDialog(false)
-      if (isActive) navigate('/chat')
+      if (isActive) useChatDrawerStore.getState().newConversation()
     } catch {
       // Left the dialog open so the user can see it failed and retry or cancel.
     } finally {
@@ -99,34 +98,29 @@ export function ConversationListItem({
 
   return (
     <li className="group relative">
-      <NavLink
-        to={`/chat/${conversation.id}`}
+      <div
+        role="button"
+        tabIndex={0}
+        aria-current={isActive && !selectMode ? 'true' : undefined}
         aria-selected={selectMode ? selected : undefined}
-        onClick={(e) => {
-          if (isEditing) {
+        onClick={activate}
+        onKeyDown={(e) => {
+          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault()
-            return
-          }
-          if (selectMode) {
-            e.preventDefault()
-            onToggleSelected?.()
+            activate()
           }
         }}
-        className={({ isActive }) =>
-          cn(
-            'flex flex-col gap-1 rounded-lg border border-border bg-card p-2.5 transition-colors hover:bg-muted',
-            isActive && !selectMode && 'border-primary/40 bg-muted',
-          )
-        }
+        className={cn(
+          'flex cursor-pointer flex-col gap-1 rounded-lg border border-border bg-card p-2.5 text-left transition-colors hover:bg-muted',
+          isActive && !selectMode && 'border-primary/40 bg-muted',
+        )}
       >
         <div className={cn('flex items-center justify-between gap-2', !selectMode && 'pr-11')}>
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {selectMode && (
-              // Decorative only - a real (focusable) checkbox nested inside the NavLink's
-              // <a> would be invalid HTML, and stopping its click from bubbling up would
-              // skip the NavLink's own onClick below (the preventDefault that stops this
-              // from navigating), causing a full page reload instead of a selection toggle.
-              // The row itself is the click target; this just mirrors `selected` visually.
+              // Decorative only - the row itself is the click target (a focusable
+              // checkbox nested in a role="button" row would be two tab stops for one
+              // action); this just mirrors `selected` visually.
               <Checkbox
                 checked={selected}
                 tabIndex={-1}
@@ -142,7 +136,7 @@ export function ConversationListItem({
                 onChange={(e) => setDraftTitle(e.target.value)}
                 onKeyDown={handleTitleKeyDown}
                 onBlur={() => void saveRename()}
-                onClick={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
                 className="min-w-0 flex-1 rounded border border-border bg-background px-1 py-0.5 text-sm font-medium outline-none focus-visible:border-ring"
               />
             ) : (
@@ -163,7 +157,7 @@ export function ConversationListItem({
             Started {formatRelativeTime(conversation.createdAt)}
           </p>
         )}
-      </NavLink>
+      </div>
 
       {!isEditing && !selectMode && (
         <div className="absolute top-1/2 right-2 flex -translate-y-1/2 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">

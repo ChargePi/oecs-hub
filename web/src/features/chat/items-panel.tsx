@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import { PanelRightClose, Zap } from 'lucide-react'
+import { Zap } from 'lucide-react'
 
 import { Badge, type badgeVariants } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { humanize } from '@/lib/oecs/format'
 import type { ChargePointCandidate, EvidenceItem } from '@/lib/chat/types'
 import { groupEvidenceByCandidate, type CandidateEvidenceGroup } from './evidence-grouping'
@@ -143,28 +141,19 @@ function EvidenceSection({
   )
 }
 
+/** The drawer's Results tab: the charge points suggested in the active conversation,
+ *  each opening its full detail in a sheet, plus the evidence behind them. */
 export function ItemsPanel({
   candidates,
   evidence,
-  onCollapse,
 }: {
   candidates: ChargePointCandidate[]
   evidence: EvidenceItem[]
-  onCollapse: () => void
 }) {
   const [selectedCandidate, setSelectedCandidate] = useState<ChargePointCandidate | null>(null)
 
   return (
-    <aside className="sticky top-14 flex h-[calc(100svh-3.5rem)] w-80 shrink-0 flex-col border-l border-border bg-card/50">
-      <div className="flex items-center gap-2 p-4">
-        <h2 className="min-w-0 flex-1 text-sm font-medium">Items</h2>
-        <Button size="icon-sm" variant="ghost" onClick={onCollapse} aria-label="Hide items">
-          <PanelRightClose />
-        </Button>
-      </div>
-
-      <Separator />
-
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex-1 overflow-y-auto p-3">
         {candidates.length === 0 ? (
           <p className="px-1 py-6 text-center text-sm text-muted-foreground">
@@ -188,6 +177,6 @@ export function ItemsPanel({
       </div>
 
       <ItemDetailSheet candidate={selectedCandidate} onClose={() => setSelectedCandidate(null)} />
-    </aside>
+    </div>
   )
 }

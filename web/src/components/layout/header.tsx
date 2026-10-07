@@ -3,15 +3,14 @@ import { Zap } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { AuthStatus } from '@/features/auth/auth-status'
+import { AssistantToggle } from '@/features/chat/assistant-toggle'
 import { SearchBar } from '@/features/explorer/search-bar'
 import { useIdentity } from '@/lib/auth/use-identity'
-import { CHAT_ENABLED } from '@/lib/chat/config'
 
 const NAV_LINKS = [
   { to: '/manufacturers', label: 'Manufacturers' },
   { to: '/chargers', label: 'Chargers' },
   { to: '/compare', label: 'Compare' },
-  ...(CHAT_ENABLED ? [{ to: '/chat', label: 'Chat' }] : []),
 ]
 
 export function Header() {
@@ -53,6 +52,7 @@ export function Header() {
           ))}
         </nav>
 
+        <AssistantToggle />
         <AuthStatus />
       </div>
     </header>
