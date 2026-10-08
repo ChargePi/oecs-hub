@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 
@@ -20,12 +20,19 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
-import { countryFlag } from '@/lib/oecs/format'
 import { registryClient } from '@/lib/registry/client'
 import { FILTER_GROUPS } from './filter-manifest'
 import type { FilterState } from './filter-state'
+import { ProtocolFilter } from './protocol-filter'
 
 const MAX_POWER_KW = 400
+const PRICE_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN']
+
+function parsePriceInput(value: string): number | undefined {
+  if (value === '') return undefined
+  const n = Number(value)
+  return Number.isFinite(n) && n >= 0 ? n : undefined
+}
 
 export function FilterSidebar({
   filters,
@@ -39,12 +46,6 @@ export function FilterSidebar({
     queryKey: ['manufacturers'],
     queryFn: () => registryClient.listManufacturers(),
   })
-
-  const countries = useMemo(() => {
-    const set = new Set<string>()
-    for (const m of manufacturers ?? []) if (m.country) set.add(m.country)
-    return [...set].sort()
-  }, [manufacturers])
 
   function toggleFacetValue(facetId: string, value: string, checked: boolean) {
     const current = filters.facets[facetId] ?? []
@@ -60,13 +61,6 @@ export function FilterSidebar({
     if (checked) facets[facetId] = ['true']
     else delete facets[facetId]
     onChange({ ...filters, facets })
-  }
-
-  function toggleCountry(country: string, checked: boolean) {
-    const next = checked
-      ? [...filters.countries, country]
-      : filters.countries.filter((c) => c !== country)
-    onChange({ ...filters, countries: next })
   }
 
   if (collapsed) {
@@ -148,65 +142,100 @@ export function FilterSidebar({
         />
       </div>
 
-      <Accordion type="multiple" className="flex flex-col gap-1">
-        <AccordionItem value="country">
-          <AccordionTrigger>Country</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-2">
-            {countries.map((country) => (
-              <label
-                key={country}
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-              >
-                <Checkbox
-                  checked={filters.countries.includes(country)}
-                  onCheckedChange={(checked) => toggleCountry(country, checked === true)}
-                />
-                {countryFlag(country)} {country}
-              </label>
-            ))}
-            {countries.length === 0 && (
-              <p className="text-xs text-muted-foreground">No manufacturers loaded yet.</p>
-            )}
-          </AccordionContent>
-        </AccordionItem>
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-muted-foreground">Price (MSRP)</span>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            min={0}
+            inputMode="decimal"
+            placeholder="Min"
+            aria-label="Minimum price"
+            value={filters.minPrice ?? ''}
+            onChange={(e) => onChange({ ...filters, minPrice: parsePriceInput(e.target.value) })}
+          />
+          <span className="text-muted-foreground">–</span>
+          <Input
+            type="number"
+            min={0}
+            inputMode="decimal"
+            placeholder="Max"
+            aria-label="Maximum price"
+            value={filters.maxPrice ?? ''}
+            onChange={(e) => onChange({ ...filters, maxPrice: parsePriceInput(e.target.value) })}
+          />
+          <Select
+            value={filters.priceCurrency}
+            onValueChange={(value) => onChange({ ...filters, priceCurrency: value })}
+          >
+            <SelectTrigger className="w-24 shrink-0" aria-label="Currency">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PRICE_CURRENCIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
+      <Accordion type="multiple" className="flex flex-col gap-1">
         {FILTER_GROUPS.map((group) => (
-          <AccordionItem key={group.id} value={group.id}>
-            <AccordionTrigger>{group.label}</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-3">
-              {group.facets.map((facet) =>
-                facet.control === 'toggle' ? (
-                  <label key={facet.id} className="flex items-center justify-between gap-2 text-sm">
-                    <span>{facet.label}</span>
-                    <Switch
-                      checked={(filters.facets[facet.id]?.[0] ?? 'false') === 'true'}
-                      onCheckedChange={(checked) => setToggle(facet.id, checked)}
-                    />
-                  </label>
-                ) : (
-                  <div key={facet.id} className="flex flex-col gap-1.5">
-                    <span className="text-sm">{facet.label}</span>
-                    <div className="flex flex-col gap-1.5 pl-1">
-                      {facet.options?.map((option) => (
-                        <label
-                          key={option.value}
-                          className="flex items-center gap-2 text-sm text-muted-foreground"
-                        >
-                          <Checkbox
-                            checked={(filters.facets[facet.id] ?? []).includes(option.value)}
-                            onCheckedChange={(checked) =>
-                              toggleFacetValue(facet.id, option.value, checked === true)
-                            }
-                          />
-                          {option.label}
-                        </label>
-                      ))}
+          <Fragment key={group.id}>
+            <AccordionItem value={group.id}>
+              <AccordionTrigger>{group.label}</AccordionTrigger>
+              <AccordionContent className="flex flex-col gap-3">
+                {group.facets.map((facet) =>
+                  facet.control === 'toggle' ? (
+                    <label
+                      key={facet.id}
+                      className="flex items-center justify-between gap-2 text-sm"
+                    >
+                      <span>{facet.label}</span>
+                      <Switch
+                        checked={(filters.facets[facet.id]?.[0] ?? 'false') === 'true'}
+                        onCheckedChange={(checked) => setToggle(facet.id, checked)}
+                      />
+                    </label>
+                  ) : (
+                    <div key={facet.id} className="flex flex-col gap-1.5">
+                      <span className="text-sm">{facet.label}</span>
+                      <div className="flex flex-col gap-1.5 pl-1">
+                        {facet.options?.map((option) => (
+                          <label
+                            key={option.value}
+                            className="flex items-center gap-2 text-sm text-muted-foreground"
+                          >
+                            <Checkbox
+                              checked={(filters.facets[facet.id] ?? []).includes(option.value)}
+                              onCheckedChange={(checked) =>
+                                toggleFacetValue(facet.id, option.value, checked === true)
+                              }
+                            />
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ),
-              )}
-            </AccordionContent>
-          </AccordionItem>
+                  ),
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            {group.id === 'connectivity-smart-charging' && (
+              <AccordionItem value="protocols">
+                <AccordionTrigger>Protocols</AccordionTrigger>
+                <AccordionContent>
+                  <ProtocolFilter
+                    value={filters.protocols}
+                    onChange={(protocols) => onChange({ ...filters, protocols })}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Fragment>
         ))}
       </Accordion>
     </div>

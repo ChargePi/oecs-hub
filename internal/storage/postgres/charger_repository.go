@@ -134,6 +134,24 @@ func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchF
 		query = query.Where("jsonb_path_exists(spec, ?::jsonpath, ?::jsonb)", path, string(vars))
 	}
 
+	if len(filters.Protocols) > 0 {
+		path, vars, err := protocolsPredicate(filters.Protocols)
+		if err != nil {
+			return nil, fmt.Errorf("protocol filter: %w", err)
+		}
+
+		query = query.Where("jsonb_path_exists(spec, ?::jsonpath, ?::jsonb)", path, string(vars))
+	}
+
+	if filters.Price != nil {
+		path, vars, err := priceRangePredicate(*filters.Price)
+		if err != nil {
+			return nil, fmt.Errorf("price filter: %w", err)
+		}
+
+		query = query.Where("jsonb_path_exists(spec, ?::jsonpath, ?::jsonb)", path, string(vars))
+	}
+
 	return query, nil
 }
 

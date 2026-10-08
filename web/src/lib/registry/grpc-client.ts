@@ -11,6 +11,7 @@ import {
   manufacturerFromProto,
   manufacturerSummaryFromProto,
   mapGrpcError,
+  protocolVersionToProto,
   submissionStatusFromProto,
 } from './grpc-mapping'
 import type {
@@ -206,6 +207,22 @@ export class GrpcRegistryClient implements RegistryClient {
     if (filters.manufacturerId) req.setManufacturerId(filters.manufacturerId)
     if (filters.minPowerKw != null) req.setMinPowerKw(filters.minPowerKw)
     if (filters.maxPowerKw != null) req.setMaxPowerKw(filters.maxPowerKw)
+    if (filters.price) {
+      const price = new registry_v1_registry_pb.PriceRange()
+      price.setCurrency(filters.price.currency)
+      if (filters.price.min != null) price.setMin(filters.price.min)
+      if (filters.price.max != null) price.setMax(filters.price.max)
+      req.setPrice(price)
+    }
+
+    req.setProtocolFiltersList(
+      (filters.protocols ?? []).map((p) => {
+        const proto = new registry_v1_registry_pb.ProtocolFilter()
+        proto.setName(p.name)
+        proto.setVersion(protocolVersionToProto(p.name, p.version))
+        return proto
+      }),
+    )
 
     req.setFieldFiltersList(
       filters.fields

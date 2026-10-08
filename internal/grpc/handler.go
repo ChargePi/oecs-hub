@@ -3,12 +3,14 @@ package grpc
 import (
 	"context"
 	"errors"
+	"regexp"
 
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
 	"github.com/ChargePi/oecs-hub/internal/auth"
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/graph"
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
+	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 	"github.com/ChargePi/oecs-hub/internal/pagination"
 	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"github.com/google/uuid"
@@ -110,7 +112,6 @@ var allowedSearchFieldPaths = map[string]struct{}{
 	"hardware.connectors.cable.attached":                       {},
 	"hardware.electrical.output.simultaneousChargingSupported": {},
 	"hardware.electrical.output.dynamicPowerSharing":           {},
-	"manufacturer.country":                                     {},
 	"hardware.housing.formFactor":                              {},
 	"hardware.housing.material":                                {},
 	"hardware.housing.coolingMethod":                           {},
@@ -118,16 +119,15 @@ var allowedSearchFieldPaths = map[string]struct{}{
 	"hardware.electrical.input.phases":                         {},
 	"hardware.electrical.input.connectionType":                 {},
 	"hardware.connectivity.interfaces":                         {},
+	"hardware.connectivity.wifi":                               {},
 	"hardware.connectivity.cellular.generations":               {},
 	"software.smartCharging.features":                          {},
 	"software.offlineChargingSupported":                        {},
-	"software.protocols.name":                                  {},
 	"hardware.userInterface.display.type":                      {},
 	"hardware.userInterface.authenticationMethods":             {},
 	"payment.acceptedMethods":                                  {},
 	"payment.adHocPaymentSupported":                            {},
 	"hardware.certifications.type":                             {},
-	"pricing.pricingModel":                                     {},
 }
 
 func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.SearchFilters, error) {
@@ -170,7 +170,80 @@ func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.Searc
 		})
 	}
 
+	protocols, err := searchProtocols(req)
+	if err != nil {
+		return filters, err
+	}
+
+	filters.Protocols = protocols
+
+	price, err := searchPriceRange(req)
+	if err != nil {
+		return filters, err
+	}
+
+	filters.Price = price
+
 	return filters, nil
+}
+
+var currencyRe = regexp.MustCompile(`^[A-Z]{3}$`)
+
+const maxProtocolFilters = 32
+
+var searchProtocolNames = map[string]struct{}{
+	oecsspec.ProtocolNameOCPP: {}, oecsspec.ProtocolNameISO15118: {}, oecsspec.ProtocolNameIEC61851: {},
+	oecsspec.ProtocolNameDIN70121: {}, oecsspec.ProtocolNameIEEE20305: {}, oecsspec.ProtocolNameEEBus: {},
+	oecsspec.ProtocolNameModbusTCP: {}, oecsspec.ProtocolNameModbusRTU: {}, oecsspec.ProtocolNameSunSpec: {},
+	oecsspec.ProtocolNameMQTT: {}, oecsspec.ProtocolNameRESTAPI: {}, oecsspec.ProtocolNameSNMP: {},
+	oecsspec.ProtocolNameOther: {},
+}
+
+func searchProtocols(req *registryv1.SearchChargersRequest) ([]charger.ProtocolFilter, error) {
+	if len(req.GetProtocolFilters()) > maxProtocolFilters {
+		return nil, status.Errorf(codes.InvalidArgument, "at most %d protocol filters are allowed", maxProtocolFilters)
+	}
+
+	protocols := make([]charger.ProtocolFilter, 0, len(req.GetProtocolFilters()))
+
+	for _, p := range req.GetProtocolFilters() {
+		if _, ok := searchProtocolNames[p.GetName()]; !ok {
+			return nil, status.Errorf(codes.InvalidArgument, "unsupported protocol: %s", p.GetName())
+		}
+
+		filter := charger.ProtocolFilter{Name: p.GetName()}
+
+		if p.GetVersion() != registryv1.ProtocolVersion_PROTOCOL_VERSION_UNSPECIFIED {
+			v, ok := protocolVersionFromProto[p.GetVersion()]
+			if !ok || v.Name != p.GetName() {
+				return nil, status.Errorf(codes.InvalidArgument, "unsupported version %s for protocol %s", p.GetVersion(), p.GetName())
+			}
+
+			filter.Version = v.Version
+		}
+
+		protocols = append(protocols, filter)
+	}
+
+	return protocols, nil
+}
+
+func searchPriceRange(req *registryv1.SearchChargersRequest) (*charger.PriceRange, error) {
+	p := req.GetPrice()
+	if p == nil {
+		return nil, nil
+	}
+
+	switch {
+	case !currencyRe.MatchString(p.GetCurrency()):
+		return nil, status.Error(codes.InvalidArgument, "price.currency must be an ISO 4217 code")
+	case p.GetMin() < 0 || p.GetMax() < 0:
+		return nil, status.Error(codes.InvalidArgument, "price bounds must be non-negative")
+	case p.Min != nil && p.Max != nil && p.GetMin() > p.GetMax():
+		return nil, status.Error(codes.InvalidArgument, "price.min must not exceed price.max")
+	}
+
+	return &charger.PriceRange{Currency: p.GetCurrency(), Min: p.Min, Max: p.Max}, nil
 }
 
 func (h *Handler) GetManufacturers(ctx context.Context, req *registryv1.GetManufacturersRequest) (*registryv1.GetManufacturersResponse, error) {

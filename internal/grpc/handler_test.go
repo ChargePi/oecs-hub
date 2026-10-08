@@ -130,6 +130,96 @@ func TestSearchChargersFilters(t *testing.T) {
 		}
 	})
 
+	t.Run("price range passes through with currency", func(t *testing.T) {
+		minPrice, currency := 500.0, "EUR"
+		req := &registryv1.SearchChargersRequest{Price: &registryv1.PriceRange{Currency: currency, Min: &minPrice}}
+
+		filters, err := searchChargersFilters(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if filters.Price == nil || filters.Price.Currency != "EUR" || *filters.Price.Min != 500 || filters.Price.Max != nil {
+			t.Fatalf("expected EUR price range with min 500, got %+v", filters.Price)
+		}
+	})
+
+	t.Run("invalid price range is rejected", func(t *testing.T) {
+		lo, hi, neg := 100.0, 50.0, -1.0
+
+		for name, p := range map[string]*registryv1.PriceRange{
+			"missing currency": {Min: &lo},
+			"bad currency":     {Currency: "euro", Min: &lo},
+			"negative bound":   {Currency: "EUR", Max: &neg},
+			"min above max":    {Currency: "EUR", Min: &lo, Max: &hi},
+		} {
+			_, err := searchChargersFilters(&registryv1.SearchChargersRequest{Price: p})
+			if status.Code(err) != codes.InvalidArgument {
+				t.Fatalf("%s: expected InvalidArgument, got %v", name, err)
+			}
+		}
+	})
+
+	t.Run("unbounded price matches any fixed price in currency", func(t *testing.T) {
+		filters, err := searchChargersFilters(&registryv1.SearchChargersRequest{Price: &registryv1.PriceRange{Currency: "EUR"}})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if filters.Price == nil || filters.Price.Currency != "EUR" || filters.Price.Min != nil || filters.Price.Max != nil {
+			t.Fatalf("expected unbounded EUR price filter, got %+v", filters.Price)
+		}
+	})
+
+	t.Run("protocol filters map versions", func(t *testing.T) {
+		req := &registryv1.SearchChargersRequest{ProtocolFilters: []*registryv1.ProtocolFilter{
+			{Name: "OCPP", Version: registryv1.ProtocolVersion_PROTOCOL_VERSION_OCPP_1_6},
+			{Name: "ISO15118", Version: registryv1.ProtocolVersion_PROTOCOL_VERSION_ISO15118_2},
+			{Name: "EEBus"},
+		}}
+
+		filters, err := searchChargersFilters(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		want := []charger.ProtocolFilter{{Name: "OCPP", Version: "1.6"}, {Name: "ISO15118", Version: "ISO 15118-2"}, {Name: "EEBus"}}
+		if len(filters.Protocols) != len(want) {
+			t.Fatalf("expected %+v, got %+v", want, filters.Protocols)
+		}
+
+		for i := range want {
+			if filters.Protocols[i] != want[i] {
+				t.Fatalf("expected %+v, got %+v", want, filters.Protocols)
+			}
+		}
+	})
+
+	t.Run("invalid protocol filter is rejected", func(t *testing.T) {
+		for name, p := range map[string]*registryv1.ProtocolFilter{
+			"unknown name":     {Name: "OCPI"},
+			"version mismatch": {Name: "MQTT", Version: registryv1.ProtocolVersion_PROTOCOL_VERSION_OCPP_1_6},
+			"unknown version":  {Name: "OCPP", Version: registryv1.ProtocolVersion(999)},
+		} {
+			_, err := searchChargersFilters(&registryv1.SearchChargersRequest{ProtocolFilters: []*registryv1.ProtocolFilter{p}})
+			if status.Code(err) != codes.InvalidArgument {
+				t.Fatalf("%s: expected InvalidArgument, got %v", name, err)
+			}
+		}
+	})
+
+	t.Run("every protocol version is mapped", func(t *testing.T) {
+		for v := range registryv1.ProtocolVersion_name {
+			if v == 0 {
+				continue
+			}
+
+			if _, ok := protocolVersionFromProto[registryv1.ProtocolVersion(v)]; !ok {
+				t.Fatalf("ProtocolVersion %s has no mapping", registryv1.ProtocolVersion(v))
+			}
+		}
+	})
+
 	t.Run("always scoped to verified chargers", func(t *testing.T) {
 		filters, err := searchChargersFilters(&registryv1.SearchChargersRequest{})
 		if err != nil {

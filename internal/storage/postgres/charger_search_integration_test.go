@@ -38,7 +38,9 @@ func TestSearch_Integration(t *testing.T) {
 		"hardware": {
 			"housing": {"material": "aluminum"},
 			"connectors": [{"type": "CCS2_Combo2", "currentType": "DC"}]
-		}
+		},
+		"software": {"protocols": [{"name": "OCPP", "version": "2.0.1"}]},
+		"pricing": {"pricingModel": "fixed", "prices": [{"value": 1200, "currency": "EUR"}, {"value": 1400, "currency": "USD"}]}
 	}`)
 
 	specB := []byte(`{
@@ -48,7 +50,9 @@ func TestSearch_Integration(t *testing.T) {
 		"hardware": {
 			"housing": {"material": "composite"},
 			"connectors": [{"type": "Type2_Mennekes", "currentType": "AC"}]
-		}
+		},
+		"software": {"protocols": [{"name": "OCPP", "version": "1.6"}]},
+		"pricing": {"pricingModel": "enquiry"}
 	}`)
 
 	a := &charger.Charger{ID: uuid.New(), ManufacturerName: "Acme", ModelName: "Bolt-9000", ChargerType: "AC", ConnectorTypes: []string{"CCS2_Combo2"}, Protocols: []string{}, MinPowerWatts: ptr(7400.0), MaxPowerWatts: ptr(22000.0), SchemaVersion: "1.1.0", Spec: specA, Status: charger.StatusVerified}
@@ -115,6 +119,54 @@ func TestSearch_Integration(t *testing.T) {
 
 		if total != 0 {
 			t.Fatalf("expected no match, got total=%d", total)
+		}
+	})
+
+	t.Run("price range matches fixed price in currency", func(t *testing.T) {
+		results, total, err := repo.Search(ctx, charger.SearchFilters{
+			Statuses: []charger.Status{charger.StatusVerified},
+			Price:    &charger.PriceRange{Currency: "EUR", Min: ptr(1000.0), Max: ptr(1500.0)},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 1 || len(results) != 1 || results[0].ID != a.ID {
+			t.Fatalf("expected only charger a, got total=%d results=%+v", total, results)
+		}
+	})
+
+	t.Run("price range outside bounds or other currency", func(t *testing.T) {
+		for _, p := range []charger.PriceRange{
+			{Currency: "EUR", Max: ptr(1000.0)},
+			{Currency: "EUR", Min: ptr(1300.0)},
+			{Currency: "GBP", Min: ptr(0.0)},
+		} {
+			_, total, err := repo.Search(ctx, charger.SearchFilters{
+				Statuses: []charger.Status{charger.StatusVerified},
+				Price:    &p,
+			}, 50, 0)
+			if err != nil {
+				t.Fatalf("search: %v", err)
+			}
+
+			if total != 0 {
+				t.Fatalf("expected no match for %+v, got total=%d", p, total)
+			}
+		}
+	})
+
+	t.Run("protocol version prefix match", func(t *testing.T) {
+		results, total, err := repo.Search(ctx, charger.SearchFilters{
+			Statuses:  []charger.Status{charger.StatusVerified},
+			Protocols: []charger.ProtocolFilter{{Name: "OCPP", Version: "2.0.1"}},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 1 || len(results) != 1 || results[0].ID != a.ID {
+			t.Fatalf("expected only charger a, got total=%d results=%+v", total, results)
 		}
 	})
 

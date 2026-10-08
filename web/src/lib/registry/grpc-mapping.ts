@@ -13,6 +13,28 @@ import type {
 import * as registry_v1_registry_pb from './gen/registry/v1/registry_pb'
 import type { ManufacturerSummary, SubmissionStatus } from './types'
 
+const PV = registry_v1_registry_pb.ProtocolVersion
+
+const PROTOCOL_VERSION_TO_PROTO: Record<string, registry_v1_registry_pb.ProtocolVersion> = {
+  'OCPP@1.5': PV.PROTOCOL_VERSION_OCPP_1_5,
+  'OCPP@1.6': PV.PROTOCOL_VERSION_OCPP_1_6,
+  'OCPP@2.0.1': PV.PROTOCOL_VERSION_OCPP_2_0_1,
+  'OCPP@2.1': PV.PROTOCOL_VERSION_OCPP_2_1,
+  'ISO15118@ISO 15118-2': PV.PROTOCOL_VERSION_ISO15118_2,
+  'ISO15118@ISO 15118-20': PV.PROTOCOL_VERSION_ISO15118_20,
+  'MQTT@3.1.1': PV.PROTOCOL_VERSION_MQTT_3_1_1,
+  'MQTT@5.0': PV.PROTOCOL_VERSION_MQTT_5_0,
+}
+
+/** Unknown versions map to UNSPECIFIED, i.e. any version of the protocol. */
+export function protocolVersionToProto(
+  name: string,
+  version?: string,
+): registry_v1_registry_pb.ProtocolVersion {
+  if (!version) return PV.PROTOCOL_VERSION_UNSPECIFIED
+  return PROTOCOL_VERSION_TO_PROTO[`${name}@${version}`] ?? PV.PROTOCOL_VERSION_UNSPECIFIED
+}
+
 const CHARGER_TYPE_FROM_PROTO: Partial<Record<registry_v1_registry_pb.ChargerType, ChargerType>> = {
   [registry_v1_registry_pb.ChargerType.CHARGER_TYPE_AC]: 'AC',
   [registry_v1_registry_pb.ChargerType.CHARGER_TYPE_DC]: 'DC',

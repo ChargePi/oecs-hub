@@ -3,16 +3,18 @@ import { humanize } from '@/lib/oecs/format'
 /**
  * Every facet here maps 1:1 to a generic OECS field_filter dot-path — see
  * internal/grpc/handler.go's allowedSearchFieldPaths on the backend, which must stay in sync
- * with the `field` values below. Manufacturer and Country are handled separately (see
- * filter-sidebar.tsx) since their options are populated dynamically from the manufacturer
- * list rather than a fixed enum. Power is also handled separately - it's a numeric range,
- * not a field_filter.
+ * with the `field` values below. Manufacturer is handled separately (see filter-sidebar.tsx)
+ * since its options are populated dynamically from the manufacturer list rather than a fixed
+ * enum. Power is also handled separately - it's a numeric range,
+ * not a field_filter, and so are the price range and protocols (see PROTOCOL_OPTIONS).
  */
 export type FacetControl = 'multi-select' | 'toggle'
 
 export interface FacetOption {
   value: string
   label: string
+  /** Spec values this option matches, when it covers more than `value` alone. */
+  matches?: string[]
 }
 
 export interface FacetDefinition {
@@ -31,6 +33,10 @@ export interface FacetGroup {
 
 function options(values: string[]): FacetOption[] {
   return values.map((value) => ({ value, label: humanize(value) }))
+}
+
+function labeled(pairs: [string, string][]): FacetOption[] {
+  return pairs.map(([value, label]) => ({ value, label }))
 }
 
 export const FILTER_GROUPS: FacetGroup[] = [
@@ -63,25 +69,31 @@ export const FILTER_GROUPS: FacetGroup[] = [
         label: 'Connector type',
         field: 'hardware.connectors.type',
         control: 'multi-select',
-        options: options([
-          'Type1_J1772',
-          'Type2_Mennekes',
-          'Type3A',
-          'CCS1_Combo1',
-          'CCS2_Combo2',
-          'CHAdeMO',
-          'GBT_AC',
-          'GBT_DC',
-          'NACS_Tesla',
-          'Domestic_Socket',
-          'Industrial_IEC60309',
-          'MCS_MegawattChargingSystem',
-          'Other',
+        options: labeled([
+          ['Type1_J1772', 'Type 1 (J1772)'],
+          ['Type2_Mennekes', 'Type 2 (Mennekes)'],
+          ['Type3A', 'Type 3A'],
+          ['CCS1_Combo1', 'CCS1 (Combo 1)'],
+          ['CCS2_Combo2', 'CCS2 (Combo 2)'],
+          ['CHAdeMO', 'CHAdeMO'],
+          ['GBT_AC', 'GB/T AC'],
+          ['GBT_DC', 'GB/T DC'],
+          ['NACS_Tesla', 'NACS (SAE J3400)'],
+          ['MCS_MegawattChargingSystem', 'MCS (Megawatt)'],
+          ['Domestic_Socket', 'Domestic socket'],
+          ['Industrial_IEC60309', 'Industrial (IEC 60309)'],
+          ['Other', 'Other'],
         ]),
       },
       {
+        id: 'cable-attached',
+        label: 'Tethered cable',
+        field: 'hardware.connectors.cable.attached',
+        control: 'toggle',
+      },
+      {
         id: 'bidirectional',
-        label: 'Bidirectional (V2G/V2H)',
+        label: 'Bidirectional (V2G/V2H/V2L)',
         field: 'hardware.connectors.bidirectional',
         control: 'toggle',
       },
@@ -89,24 +101,6 @@ export const FILTER_GROUPS: FacetGroup[] = [
         id: 'iso-plug-and-charge',
         label: 'ISO 15118 Plug & Charge',
         field: 'hardware.connectors.isoPlugAndCharge',
-        control: 'toggle',
-      },
-      {
-        id: 'cable-attached',
-        label: 'Cable attached',
-        field: 'hardware.connectors.cable.attached',
-        control: 'toggle',
-      },
-      {
-        id: 'simultaneous-charging',
-        label: 'Simultaneous charging',
-        field: 'hardware.electrical.output.simultaneousChargingSupported',
-        control: 'toggle',
-      },
-      {
-        id: 'dynamic-power-sharing',
-        label: 'Dynamic power sharing',
-        field: 'hardware.electrical.output.dynamicPowerSharing',
         control: 'toggle',
       },
     ],
@@ -161,12 +155,12 @@ export const FILTER_GROUPS: FacetGroup[] = [
     ],
   },
   {
-    id: 'electrical-input',
-    label: 'Electrical Input',
+    id: 'electrical',
+    label: 'Electrical',
     facets: [
       {
         id: 'phases',
-        label: 'Phases',
+        label: 'Input phases',
         field: 'hardware.electrical.input.phases',
         control: 'multi-select',
         options: [
@@ -177,10 +171,22 @@ export const FILTER_GROUPS: FacetGroup[] = [
       },
       {
         id: 'connection-type',
-        label: 'Connection type',
+        label: 'Grid connection',
         field: 'hardware.electrical.input.connectionType',
         control: 'multi-select',
         options: options(['hardwired', 'plug-in']),
+      },
+      {
+        id: 'simultaneous-charging',
+        label: 'Simultaneous charging',
+        field: 'hardware.electrical.output.simultaneousChargingSupported',
+        control: 'toggle',
+      },
+      {
+        id: 'dynamic-power-sharing',
+        label: 'Dynamic power sharing',
+        field: 'hardware.electrical.output.dynamicPowerSharing',
+        control: 'toggle',
       },
     ],
   },
@@ -193,27 +199,54 @@ export const FILTER_GROUPS: FacetGroup[] = [
         label: 'Interfaces',
         field: 'hardware.connectivity.interfaces',
         control: 'multi-select',
-        options: options(['ethernet', 'bluetooth', 'rs485', 'can-bus', 'powerline-communication']),
+        options: labeled([
+          ['ethernet', 'Ethernet'],
+          ['bluetooth', 'Bluetooth'],
+          ['rs485', 'RS-485'],
+          ['can-bus', 'CAN bus'],
+          ['powerline-communication', 'Powerline (PLC)'],
+        ]),
+      },
+      {
+        id: 'wifi',
+        label: 'Wi-Fi',
+        field: 'hardware.connectivity.wifi',
+        control: 'multi-select',
+        options: labeled([
+          ['802.11a', '802.11a'],
+          ['802.11b', '802.11b'],
+          ['802.11g', '802.11g'],
+          ['802.11n', 'Wi-Fi 4 (802.11n)'],
+          ['802.11ac', 'Wi-Fi 5 (802.11ac)'],
+          ['802.11ax', 'Wi-Fi 6 (802.11ax)'],
+        ]),
       },
       {
         id: 'cellular-generations',
-        label: 'Cellular generations',
+        label: 'Cellular',
         field: 'hardware.connectivity.cellular.generations',
         control: 'multi-select',
-        options: options(['2G', '3G', '4G-LTE', '5G', 'NB-IoT', 'LTE-M']),
+        options: labeled([
+          ['2G', '2G'],
+          ['3G', '3G'],
+          ['4G-LTE', '4G LTE'],
+          ['5G', '5G'],
+          ['NB-IoT', 'NB-IoT'],
+          ['LTE-M', 'LTE-M'],
+        ]),
       },
       {
         id: 'smart-charging-features',
         label: 'Smart charging features',
         field: 'software.smartCharging.features',
         control: 'multi-select',
-        options: options([
-          'local-load-balancing',
-          'backend-managed-profiles',
-          'dynamic-pricing',
-          'v2g',
-          'v2h',
-          'solar-integration',
+        options: labeled([
+          ['local-load-balancing', 'Local load balancing'],
+          ['backend-managed-profiles', 'Backend-managed profiles'],
+          ['dynamic-pricing', 'Dynamic pricing'],
+          ['v2g', 'Vehicle-to-grid (V2G)'],
+          ['v2h', 'Vehicle-to-home (V2H)'],
+          ['solar-integration', 'Solar integration'],
         ]),
       },
       {
@@ -221,30 +254,6 @@ export const FILTER_GROUPS: FacetGroup[] = [
         label: 'Offline charging',
         field: 'software.offlineChargingSupported',
         control: 'toggle',
-      },
-      {
-        id: 'protocol',
-        label: 'Protocol',
-        field: 'software.protocols.name',
-        control: 'multi-select',
-        options: options([
-          'OCPP',
-          'OCPI',
-          'OSCP',
-          'ISO15118',
-          'IEC61851',
-          'DIN70121',
-          'OpenADR',
-          'IEEE2030.5',
-          'EEBus',
-          'Modbus-TCP',
-          'Modbus-RTU',
-          'SunSpec',
-          'MQTT',
-          'REST-API',
-          'SNMP',
-          'other',
-        ]),
       },
     ],
   },
@@ -271,15 +280,12 @@ export const FILTER_GROUPS: FacetGroup[] = [
         label: 'Authentication methods',
         field: 'hardware.userInterface.authenticationMethods',
         control: 'multi-select',
-        options: options([
-          'rfid',
-          'mobile-app',
-          'plug-and-charge-iso15118',
-          'credit-card',
-          'qr-code',
-          'ocpp-remote-start',
-          'pin-code',
-          'autostart-free-vend',
+        options: labeled([
+          ['rfid', 'RFID card'],
+          ['mobile-app', 'Mobile app'],
+          ['plug-and-charge-iso15118', 'Plug & Charge (ISO 15118)'],
+          ['qr-code', 'QR code'],
+          ['pin-code', 'PIN code'],
         ]),
       },
     ],
@@ -293,15 +299,18 @@ export const FILTER_GROUPS: FacetGroup[] = [
         label: 'Accepted methods',
         field: 'payment.acceptedMethods',
         control: 'multi-select',
-        options: options([
-          'contactless-card',
-          'mobile-wallet',
-          'rfid-prepaid',
-          'mobile-app',
-          'plug-and-charge-autocharge',
-          'backend-invoicing',
-          'free-of-charge',
-        ]),
+        options: [
+          {
+            value: 'contactless-card',
+            label: 'Contactless (card / phone wallet)',
+            matches: ['contactless-card', 'mobile-wallet'],
+          },
+          ...labeled([
+            ['rfid-prepaid', 'Prepaid RFID'],
+            ['mobile-app', 'Mobile app'],
+            ['plug-and-charge-autocharge', 'Plug & Charge / Autocharge'],
+          ]),
+        ],
       },
       {
         id: 'ad-hoc-payment',
@@ -335,19 +344,49 @@ export const FILTER_GROUPS: FacetGroup[] = [
       },
     ],
   },
+]
+
+export interface ProtocolOption {
+  name: string
+  label: string
+  versions?: FacetOption[]
+}
+
+/** Protocol names from software.schema.json's protocolName; versions are matched by prefix. */
+export const PROTOCOL_OPTIONS: ProtocolOption[] = [
   {
-    id: 'pricing',
-    label: 'Pricing',
-    facets: [
-      {
-        id: 'pricing-model',
-        label: 'Pricing model',
-        field: 'pricing.pricingModel',
-        control: 'multi-select',
-        options: options(['fixed', 'enquiry']),
-      },
-    ],
+    name: 'OCPP',
+    label: 'OCPP',
+    versions: labeled([
+      ['1.5', '1.5'],
+      ['1.6', '1.6'],
+      ['2.0.1', '2.0.1'],
+      ['2.1', '2.1'],
+    ]),
   },
+  {
+    name: 'ISO15118',
+    label: 'ISO 15118',
+    versions: labeled([
+      ['ISO 15118-2', '-2'],
+      ['ISO 15118-20', '-20'],
+    ]),
+  },
+  { name: 'EEBus', label: 'EEBus' },
+  { name: 'IEEE2030.5', label: 'IEEE 2030.5' },
+  { name: 'Modbus-TCP', label: 'Modbus TCP' },
+  { name: 'Modbus-RTU', label: 'Modbus RTU' },
+  { name: 'SunSpec', label: 'SunSpec' },
+  {
+    name: 'MQTT',
+    label: 'MQTT',
+    versions: labeled([
+      ['3.1.1', '3.1.1'],
+      ['5.0', '5.0'],
+    ]),
+  },
+  { name: 'REST-API', label: 'REST API' },
+  { name: 'SNMP', label: 'SNMP' },
 ]
 
 export const ALL_FACETS: FacetDefinition[] = FILTER_GROUPS.flatMap((g) => g.facets)

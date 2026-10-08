@@ -13,6 +13,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// protocolVersionFromProto maps a ProtocolVersion to its protocol name and the version
+// prefix matched against the spec's free-text software.protocols[].version.
+var protocolVersionFromProto = map[registryv1.ProtocolVersion]charger.ProtocolFilter{
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_OCPP_1_5:    {Name: oecsspec.ProtocolNameOCPP, Version: "1.5"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_OCPP_1_6:    {Name: oecsspec.ProtocolNameOCPP, Version: "1.6"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_OCPP_2_0_1:  {Name: oecsspec.ProtocolNameOCPP, Version: "2.0.1"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_OCPP_2_1:    {Name: oecsspec.ProtocolNameOCPP, Version: "2.1"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_ISO15118_2:  {Name: oecsspec.ProtocolNameISO15118, Version: "ISO 15118-2"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_ISO15118_20: {Name: oecsspec.ProtocolNameISO15118, Version: "ISO 15118-20"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_MQTT_3_1_1:  {Name: oecsspec.ProtocolNameMQTT, Version: "3.1.1"},
+	registryv1.ProtocolVersion_PROTOCOL_VERSION_MQTT_5_0:    {Name: oecsspec.ProtocolNameMQTT, Version: "5.0"},
+}
+
 func chargerTypeToProto(t string) registryv1.ChargerType {
 	switch t {
 	case oecsspec.ModelTypeAC:
