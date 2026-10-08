@@ -50,9 +50,17 @@ You agree not to:
 
 - "Your content" means charger specification data and other material you submit to the registry.
 - You keep any rights you have in your content. You confirm that you have the right to submit it, and that it does not infringe anyone else's rights, including copyright, trademarks and confidential information.
-- The registry is open data. By submitting content, you license it under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)]** licence. You also grant us a worldwide, royalty-free, non-exclusive licence to host, display, adapt (for example to normalise formats) and distribute it as part of the service.
+- The registry is open data. By submitting specification data, you license it under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)]** licence. This does not apply to logos, product images or other brand assets (see "Manufacturer Logos, Product Images and Trademarks" below). For all content you submit, you also grant us a worldwide, royalty-free, non-exclusive licence to host, display, adapt (for example to normalise formats) and distribute it as part of the service.
 - These licences continue after you delete your account, so registry data stays complete and consistent. When you delete your account, we remove the link between the content and your personal account.
 - The OECS specification and the OECS Hub source code are open source. Their license terms are in the [OECS spec](https://github.com/ChargePi/oecs) and [OECS Hub](https://github.com/ChargePi/oecs-hub) repositories.
+
+## Manufacturer Logos, Product Images and Trademarks
+
+- Manufacturer names, logos, trademarks and product images shown in the service belong to their respective manufacturers or other rights holders. We do not own them, and they are **not** covered by the open data licence of the registry or by the OECS Hub source code licence.
+- We show them only to identify manufacturers and their products, and attribute them to their owners. Showing them does not imply any affiliation with, sponsorship by, or endorsement from the rights holder, or of the rights holder by us.
+- These Terms give you no rights to use these logos, images or trademarks. If you want to reuse them outside the service, you must get permission from the rights holder.
+- If you upload logos or product images, you confirm that you own them or are authorised by the rights holder to submit them. You grant us a non-exclusive, royalty-free licence to display them in the service for identification purposes. This licence ends when the images are removed, except for reasonable backup periods.
+- **Rights holders:** if you believe a logo, image or trademark is shown without permission or incorrectly attributed, contact us at [contact@chargepi.cc] with the item concerned and proof of your rights. We will remove or correct it promptly.
 
 ## Content Moderation and Reporting Illegal Content
 
