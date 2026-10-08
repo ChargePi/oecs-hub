@@ -220,6 +220,32 @@ func TestSearchChargersFilters(t *testing.T) {
 		}
 	})
 
+	t.Run("rating filters pass through", func(t *testing.T) {
+		req := &registryv1.SearchChargersRequest{
+			RatingFilters: []*registryv1.RatingFilter{{CategoryName: "reliability", MinAverage: 4}},
+		}
+
+		filters, err := searchChargersFilters(req)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if len(filters.RatingFilters) != 1 || filters.RatingFilters[0] != (charger.RatingFilter{Category: "reliability", MinAverage: 4}) {
+			t.Fatalf("expected rating filter to pass through, got %+v", filters.RatingFilters)
+		}
+	})
+
+	t.Run("invalid rating filter is rejected", func(t *testing.T) {
+		req := &registryv1.SearchChargersRequest{
+			RatingFilters: []*registryv1.RatingFilter{{CategoryName: "price", MinAverage: 4}},
+		}
+
+		_, err := searchChargersFilters(req)
+		if status.Code(err) != codes.InvalidArgument {
+			t.Fatalf("expected InvalidArgument, got %v", err)
+		}
+	})
+
 	t.Run("always scoped to verified chargers", func(t *testing.T) {
 		filters, err := searchChargersFilters(&registryv1.SearchChargersRequest{})
 		if err != nil {

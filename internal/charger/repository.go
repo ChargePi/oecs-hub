@@ -27,6 +27,12 @@ type FieldFilter struct {
 	Values []string
 }
 
+// RatingFilter excludes chargers unrated in Category.
+type RatingFilter struct {
+	Category   string
+	MinAverage float64
+}
+
 // SearchFilters holds the filters accepted by Repository.Search. A nil/empty Query or
 // ManufacturerID matches "any" for that filter. FieldFilters are AND-matched against each
 // other and against Query/ManufacturerID/the power range; within one FieldFilter, Values
@@ -43,6 +49,7 @@ type SearchFilters struct {
 	FieldFilters   []FieldFilter
 	Price          *PriceRange
 	Protocols      []ProtocolFilter
+	RatingFilters  []RatingFilter
 	// SubmitterIdentityID, if set, matches only chargers submitted by this Kratos
 	// identity - used by the manufacturer self-service API to scope results to the
 	// caller's own submissions, regardless of status.

@@ -146,6 +146,11 @@ message PriceRange {
   optional double max = 3;
 }
 
+message RatingFilter {
+  string category_name = 1;
+  double min_average = 2;
+}
+
 message SearchChargersRequest {
   optional string query = 1;
   optional string manufacturer_id = 2;
@@ -163,6 +168,7 @@ message SearchChargersRequest {
   optional PriceRange price = 12;
   // OR-matched: a charger matches if it implements any of these.
   repeated ProtocolFilter protocol_filters = 13;
+  repeated RatingFilter rating_filters = 14;
 }
 
 message SearchChargersResponse {

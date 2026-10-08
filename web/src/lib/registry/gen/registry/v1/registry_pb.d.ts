@@ -398,6 +398,28 @@ export namespace PriceRange {
   }
 }
 
+export class RatingFilter extends jspb.Message {
+  getCategoryName(): string;
+  setCategoryName(value: string): RatingFilter;
+
+  getMinAverage(): number;
+  setMinAverage(value: number): RatingFilter;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RatingFilter.AsObject;
+  static toObject(includeInstance: boolean, msg: RatingFilter): RatingFilter.AsObject;
+  static serializeBinaryToWriter(message: RatingFilter, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RatingFilter;
+  static deserializeBinaryFromReader(message: RatingFilter, reader: jspb.BinaryReader): RatingFilter;
+}
+
+export namespace RatingFilter {
+  export type AsObject = {
+    categoryName: string;
+    minAverage: number;
+  };
+}
+
 export class SearchChargersRequest extends jspb.Message {
   getQuery(): string;
   setQuery(value: string): SearchChargersRequest;
@@ -440,6 +462,11 @@ export class SearchChargersRequest extends jspb.Message {
   clearProtocolFiltersList(): SearchChargersRequest;
   addProtocolFilters(value?: ProtocolFilter, index?: number): ProtocolFilter;
 
+  getRatingFiltersList(): Array<RatingFilter>;
+  setRatingFiltersList(value: Array<RatingFilter>): SearchChargersRequest;
+  clearRatingFiltersList(): SearchChargersRequest;
+  addRatingFilters(value?: RatingFilter, index?: number): RatingFilter;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SearchChargersRequest.AsObject;
   static toObject(includeInstance: boolean, msg: SearchChargersRequest): SearchChargersRequest.AsObject;
@@ -459,6 +486,7 @@ export namespace SearchChargersRequest {
     fieldFiltersList: Array<FieldFilter.AsObject>;
     price?: PriceRange.AsObject;
     protocolFiltersList: Array<ProtocolFilter.AsObject>;
+    ratingFiltersList: Array<RatingFilter.AsObject>;
   };
 
   export enum QueryCase {

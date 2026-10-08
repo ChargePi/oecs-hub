@@ -38,6 +38,7 @@ export interface ChargerFilters {
   price?: PriceRangeFilter
   protocols?: ProtocolFilterValue[]
   fields: FieldFilterValue[]
+  minRatings: Record<string, number>
 }
 
 /** Matches chargers implementing `name`, narrowed to a version prefix when `version` is set. */
