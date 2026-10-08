@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 
 import { registryClient } from '@/lib/registry/client'
 import { ChargerGraph } from './charger-graph'
-import { NodeDetailSheet, type GraphSelection } from './node-detail-sheet'
+import { NodeDetailPanel, type GraphSelection } from './node-detail-sheet'
 
 export function GraphPage() {
   const { manufacturerId } = useParams<{ manufacturerId: string }>()
@@ -51,14 +51,16 @@ export function GraphPage() {
   }
 
   return (
-    <div className="relative flex-1">
-      <ChargerGraph
-        manufacturer={graph.manufacturer}
-        products={graph.products}
-        onSelectNode={setSelection}
-        focusVariantId={focusVariantId}
-      />
-      <NodeDetailSheet selection={selection} onSelectionChange={setSelection} />
+    <div className="flex h-[calc(100svh-3.5rem)]">
+      <NodeDetailPanel selection={selection} onSelectionChange={setSelection} />
+      <div className="relative min-w-0 flex-1">
+        <ChargerGraph
+          manufacturer={graph.manufacturer}
+          products={graph.products}
+          onSelectNode={setSelection}
+          focusVariantId={focusVariantId}
+        />
+      </div>
     </div>
   )
 }

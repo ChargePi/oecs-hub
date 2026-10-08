@@ -16,9 +16,12 @@ import {
 export function ChargerCard({
   variant,
   onClick,
+  active = false,
 }: {
   variant: ChargerVariant
   onClick: () => void
+  /** Open in the details panel. Distinct from `isSelected`, which means "in the comparison". */
+  active?: boolean
 }) {
   const maxPowerKw = variant.hardware.electrical?.output?.maxPower?.value
   const connectorTypes = [...new Set(variant.hardware.connectors.map((c) => c.type))]
@@ -40,9 +43,11 @@ export function ChargerCard({
       onDragStart={handleDragStart}
       onClick={onClick}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onClick()}
+      aria-current={active || undefined}
       className={cn(
         'cursor-pointer gap-0 overflow-hidden p-0 transition-colors hover:bg-muted/40',
         isSelected && 'ring-2 ring-primary',
+        active && 'bg-muted/40 outline-2 outline-offset-2 outline-primary/50',
       )}
     >
       <div className="relative">
@@ -74,8 +79,12 @@ export function ChargerCard({
           <p className="truncate text-sm text-muted-foreground">{variant.manufacturer.name}</p>
         </div>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-3 text-sm">
-          <Spec icon={SPEC_ICONS.chargerType} label="Type">{humanize(variant.model.type)}</Spec>
-          <Spec icon={SPEC_ICONS.power} label="Max power">{maxPowerKw != null ? `${maxPowerKw} kW` : '—'}</Spec>
+          <Spec icon={SPEC_ICONS.chargerType} label="Type">
+            {humanize(variant.model.type)}
+          </Spec>
+          <Spec icon={SPEC_ICONS.power} label="Max power">
+            {maxPowerKw != null ? `${maxPowerKw} kW` : '—'}
+          </Spec>
           <Spec icon={SPEC_ICONS.connectors} label="Connectors">
             {connectorTypes.length > 0 ? connectorTypes.map(humanize).join(', ') : '—'}
           </Spec>

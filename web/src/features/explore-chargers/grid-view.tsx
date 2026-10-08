@@ -9,9 +9,12 @@ import { useChargerSearch } from './use-charger-search'
 export function GridView({
   filters,
   onSelectVariant,
+  selectedVariantId,
 }: {
   filters: ChargerFilters
   onSelectVariant: (variant: ChargerVariant) => void
+  /** The variant shown in the details panel, highlighted so it's clear which card it describes. */
+  selectedVariantId?: string
 }) {
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useChargerSearch(filters)
@@ -66,6 +69,7 @@ export function GridView({
             key={variant.id}
             variant={variant}
             onClick={() => onSelectVariant(variant)}
+            active={variant.id === selectedVariantId}
           />
         ))}
       </div>

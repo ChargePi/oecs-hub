@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
-import { NodeDetailSheet, type GraphSelection } from '@/features/graph/node-detail-sheet'
+import { NodeDetailPanel, type GraphSelection } from '@/features/graph/node-detail-sheet'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { useComparisonStore } from '@/stores/comparison-store'
 import { FilterSidebar } from './filter-sidebar'
@@ -23,6 +23,10 @@ export function ExploreChargersPage() {
   const filterState = parseFiltersFromSearchParams(searchParams)
   const view: ExploreView = searchParams.get('view') === 'graph' ? 'graph' : 'grid'
   const [selection, setSelection] = useState<GraphSelection>(null)
+  const [filtersCollapsed, setFiltersCollapsed] = useState(false)
+  // Whether the filters were collapsed by opening details (rather than by the user), so
+  // closing the details only re-expands what it collapsed itself.
+  const [filtersAutoCollapsed, setFiltersAutoCollapsed] = useState(false)
 
   // The sidebar renders straight off filterState (derived from the URL) so it stays
   // instantly responsive; only the actual search query is debounced, so a text keystroke
@@ -62,13 +66,37 @@ export function ExploreChargersPage() {
     setSearchParams(params, { replace: true })
   }
 
+  // The details panel docks on the left beside the filters, so make room for it by
+  // collapsing the filters to their rail while something is selected.
+  function select(next: GraphSelection) {
+    if (next != null && selection == null && !filtersCollapsed) {
+      setFiltersCollapsed(true)
+      setFiltersAutoCollapsed(true)
+    } else if (next == null && filtersAutoCollapsed) {
+      setFiltersCollapsed(false)
+      setFiltersAutoCollapsed(false)
+    }
+    setSelection(next)
+  }
+
+  function setFiltersCollapsedByUser(collapsed: boolean) {
+    setFiltersCollapsed(collapsed)
+    setFiltersAutoCollapsed(false)
+  }
+
   function selectVariant(variant: ChargerVariant) {
-    setSelection({ kind: 'variant', variant })
+    select({ kind: 'variant', variant })
   }
 
   return (
     <div className="flex h-[calc(100svh-3.5rem-1px)]">
-      <FilterSidebar filters={filterState} onChange={updateFilters} />
+      <FilterSidebar
+        filters={filterState}
+        onChange={updateFilters}
+        collapsed={filtersCollapsed}
+        onCollapsedChange={setFiltersCollapsedByUser}
+      />
+      <NodeDetailPanel selection={selection} onSelectionChange={select} />
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="relative flex items-center justify-end border-b border-border p-4">
           <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold">Chargers</h1>
@@ -90,12 +118,15 @@ export function ExploreChargersPage() {
           </div>
         </div>
         {view === 'grid' ? (
-          <GridView filters={chargerFilters} onSelectVariant={selectVariant} />
+          <GridView
+            filters={chargerFilters}
+            onSelectVariant={selectVariant}
+            selectedVariantId={selection?.kind === 'variant' ? selection.variant.id : undefined}
+          />
         ) : (
-          <GraphView filters={chargerFilters} onSelectNode={setSelection} />
+          <GraphView filters={chargerFilters} onSelectNode={select} />
         )}
       </div>
-      <NodeDetailSheet selection={selection} onSelectionChange={setSelection} />
     </div>
   )
 }
