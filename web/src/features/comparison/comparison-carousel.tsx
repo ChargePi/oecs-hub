@@ -110,7 +110,7 @@ export function EmptyComparisonState() {
         </div>
         <p className="text-muted-foreground">Add a variant to start comparing.</p>
         <Button asChild>
-          <Link to="/">Go to explorer</Link>
+          <Link to="/chargers">Browse chargers</Link>
         </Button>
       </div>
     </div>
