@@ -7,6 +7,7 @@ import (
 
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/ChargePi/oecs-hub/internal/pagination"
+	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -18,13 +19,19 @@ type FieldFilterInput struct {
 	Values []string `json:"values" jsonschema:"candidate values for the field; matches if the field equals any one of them"`
 }
 
+type RatingFilterInput struct {
+	Category   string  `json:"category" jsonschema:"rating category: reliability, support, design, or ease_of_use"`
+	MinAverage float64 `json:"minAverage" jsonschema:"minimum average score across raters, 1 to 5"`
+}
+
 type SearchChargersInput struct {
-	Query          string             `json:"query,omitempty" jsonschema:"free-text search across manufacturer name, model name, and product series"`
-	ManufacturerID string             `json:"manufacturerId,omitempty" jsonschema:"restrict results to one manufacturer, by UUID - not part of the OECS spec, so it can't be expressed via fields"`
-	ChargerType    string             `json:"chargerType,omitempty" jsonschema:"AC, DC, portable-evse, or wireless"`
-	Fields         []FieldFilterInput `json:"fields,omitempty" jsonschema:"generic filters over any OECS spec field, by dot-path and candidate values (e.g. field \"hardware.connectors.type\" values [\"CCS2_Combo2\"], or \"manufacturer.country\" values [\"DE\"]); distinct entries are AND-matched together"`
-	PageSize       int                `json:"pageSize,omitempty" jsonschema:"max results to return (default 50, max 200)"`
-	PageToken      string             `json:"pageToken,omitempty" jsonschema:"opaque pagination cursor from a previous response's nextPageToken"`
+	Query          string              `json:"query,omitempty" jsonschema:"free-text search across manufacturer name, model name, and product series"`
+	ManufacturerID string              `json:"manufacturerId,omitempty" jsonschema:"restrict results to one manufacturer, by UUID - not part of the OECS spec, so it can't be expressed via fields"`
+	ChargerType    string              `json:"chargerType,omitempty" jsonschema:"AC, DC, portable-evse, or wireless"`
+	Fields         []FieldFilterInput  `json:"fields,omitempty" jsonschema:"generic filters over any OECS spec field, by dot-path and candidate values (e.g. field \"hardware.connectors.type\" values [\"CCS2_Combo2\"], or \"manufacturer.country\" values [\"DE\"]); distinct entries are AND-matched together"`
+	MinRatings     []RatingFilterInput `json:"minRatings,omitempty" jsonschema:"minimum average user rating per category, AND-matched; unrated chargers never match (e.g. category \"reliability\" minAverage 4)"`
+	PageSize       int                 `json:"pageSize,omitempty" jsonschema:"max results to return (default 50, max 200)"`
+	PageToken      string              `json:"pageToken,omitempty" jsonschema:"opaque pagination cursor from a previous response's nextPageToken"`
 }
 
 type ChargerSummaryOutput struct {
@@ -120,6 +127,17 @@ func searchChargersFilters(in SearchChargersInput) (charger.SearchFilters, error
 			Field:  f.Field,
 			Values: f.Values,
 		})
+	}
+
+	for _, r := range in.MinRatings {
+		filters.RatingFilters = append(filters.RatingFilters, charger.RatingFilter{
+			Category:   r.Category,
+			MinAverage: r.MinAverage,
+		})
+	}
+
+	if err := userchargers.ValidateRatingFilters(filters.RatingFilters); err != nil {
+		return charger.SearchFilters{}, fmt.Errorf("invalid minRatings: %w", err)
 	}
 
 	return filters, nil

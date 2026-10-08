@@ -235,6 +235,15 @@ export class GrpcRegistryClient implements RegistryClient {
         }),
     )
 
+    req.setRatingFiltersList(
+      Object.entries(filters.minRatings).map(([categoryName, minAverage]) => {
+        const proto = new registry_v1_registry_pb.RatingFilter()
+        proto.setCategoryName(categoryName)
+        proto.setMinAverage(minAverage)
+        return proto
+      }),
+    )
+
     req.setPageSize(params.pageSize)
     if (params.pageToken) req.setPageToken(params.pageToken)
 

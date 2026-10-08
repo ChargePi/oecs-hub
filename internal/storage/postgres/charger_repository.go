@@ -152,6 +152,10 @@ func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchF
 		query = query.Where("jsonb_path_exists(spec, ?::jsonpath, ?::jsonb)", path, string(vars))
 	}
 
+	for _, f := range filters.RatingFilters {
+		query = query.Where("(ratings -> ? ->> 'average')::float8 >= ?", f.Category, f.MinAverage)
+	}
+
 	return query, nil
 }
 

@@ -3,11 +3,14 @@ package userchargers
 import (
 	"errors"
 	"fmt"
+
+	"github.com/ChargePi/oecs-hub/internal/charger"
 )
 
 var (
 	ErrInvalidCategory = errors.New("invalid rating category")
 	ErrInvalidScore    = errors.New("rating score must be between 1 and 5")
+	ErrInvalidMinScore = errors.New("minimum rating must be between 1 and 5")
 )
 
 // ValidRatingCategories mirrors rating_categories, seeded by
@@ -46,6 +49,28 @@ func ValidateRatingInputs(inputs []RatingInput) error {
 		}
 
 		seen[in.CategoryName] = true
+	}
+
+	return nil
+}
+
+func ValidateRatingFilters(filters []charger.RatingFilter) error {
+	seen := make(map[string]struct{}, len(filters))
+
+	for _, in := range filters {
+		if !ValidRatingCategories[in.Category] {
+			return fmt.Errorf("%w: %q", ErrInvalidCategory, in.Category)
+		}
+
+		if in.MinAverage < 1 || in.MinAverage > 5 {
+			return fmt.Errorf("%w: got %g", ErrInvalidMinScore, in.MinAverage)
+		}
+
+		if _, ok := seen[in.Category]; ok {
+			return fmt.Errorf("%w: duplicate category %q", ErrInvalidCategory, in.Category)
+		}
+
+		seen[in.Category] = struct{}{}
 	}
 
 	return nil

@@ -184,6 +184,17 @@ func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.Searc
 
 	filters.Price = price
 
+	for _, f := range req.GetRatingFilters() {
+		filters.RatingFilters = append(filters.RatingFilters, charger.RatingFilter{
+			Category:   f.GetCategoryName(),
+			MinAverage: f.GetMinAverage(),
+		})
+	}
+
+	if err := userchargers.ValidateRatingFilters(filters.RatingFilters); err != nil {
+		return filters, status.Errorf(codes.InvalidArgument, "invalid rating filter: %v", err)
+	}
+
 	return filters, nil
 }
 

@@ -19,7 +19,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
+import { StarRatingInput } from '@/components/ui/star-rating-input'
 import { Switch } from '@/components/ui/switch'
+import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import { registryClient } from '@/lib/registry/client'
 import { FILTER_GROUPS } from './filter-manifest'
 import type { FilterState } from './filter-state'
@@ -71,6 +73,13 @@ export function FilterSidebar({
     if (checked) facets[facetId] = ['true']
     else delete facets[facetId]
     onChange({ ...filters, facets })
+  }
+
+  function setMinRating(category: string, stars: number) {
+    const minRatings = { ...filters.minRatings }
+    if (minRatings[category] === stars) delete minRatings[category]
+    else minRatings[category] = stars
+    onChange({ ...filters, minRatings })
   }
 
   if (collapsed) {
@@ -193,6 +202,25 @@ export function FilterSidebar({
       </div>
 
       <Accordion type="multiple" className="flex flex-col gap-1">
+        <AccordionItem value="ratings">
+          <AccordionTrigger>Ratings</AccordionTrigger>
+          <AccordionContent className="flex flex-col gap-2">
+            {RATING_CATEGORIES.map((category) => (
+              <div key={category.name} className="flex items-center justify-between gap-2 text-sm">
+                <span title={category.description}>{category.label}</span>
+                <StarRatingInput
+                  value={filters.minRatings[category.name] ?? 0}
+                  onChange={(stars) => setMinRating(category.name, stars)}
+                  aria-label={`Minimum ${category.label} rating`}
+                />
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground">
+              Minimum average rating. Click the selected star again to clear.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+
         {FILTER_GROUPS.map((group) => (
           <Fragment key={group.id}>
             <AccordionItem value={group.id}>

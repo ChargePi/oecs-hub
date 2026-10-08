@@ -55,8 +55,8 @@ func TestSearch_Integration(t *testing.T) {
 		"pricing": {"pricingModel": "enquiry"}
 	}`)
 
-	a := &charger.Charger{ID: uuid.New(), ManufacturerName: "Acme", ModelName: "Bolt-9000", ChargerType: "AC", ConnectorTypes: []string{"CCS2_Combo2"}, Protocols: []string{}, MinPowerWatts: ptr(7400.0), MaxPowerWatts: ptr(22000.0), SchemaVersion: "1.1.0", Spec: specA, Status: charger.StatusVerified}
-	b := &charger.Charger{ID: uuid.New(), ManufacturerName: "Zenith", ModelName: "Volt-1", ChargerType: "DC", ConnectorTypes: []string{"Type2_Mennekes"}, Protocols: []string{}, MinPowerWatts: ptr(50000.0), MaxPowerWatts: ptr(150000.0), SchemaVersion: "1.1.0", Spec: specB, Status: charger.StatusVerified}
+	a := &charger.Charger{ID: uuid.New(), ManufacturerName: "Acme", ModelName: "Bolt-9000", ChargerType: "AC", ConnectorTypes: []string{"CCS2_Combo2"}, Protocols: []string{}, MinPowerWatts: ptr(7400.0), MaxPowerWatts: ptr(22000.0), SchemaVersion: "1.1.0", Spec: specA, Status: charger.StatusVerified, Ratings: []byte(`{"reliability": {"average": 4.5, "count": 2}, "support": {"average": 2, "count": 1}}`)}
+	b := &charger.Charger{ID: uuid.New(), ManufacturerName: "Zenith", ModelName: "Volt-1", ChargerType: "DC", ConnectorTypes: []string{"Type2_Mennekes"}, Protocols: []string{}, MinPowerWatts: ptr(50000.0), MaxPowerWatts: ptr(150000.0), SchemaVersion: "1.1.0", Spec: specB, Status: charger.StatusVerified, Ratings: []byte(`{"reliability": {"average": 3, "count": 4}}`)}
 
 	if err := repo.Create(ctx, a); err != nil {
 		t.Fatalf("create a: %v", err)
@@ -207,6 +207,51 @@ func TestSearch_Integration(t *testing.T) {
 
 		if total != 0 {
 			t.Fatalf("expected no match (b's power is out of range), got total=%d", total)
+		}
+	})
+
+	t.Run("rating filter matches minimum average", func(t *testing.T) {
+		results, total, err := repo.Search(ctx, charger.SearchFilters{
+			Statuses:      []charger.Status{charger.StatusVerified},
+			RatingFilters: []charger.RatingFilter{{Category: "reliability", MinAverage: 4}},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 1 || len(results) != 1 || results[0].ID != a.ID {
+			t.Fatalf("expected only charger a, got total=%d results=%+v", total, results)
+		}
+	})
+
+	t.Run("rating filters AND-matched", func(t *testing.T) {
+		_, total, err := repo.Search(ctx, charger.SearchFilters{
+			Statuses: []charger.Status{charger.StatusVerified},
+			RatingFilters: []charger.RatingFilter{
+				{Category: "reliability", MinAverage: 4},
+				{Category: "support", MinAverage: 3},
+			},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 0 {
+			t.Fatalf("expected no match (a's support is below 3), got total=%d", total)
+		}
+	})
+
+	t.Run("unrated category never matches", func(t *testing.T) {
+		results, total, err := repo.Search(ctx, charger.SearchFilters{
+			Statuses:      []charger.Status{charger.StatusVerified},
+			RatingFilters: []charger.RatingFilter{{Category: "support", MinAverage: 1}},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 1 || len(results) != 1 || results[0].ID != a.ID {
+			t.Fatalf("expected only charger a (b has no support ratings), got total=%d results=%+v", total, results)
 		}
 	})
 }

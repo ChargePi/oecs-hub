@@ -13,6 +13,7 @@ export interface FilterState {
   maxPrice?: number
   /** "OCPP" (any version) or "OCPP@1.6" (that version) */
   protocols: string[]
+  minRatings: Record<string, number>
   /** facet id -> selected values (multi-select options, or ["true"] for an enabled toggle) */
   facets: Record<string, string[]>
 }
@@ -23,6 +24,7 @@ export const EMPTY_FILTER_STATE: FilterState = {
   query: '',
   priceCurrency: DEFAULT_PRICE_CURRENCY,
   protocols: [],
+  minRatings: {},
   facets: {},
 }
 
@@ -34,6 +36,16 @@ function parseNumber(value: string | null): number | undefined {
   if (!value) return undefined
   const n = Number(value)
   return Number.isFinite(n) ? n : undefined
+}
+
+function parseMinRatings(value: string | null): Record<string, number> {
+  const minRatings: Record<string, number> = {}
+  for (const entry of parseList(value)) {
+    const [category, raw] = entry.split(':')
+    const min = Number(raw)
+    if (category && Number.isInteger(min) && min >= 1 && min <= 5) minRatings[category] = min
+  }
+  return minRatings
 }
 
 export function parseFiltersFromSearchParams(params: URLSearchParams): FilterState {
@@ -52,6 +64,7 @@ export function parseFiltersFromSearchParams(params: URLSearchParams): FilterSta
     minPrice: parseNumber(params.get('minPrice')),
     maxPrice: parseNumber(params.get('maxPrice')),
     protocols: parseList(params.get('protocol')),
+    minRatings: parseMinRatings(params.get('rating')),
     facets,
   }
 }
@@ -66,7 +79,9 @@ export function filtersToSearchParams(
   for (const key of [...params.keys()]) {
     if (
       facetIds.has(key) ||
-      ['q', 'm', 'minKw', 'maxKw', 'cur', 'minPrice', 'maxPrice', 'protocol'].includes(key)
+      ['q', 'm', 'minKw', 'maxKw', 'cur', 'minPrice', 'maxPrice', 'protocol', 'rating'].includes(
+        key,
+      )
     ) {
       params.delete(key)
     }
@@ -83,6 +98,11 @@ export function filtersToSearchParams(
   }
 
   if (state.protocols.length > 0) params.set('protocol', state.protocols.join(','))
+
+  const ratings = Object.entries(state.minRatings)
+  if (ratings.length > 0) {
+    params.set('rating', ratings.map(([category, min]) => `${category}:${min}`).join(','))
+  }
 
   for (const [facetId, values] of Object.entries(state.facets)) {
     if (values.length > 0) params.set(facetId, values.join(','))
@@ -112,6 +132,7 @@ export function isFilterStateEmpty(state: FilterState): boolean {
     state.maxPowerKw == null &&
     !hasPriceRange(state) &&
     state.protocols.length === 0 &&
+    Object.keys(state.minRatings).length === 0 &&
     Object.keys(state.facets).length === 0
   )
 }
@@ -137,5 +158,6 @@ export function filterStateToChargerFilters(state: FilterState): ChargerFilters 
       : undefined,
     protocols: state.protocols.map(parseProtocolToken),
     fields,
+    minRatings: state.minRatings,
   }
 }
