@@ -37,11 +37,21 @@ function parsePriceInput(value: string): number | undefined {
 export function FilterSidebar({
   filters,
   onChange,
+  collapsed: controlledCollapsed,
+  onCollapsedChange,
 }: {
   filters: FilterState
   onChange: (next: FilterState) => void
+  /** Controls the collapsed rail from outside; falls back to internal state when omitted. */
+  collapsed?: boolean
+  onCollapsedChange?: (collapsed: boolean) => void
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [internalCollapsed, setInternalCollapsed] = useState(false)
+  const collapsed = controlledCollapsed ?? internalCollapsed
+  function setCollapsed(next: boolean) {
+    setInternalCollapsed(next)
+    onCollapsedChange?.(next)
+  }
   const { data: manufacturers } = useQuery({
     queryKey: ['manufacturers'],
     queryFn: () => registryClient.listManufacturers(),
