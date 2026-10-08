@@ -59,23 +59,29 @@ export function ChatComposer({
   }
 
   return (
-    <div className="flex items-end gap-2 rounded-lg border border-border bg-card p-2">
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        autoFocus={autoFocus}
-        rows={1}
-        className={cn(
-          'placeholder:text-muted-foreground max-h-40 min-h-9 w-full flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        )}
-      />
-      <Button size="icon" onClick={submit} disabled={disabled || !value.trim()} aria-label="Send">
-        <SendHorizonal />
-      </Button>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-end gap-2 rounded-lg border border-border bg-card p-2">
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          rows={1}
+          className={cn(
+            'placeholder:text-muted-foreground max-h-40 min-h-9 w-full flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          )}
+        />
+        <Button size="icon" onClick={submit} disabled={disabled || !value.trim()} aria-label="Send">
+          <SendHorizonal />
+        </Button>
+      </div>
+      {/* AI-interaction disclosure (EU AI Act Art. 50) - keep visible wherever the composer is. */}
+      <p className="text-center text-xs text-muted-foreground">
+        You're chatting with an AI assistant. Answers may be inaccurate - verify important details.
+      </p>
     </div>
   )
 }
