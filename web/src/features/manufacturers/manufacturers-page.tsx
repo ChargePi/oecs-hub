@@ -51,7 +51,7 @@ export function ManufacturersPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(24rem,1fr))] gap-4 p-4">
           {Array.from({ length: 6 }, (_, i) => (
             <ManufacturerCardSkeleton key={i} />
           ))}
@@ -65,14 +65,14 @@ export function ManufacturersPage() {
           <p className="text-xs text-muted-foreground">
             {totalSize} manufacturer{totalSize === 1 ? '' : 's'}
           </p>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(24rem,1fr))] gap-4">
             {manufacturers.map((manufacturer) => (
               <ManufacturerCard key={manufacturer.id} manufacturer={manufacturer} />
             ))}
           </div>
           <div ref={sentinelRef} />
           {isFetchingNextPage && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(24rem,1fr))] gap-4">
               {Array.from({ length: 3 }, (_, i) => (
                 <ManufacturerCardSkeleton key={i} />
               ))}

@@ -14,6 +14,9 @@ export function ExplorerPage() {
     queryKey: ['manufacturers'],
     queryFn: () => registryClient.listManufacturers(),
   })
+  const sortedManufacturers = [...manufacturers].sort(
+    (a, b) => Number(b.productCount > 0) - Number(a.productCount > 0),
+  )
 
   return (
     <>
@@ -39,7 +42,7 @@ export function ExplorerPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {manufacturers.map((manufacturer, i) => (
+              {sortedManufacturers.map((manufacturer, i) => (
                 <Reveal key={manufacturer.id} delay={Math.min(i * 60, 300)}>
                   <ManufacturerCard manufacturer={manufacturer} />
                 </Reveal>
