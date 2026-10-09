@@ -24,7 +24,7 @@ import { Switch } from '@/components/ui/switch'
 import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import { registryClient } from '@/lib/registry/client'
 import { FILTER_GROUPS } from './filter-manifest'
-import type { FilterState } from './filter-state'
+import { EMPTY_FILTER_STATE, isFilterStateEmpty, type FilterState } from './filter-state'
 import { ProtocolFilter } from './protocol-filter'
 
 const MAX_POWER_KW = 400
@@ -100,14 +100,26 @@ export function FilterSidebar({
     <div className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto border-r border-border p-4">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Filters</span>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setCollapsed(true)}
-          aria-label="Hide filters"
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={isFilterStateEmpty(filters)}
+            onClick={() =>
+              onChange({ ...EMPTY_FILTER_STATE, priceCurrency: filters.priceCurrency })
+            }
+          >
+            Clear all
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setCollapsed(true)}
+            aria-label="Hide filters"
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+        </div>
       </div>
 
       <Input

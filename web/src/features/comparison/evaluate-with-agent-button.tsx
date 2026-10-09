@@ -33,7 +33,13 @@ function buildComparisonPrompt(variants: ChargerVariant[]): string {
  *  lands back here. Also carries the exact catalog ids (`chargerIds`) so the agent's ResolveChargers can
  *  skip its name-based resolution loop entirely - the prompt text still names every
  *  charger too, for AnalyzeIntent's own compare_chargers classification. */
-export function EvaluateWithAgentButton({ variants }: { variants: ChargerVariant[] }) {
+export function EvaluateWithAgentButton({
+  variants,
+  className,
+}: {
+  variants: ChargerVariant[]
+  className?: string
+}) {
   const navigate = useNavigate()
   const { identity } = useIdentity()
 
@@ -57,7 +63,7 @@ export function EvaluateWithAgentButton({ variants }: { variants: ChargerVariant
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline" size="sm" onClick={handleClick}>
+        <Button variant="outline" size="sm" className={className} onClick={handleClick}>
           <Sparkles />
           Evaluate using AI
         </Button>

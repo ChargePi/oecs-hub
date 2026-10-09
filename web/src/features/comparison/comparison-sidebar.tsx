@@ -11,6 +11,7 @@ import {
   useComparisonStore,
 } from '@/stores/comparison-store'
 import { ProductImage } from '@/features/product/product-image'
+import { EvaluateWithAgentButton } from './evaluate-with-agent-button'
 import { useComparisonVariants } from './use-comparison-variants'
 
 export function ComparisonSidebar() {
@@ -134,8 +135,9 @@ export function ComparisonSidebar() {
         )}
       </div>
 
-      <div className="p-3">
-        <Button asChild className={cn('w-full')} disabled={variants.length === 0}>
+      <div className="flex gap-2 p-3">
+        <EvaluateWithAgentButton variants={variants} className="h-8 flex-1 text-sm" />
+        <Button asChild className="flex-1" disabled={variants.length === 0}>
           <Link
             to="/compare"
             aria-disabled={variants.length === 0}
