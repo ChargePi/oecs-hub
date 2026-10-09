@@ -1,52 +1,55 @@
 import type {LucideIcon} from 'lucide-react'
 import {Building2, Plug, User} from 'lucide-react'
 
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Reveal} from '@/components/reveal'
+import {FeatureCard} from './feature-card'
 
-const AUDIENCE_SEGMENTS: { icon: LucideIcon; title: string; body: string }[] = [
+type AudienceSegment = {
+  icon: LucideIcon
+  title: string
+  body: string
+  link: { to: string; label: string }
+}
+
+const AUDIENCE_SEGMENTS: AudienceSegment[] = [
   {
     icon: Plug,
-    title: 'Infrastructure developers, installers & integrators',
-    body: "Real electrical, connector and mounting specs for every manufacturer, side by side. Explore the field, compare what matters, and land on the charger that actually fits your site's physical, functional and regulatory constraints.",
+    title: 'Installers & integrators',
+    body: 'Electrical and mounting specs alongside OCPP, ISO 15118, smart charging and payment support — side by side, so the charger you pick fits both your site and your backend.',
+    link: { to: '/chargers?protocol=OCPP', label: 'Explore OCPP chargers' },
   },
   {
     icon: User,
     title: 'EV drivers & residents',
-    body: 'Charging at home or just curious what that charger at your building actually supports? Look up any charger by model and see its specs in plain language — no datasheet required.',
+    body: 'Searching for the perfect home charger, or just curious what the one at your building can do? Look up any model and see its features in plain language — no datasheet required.',
+    link: { to: '/chargers?charger-type=AC&form-factor=wall-mounted', label: 'Browse home chargers' },
   },
   {
     icon: Building2,
     title: 'Real estate & property teams',
-    body: 'Evaluating chargers for a property, portfolio or new development? Compare options side by side on the specs that matter for procurement — power, connector standards, and compliance — without vendor spin.',
+    body: 'Compare chargers for a property or portfolio on power, connector standards and compliance — without vendor spin.',
+    link: { to: '/compare', label: 'Start a comparison' },
   },
 ]
 
 export function AudienceSection() {
   return (
-    <section className="border-t border-border/60 bg-card/30">
-      <div className="mx-auto max-w-5xl px-4 py-16 md:px-6 md:py-24">
-        <Reveal>
-          <h2 className="text-center text-2xl font-semibold tracking-tight">Built for everyone</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
+    <section>
+      <div className="mx-auto max-w-7xl px-4 pt-12 pb-20 md:px-6 md:pt-16 md:pb-28">
+        <Reveal className="flex flex-col items-center text-center">
+          <h2 className="text-3xl font-semibold tracking-tighter text-balance md:text-5xl">
+            Built for everyone.
+          </h2>
+          <p className="mt-4 max-w-2xl text-pretty text-muted-foreground md:text-lg">
             Whether you're planning a new commercial or residential charging infrastructure project or simply charging
             at home, OECS Hub helps you find the best charger for your use case.
           </p>
         </Reveal>
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
           {AUDIENCE_SEGMENTS.map((segment, i) => (
             <Reveal key={segment.title} delay={i * 100}>
-              <Card className="h-full">
-                <CardHeader className="flex-row items-center gap-3">
-                  <div
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <segment.icon className="size-5"/>
-                  </div>
-                  <CardTitle>{segment.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">{segment.body}</CardContent>
-              </Card>
+              <FeatureCard icon={segment.icon} title={segment.title} body={segment.body} link={segment.link}/>
             </Reveal>
           ))}
         </div>

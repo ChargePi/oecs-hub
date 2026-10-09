@@ -89,7 +89,7 @@ export function ManufacturersPage() {
 function ManufacturerCardSkeleton() {
   return (
     <Card>
-      <CardHeader className="flex-row items-center gap-3">
+      <CardHeader className="flex items-center gap-4">
         <Skeleton className="size-10 shrink-0 rounded-lg" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-2/3" />

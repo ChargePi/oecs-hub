@@ -1,10 +1,10 @@
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { Zap } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { AuthStatus } from '@/features/auth/auth-status'
 import { AssistantToggle } from '@/features/chat/assistant-toggle'
-import { SearchBar } from '@/features/explorer/search-bar'
+import { SearchBar } from '@/components/search-bar'
 import { useIdentity } from '@/lib/auth/use-identity'
 
 const NAV_LINKS = [
@@ -15,6 +15,7 @@ const NAV_LINKS = [
 
 export function Header() {
   const { identity } = useIdentity()
+  const { pathname } = useLocation()
   const navLinks = [
     ...NAV_LINKS,
     ...(identity ? [{ to: '/my-chargers', label: 'My chargers' }] : []),
@@ -32,7 +33,7 @@ export function Header() {
         </NavLink>
 
         <div className="flex flex-1 justify-center">
-          <SearchBar />
+          {pathname !== '/' && <SearchBar />}
         </div>
 
         <nav className="flex shrink-0 items-center gap-6">
