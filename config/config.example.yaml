@@ -59,3 +59,14 @@ promptSuggestions:
   poolSize: 10
   # How many of a topic's cached pool are randomly sampled and returned per request.
   returnCount: 1
+
+# Semantic charger search: a free-text query over verified chargers is ranked by a Qdrant
+# index of their specs, embedded through Bifrost. Disabled, search matches names only.
+semanticSearch:
+  enabled: false
+  qdrantHost: "qdrant"
+  qdrantPort: 6334
+  collection: "oecs_chargers"
+  embeddingModel: "openai/text-embedding-3-small"
+  topK: 100
+  minScore: 0.25

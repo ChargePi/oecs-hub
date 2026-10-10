@@ -97,6 +97,23 @@ type PromptSuggestionsConfiguration struct {
 	ReturnCount int `json:"returnCount" mapstructure:"returnCount" validate:"required" yaml:"returnCount"`
 }
 
+// SemanticSearchConfiguration configures the Qdrant index behind semantic charger search
+// (internal/vector). Embeddings go through Bifrost, see BifrostConfiguration.
+type SemanticSearchConfiguration struct {
+	Enabled    bool   `json:"enabled"    mapstructure:"enabled"    yaml:"enabled"`
+	QdrantHost string `json:"qdrantHost" mapstructure:"qdrantHost" yaml:"qdrantHost"`
+	// QdrantPort is Qdrant's gRPC port.
+	QdrantPort int    `json:"qdrantPort" mapstructure:"qdrantPort" yaml:"qdrantPort"`
+	Collection string `json:"collection" mapstructure:"collection" yaml:"collection"`
+	// EmbeddingModel is in Bifrost's "provider/model" form. Changing it requires a new
+	// collection and a reindex.
+	EmbeddingModel string `json:"embeddingModel" mapstructure:"embeddingModel" yaml:"embeddingModel"`
+	// TopK caps how many semantic matches a search considers.
+	TopK int `json:"topK" mapstructure:"topK" yaml:"topK"`
+	// MinScore is the cosine similarity below which a charger isn't a match.
+	MinScore float64 `json:"minScore" mapstructure:"minScore" yaml:"minScore"`
+}
+
 type Configuration struct {
 	Database          DatabaseConfiguration          `json:"database"          mapstructure:"database"          validate:"required" yaml:"database"`
 	Redis             RedisConfiguration             `json:"redis"             mapstructure:"redis"             validate:"required" yaml:"redis"`
@@ -110,4 +127,5 @@ type Configuration struct {
 	Bifrost           BifrostConfiguration           `json:"bifrost"           mapstructure:"bifrost"           validate:"required" yaml:"bifrost"`
 	PromptSuggestions PromptSuggestionsConfiguration `json:"promptSuggestions" mapstructure:"promptSuggestions" validate:"required" yaml:"promptSuggestions"`
 	PendingActions    PendingActionsConfiguration    `json:"pendingActions"    mapstructure:"pendingActions"    yaml:"pendingActions"`
+	SemanticSearch    SemanticSearchConfiguration    `json:"semanticSearch"    mapstructure:"semanticSearch"    yaml:"semanticSearch"`
 }

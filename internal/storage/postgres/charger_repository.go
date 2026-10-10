@@ -7,8 +7,12 @@ import (
 
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
+
+const nameMatchPredicate = "(manufacturer_name ILIKE ? OR model_name ILIKE ? OR series ILIKE ?)"
 
 type ChargerRepository struct {
 	db *gorm.DB
@@ -70,12 +74,34 @@ func (r *ChargerRepository) Search(ctx context.Context, filters charger.SearchFi
 		return nil, 0, err
 	}
 
-	return runSearch(query, limit, offset)
+	return runSearch(query, searchOrder(filters), limit, offset)
 }
 
-// runSearch counts and fetches the given query's matches, applying Search's shared
-// ordering and page bounds.
-func runSearch(query *gorm.DB, limit, offset uint32) ([]*charger.Charger, int64, error) {
+const alphabeticalOrder = "manufacturer_name ASC, model_name ASC"
+
+// searchOrder is alphabetical unless filters.RankedIDs is set: then name matches come
+// first, followed by the ranked IDs in their given order.
+func searchOrder(filters charger.SearchFilters) any {
+	if len(filters.RankedIDs) == 0 || filters.Query == nil {
+		return alphabeticalOrder
+	}
+
+	ids := make([]string, len(filters.RankedIDs))
+	for i, id := range filters.RankedIDs {
+		ids[i] = id.String()
+	}
+
+	q := "%" + *filters.Query + "%"
+
+	return clause.OrderBy{Expression: clause.Expr{
+		SQL:                nameMatchPredicate + " DESC NULLS LAST, array_position(?::uuid[], id), " + alphabeticalOrder,
+		Vars:               []any{q, q, q, pq.Array(ids)},
+		WithoutParentheses: true,
+	}}
+}
+
+// runSearch counts and fetches the given query's matches, applying order and page bounds.
+func runSearch(query *gorm.DB, order any, limit, offset uint32) ([]*charger.Charger, int64, error) {
 	var total int64
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, fmt.Errorf("count chargers: %w", err)
@@ -83,7 +109,7 @@ func runSearch(query *gorm.DB, limit, offset uint32) ([]*charger.Charger, int64,
 
 	var entities []*chargerVariantEntity
 
-	err := query.Order("manufacturer_name ASC, model_name ASC").
+	err := query.Order(order).
 		Limit(int(limit)).
 		Offset(int(offset)).
 		Find(&entities).Error
@@ -97,7 +123,13 @@ func runSearch(query *gorm.DB, limit, offset uint32) ([]*charger.Charger, int64,
 func (r *ChargerRepository) applyFilters(query *gorm.DB, filters charger.SearchFilters) (*gorm.DB, error) {
 	if filters.Query != nil && *filters.Query != "" {
 		q := "%" + *filters.Query + "%"
-		query = query.Where("(manufacturer_name ILIKE ? OR model_name ILIKE ? OR series ILIKE ?)", q, q, q)
+
+		switch {
+		case len(filters.RankedIDs) > 0:
+			query = query.Where("(id IN ? OR "+nameMatchPredicate+")", filters.RankedIDs, q, q, q)
+		default:
+			query = query.Where(nameMatchPredicate, q, q, q)
+		}
 	}
 
 	if filters.ManufacturerID != nil {

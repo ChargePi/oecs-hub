@@ -20,6 +20,7 @@ type fakeAdminChargerService struct {
 	gotSpec           []byte
 	gotManufacturerID uuid.UUID
 	charger           *charger.Charger
+	reindexed         charger.ReindexResult
 	err               error
 }
 
@@ -43,6 +44,10 @@ func (f *fakeAdminChargerService) ReassignManufacturer(_ context.Context, id, ma
 	f.gotManufacturerID = manufacturerID
 
 	return f.charger, f.err
+}
+
+func (f *fakeAdminChargerService) Reindex(context.Context) (charger.ReindexResult, error) {
+	return f.reindexed, f.err
 }
 
 type fakeAdminManufacturerService struct {
@@ -264,6 +269,41 @@ func TestAdminHandler_SetManufacturerOwner(t *testing.T) {
 
 		if fake.gotOwner != owner || resp.GetOwnerIdentityId() != owner.String() {
 			t.Fatalf("unexpected owner: forwarded=%v returned=%q", fake.gotOwner, resp.GetOwnerIdentityId())
+		}
+	})
+}
+
+func TestAdminHandler_ReindexChargers(t *testing.T) {
+	errorCases := []struct {
+		name string
+		err  error
+		want codes.Code
+	}{
+		{"disabled", fmt.Errorf("reindex: %w", charger.ErrSemanticSearchDisabled), codes.FailedPrecondition},
+		{"other failure", errors.New("boom"), codes.Internal},
+	}
+
+	for _, tc := range errorCases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := NewAdminHandler(&fakeAdminChargerService{err: tc.err}, nil)
+
+			_, err := h.ReindexChargers(context.Background(), &adminv1.ReindexChargersRequest{})
+			if status.Code(err) != tc.want {
+				t.Fatalf("expected %v, got %v", tc.want, err)
+			}
+		})
+	}
+
+	t.Run("success", func(t *testing.T) {
+		h := NewAdminHandler(&fakeAdminChargerService{reindexed: charger.ReindexResult{Indexed: 7, Failed: 2}}, nil)
+
+		resp, err := h.ReindexChargers(context.Background(), &adminv1.ReindexChargersRequest{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if resp.GetIndexed() != 7 || resp.GetFailed() != 2 {
+			t.Fatalf("got indexed=%d failed=%d, want 7 and 2", resp.GetIndexed(), resp.GetFailed())
 		}
 	})
 }

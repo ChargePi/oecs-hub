@@ -21,6 +21,7 @@ type AdminChargerService interface {
 	ChangeStatus(ctx context.Context, id uuid.UUID, status charger.Status) (*charger.Charger, error)
 	AdminEditSpecification(ctx context.Context, id uuid.UUID, raw []byte) (*charger.Charger, error)
 	ReassignManufacturer(ctx context.Context, id, manufacturerID uuid.UUID) (*charger.Charger, error)
+	Reindex(ctx context.Context) (charger.ReindexResult, error)
 }
 
 // AdminManufacturerService is the subset of manufacturer.Service the admin handler
@@ -301,4 +302,21 @@ func (h *AdminHandler) ReassignSchemaManufacturer(ctx context.Context, req *admi
 	}
 
 	return &adminv1.ReassignSchemaManufacturerResponse{Variant: chargerToProto(c)}, nil
+}
+
+// ReindexChargers rebuilds the semantic search index from every verified charger.
+func (h *AdminHandler) ReindexChargers(ctx context.Context, _ *adminv1.ReindexChargersRequest) (*adminv1.ReindexChargersResponse, error) {
+	result, err := h.charger.Reindex(ctx)
+
+	switch {
+	case errors.Is(err, charger.ErrSemanticSearchDisabled):
+		return nil, status.Error(codes.FailedPrecondition, "semantic search is disabled")
+	case err != nil:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &adminv1.ReindexChargersResponse{
+		Indexed: int32(result.Indexed),
+		Failed:  int32(result.Failed),
+	}, nil
 }

@@ -25,7 +25,7 @@ type RatingFilterInput struct {
 }
 
 type SearchChargersInput struct {
-	Query          string              `json:"query,omitempty" jsonschema:"free-text search across manufacturer name, model name, and product series"`
+	Query          string              `json:"query,omitempty" jsonschema:"free-text search: a manufacturer, model, or series name, or a natural-language description of what is needed (e.g. \"quiet wallbox with solar integration and OCPP 2.0.1\"); results are ordered by relevance"`
 	ManufacturerID string              `json:"manufacturerId,omitempty" jsonschema:"restrict results to one manufacturer, by UUID - not part of the OECS spec, so it can't be expressed via fields"`
 	ChargerType    string              `json:"chargerType,omitempty" jsonschema:"AC, DC, portable-evse, or wireless"`
 	Fields         []FieldFilterInput  `json:"fields,omitempty" jsonschema:"generic filters over any OECS spec field, by dot-path and candidate values (e.g. field \"hardware.connectors.type\" values [\"CCS2_Combo2\"], or \"manufacturer.country\" values [\"DE\"]); distinct entries are AND-matched together"`

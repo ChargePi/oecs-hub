@@ -254,6 +254,71 @@ func TestSearch_Integration(t *testing.T) {
 			t.Fatalf("expected only charger a (b has no support ratings), got total=%d results=%+v", total, results)
 		}
 	})
+
+	t.Run("ranked ids widen the query and set the order", func(t *testing.T) {
+		query := "no-name-match-" + uuid.NewString()
+
+		results, total, err := repo.Search(ctx, charger.SearchFilters{
+			Query:     &query,
+			Statuses:  []charger.Status{charger.StatusVerified},
+			RankedIDs: []uuid.UUID{b.ID, a.ID},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 2 || len(results) != 2 || results[0].ID != b.ID || results[1].ID != a.ID {
+			t.Fatalf("expected b then a, got total=%d results=%+v", total, results)
+		}
+
+		page, _, err := repo.Search(ctx, charger.SearchFilters{
+			Query:     &query,
+			Statuses:  []charger.Status{charger.StatusVerified},
+			RankedIDs: []uuid.UUID{b.ID, a.ID},
+		}, 1, 1)
+		if err != nil {
+			t.Fatalf("search page 2: %v", err)
+		}
+
+		if len(page) != 1 || page[0].ID != a.ID {
+			t.Fatalf("expected a on the second page, got %+v", page)
+		}
+	})
+
+	t.Run("ranked ids are still narrowed by other filters", func(t *testing.T) {
+		query := "no-name-match-" + uuid.NewString()
+
+		results, total, err := repo.Search(ctx, charger.SearchFilters{
+			Query:        &query,
+			Statuses:     []charger.Status{charger.StatusVerified},
+			RankedIDs:    []uuid.UUID{b.ID, a.ID},
+			FieldFilters: []charger.FieldFilter{{Field: "model.type", Values: []string{"AC"}}},
+		}, 50, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if total != 1 || len(results) != 1 || results[0].ID != a.ID {
+			t.Fatalf("expected only charger a, got total=%d results=%+v", total, results)
+		}
+	})
+
+	t.Run("name matches rank ahead of ranked ids", func(t *testing.T) {
+		query := "Bolt-9000"
+
+		results, _, err := repo.Search(ctx, charger.SearchFilters{
+			Query:     &query,
+			Statuses:  []charger.Status{charger.StatusVerified},
+			RankedIDs: []uuid.UUID{b.ID},
+		}, 200, 0)
+		if err != nil {
+			t.Fatalf("search: %v", err)
+		}
+
+		if len(results) < 2 || results[len(results)-1].ID != b.ID {
+			t.Fatalf("expected b after every name match, got %+v", results)
+		}
+	})
 }
 
 func ptr[T any](v T) *T { return &v }
