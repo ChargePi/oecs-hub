@@ -107,10 +107,19 @@ export interface ChargePointCandidate {
 
 export interface EvidenceItem {
   sourceType: string
+  /** Source document's title, for knowledge-base evidence; empty when unknown. */
+  title: string
   sourceUri: string
   section: string
   excerpt: string
   score: number
+}
+
+/** A knowledge-base document an answer drew on, with the sections it used. */
+export interface KnowledgeSource {
+  title: string
+  sourceUri: string
+  sections: string[]
 }
 
 export interface ConversationSummary {

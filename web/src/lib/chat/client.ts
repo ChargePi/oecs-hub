@@ -36,6 +36,7 @@ import type {
   ConversationSummary,
   EvidenceItem,
   FeedbackRating,
+  KnowledgeSource,
   MessageFeedback,
   MessageRole,
   ProposedAction,
@@ -155,6 +156,22 @@ export function proposedActionsFromMetadata(metadata?: Record<string, unknown>):
     .filter((a) => a.actionId !== '')
 }
 
+/** The knowledge-base documents a reply drew on (its knowledge_chunk evidence), one
+ *  entry per document in first-cited order, each with the sections used. */
+export function knowledgeSourcesFromMetadata(
+  metadata?: Record<string, unknown>,
+): KnowledgeSource[] {
+  const byDocument = new Map<string, KnowledgeSource>()
+  for (const e of evidenceFromMetadata(metadata)) {
+    if (e.sourceType !== 'knowledge_chunk' || (!e.title && !e.sourceUri)) continue
+    const key = e.sourceUri || e.title
+    const source = byDocument.get(key) ?? { title: e.title, sourceUri: e.sourceUri, sections: [] }
+    if (e.section && !source.sections.includes(e.section)) source.sections.push(e.section)
+    byDocument.set(key, source)
+  }
+  return [...byDocument.values()]
+}
+
 /** Extracts the deterministic side-by-side attribute table the agent's compare step
  *  attaches to a message's metadata - present only on a compare answer. Returns
  *  undefined if absent, rather than an empty table, so callers can tell "not a compare
@@ -182,6 +199,7 @@ export function comparisonTableFromMetadata(
 function evidenceFromMetadata(metadata?: Record<string, unknown>): EvidenceItem[] {
   return asRecordArray(metadata?.evidence).map((e) => ({
     sourceType: String(e.source_type ?? ''),
+    title: String(e.title ?? ''),
     sourceUri: String(e.source_uri ?? ''),
     section: String(e.section ?? ''),
     excerpt: String(e.excerpt ?? ''),

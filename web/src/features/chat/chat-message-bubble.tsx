@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import {
   clarifyingQuestionsFromMetadata,
   comparisonTableFromMetadata,
+  knowledgeSourcesFromMetadata,
   proposedActionsFromMetadata,
 } from '@/lib/chat/client'
 import type { ChatMessage, SelectedChoice } from '@/lib/chat/types'
@@ -14,6 +15,7 @@ import { ChatClarifyForm } from './chat-clarify-form'
 import { ChatComparisonTable } from './chat-comparison-table'
 import { MARKDOWN_COMPONENTS } from './chat-markdown'
 import { ChatMessageFeedback } from './chat-message-feedback'
+import { ChatMessageSources } from './chat-message-sources'
 import { ChatPendingActions } from './chat-pending-actions'
 
 const CLARIFY_INTRO =
@@ -80,6 +82,8 @@ export function ChatMessageBubble({
   // tracks its own live status.
   const proposedActions = isUser ? [] : proposedActionsFromMetadata(message.metadata)
   const showPendingActions = proposedActions.length > 0
+  // Knowledge-base documents the reply drew on - not shown on a failed reply's apology.
+  const knowledgeSources = isUser || failed ? [] : knowledgeSourcesFromMetadata(message.metadata)
   const isWide = showClarifyForm || showComparisonTable || showPendingActions
   // Resend lives on the request, not the response - a response only gets its own
   // when it failed, since then the request just above it doesn't visually read as
@@ -138,6 +142,7 @@ export function ChatMessageBubble({
                 {message.content}
               </Markdown>
             )}
+            {knowledgeSources.length > 0 && <ChatMessageSources sources={knowledgeSources} />}
             {showPendingActions && (
               <div className="mt-3">
                 <ChatPendingActions
