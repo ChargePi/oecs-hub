@@ -32,6 +32,8 @@ import (
 	redisStorage "github.com/ChargePi/oecs-hub/internal/storage/redis"
 	"github.com/ChargePi/oecs-hub/internal/useraction"
 	"github.com/ChargePi/oecs-hub/internal/userchargers"
+	"github.com/ChargePi/oecs-hub/internal/vector"
+	openaiEmbedding "github.com/cloudwego/eino-ext/components/embedding/openai"
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -142,9 +144,47 @@ var (
 			manufacturerCache := redisStorage.NewManufacturerCache(redisClient, cfg.Redis.CacheTTL)
 			manufacturerSvc := manufacturer.NewService(manufacturerRepo, manufacturerCache, graphClient)
 
+			var chargerIndex charger.SemanticIndex
+
+			if cfg.SemanticSearch.Enabled {
+				embedder, err := openaiEmbedding.NewEmbedder(ctx, &openaiEmbedding.EmbeddingConfig{
+					APIKey:  cfg.Bifrost.APIKey,
+					Model:   cfg.SemanticSearch.EmbeddingModel,
+					BaseURL: cfg.Bifrost.BaseURL,
+				})
+				if err != nil {
+					logger.Fatal("failed to create embedder", zap.Error(err))
+				}
+
+				index, err := vector.NewChargerIndex(vector.Config{
+					Host:       cfg.SemanticSearch.QdrantHost,
+					Port:       cfg.SemanticSearch.QdrantPort,
+					Collection: cfg.SemanticSearch.Collection,
+					TopK:       cfg.SemanticSearch.TopK,
+					MinScore:   cfg.SemanticSearch.MinScore,
+				}, embedder)
+				if err != nil {
+					logger.Fatal("failed to create charger index", zap.Error(err))
+				}
+
+				defer func() {
+					err := index.Close()
+					if err != nil {
+						logger.Error("failed to close charger index", zap.Error(err))
+					}
+				}()
+
+				// Not fatal: search falls back to name matching until Qdrant is reachable.
+				if err := index.EnsureCollection(ctx); err != nil {
+					logger.Warn("failed to ensure charger index collection", zap.Error(err))
+				}
+
+				chargerIndex = index
+			}
+
 			chargerRepo := postgresStorage.NewChargerRepository(db)
 			chargerCache := redisStorage.NewChargerCache(redisClient, cfg.Redis.CacheTTL)
-			chargerSvc := charger.NewService(chargerRepo, chargerCache, validator, manufacturerSvc, graphClient)
+			chargerSvc := charger.NewService(chargerRepo, chargerCache, validator, manufacturerSvc, graphClient, chargerIndex)
 
 			kratosAdmin := kratos.NewAdminClient(cfg.Kratos.AdminURL)
 			accountSvc := account.NewService(kratos.NewSDKClient(cfg.Kratos.AdminURL))
@@ -339,6 +379,13 @@ func setDefaults() {
 	viper.SetDefault("promptSuggestions.poolSize", 10)
 	viper.SetDefault("promptSuggestions.returnCount", 1)
 	viper.SetDefault("pendingActions.ttl", "15m")
+	viper.SetDefault("semanticSearch.enabled", false)
+	viper.SetDefault("semanticSearch.qdrantHost", "qdrant")
+	viper.SetDefault("semanticSearch.qdrantPort", 6334)
+	viper.SetDefault("semanticSearch.collection", "oecs_chargers")
+	viper.SetDefault("semanticSearch.embeddingModel", "openai/text-embedding-3-small")
+	viper.SetDefault("semanticSearch.topK", 100)
+	viper.SetDefault("semanticSearch.minScore", 0.25)
 
 	_ = viper.BindEnv("database.dsn", "OECS_HUB_DATABASE_DSN")
 	_ = viper.BindEnv("redis.address", "OECS_HUB_REDIS_ADDRESS")
@@ -362,6 +409,13 @@ func setDefaults() {
 	_ = viper.BindEnv("promptSuggestions.poolSize", "OECS_HUB_PROMPTSUGGESTIONS_POOLSIZE")
 	_ = viper.BindEnv("promptSuggestions.returnCount", "OECS_HUB_PROMPTSUGGESTIONS_RETURNCOUNT")
 	_ = viper.BindEnv("pendingActions.ttl", "OECS_HUB_PENDINGACTIONS_TTL")
+	_ = viper.BindEnv("semanticSearch.enabled", "OECS_HUB_SEMANTICSEARCH_ENABLED")
+	_ = viper.BindEnv("semanticSearch.qdrantHost", "OECS_HUB_SEMANTICSEARCH_QDRANTHOST")
+	_ = viper.BindEnv("semanticSearch.qdrantPort", "OECS_HUB_SEMANTICSEARCH_QDRANTPORT")
+	_ = viper.BindEnv("semanticSearch.collection", "OECS_HUB_SEMANTICSEARCH_COLLECTION")
+	_ = viper.BindEnv("semanticSearch.embeddingModel", "OECS_HUB_SEMANTICSEARCH_EMBEDDINGMODEL")
+	_ = viper.BindEnv("semanticSearch.topK", "OECS_HUB_SEMANTICSEARCH_TOPK")
+	_ = viper.BindEnv("semanticSearch.minScore", "OECS_HUB_SEMANTICSEARCH_MINSCORE")
 }
 
 // getConfiguration gets the configuration from cache or file.

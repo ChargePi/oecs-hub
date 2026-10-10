@@ -196,6 +196,14 @@ services:
       # oecs-billing-service's compose file) - so it isn't a depends_on, and project RPCs return
       # Unavailable until it's up.
       - OECS_HUB_BILLING_ADDRESS=billing-service:50060
+      # Qdrant runs from oecs-recommendation-agent's compose project and must join this
+      # network; until it is reachable, search falls back to name matching.
+      - OECS_HUB_SEMANTICSEARCH_ENABLED=${OECS_HUB_SEMANTICSEARCH_ENABLED:-false}
+      - OECS_HUB_SEMANTICSEARCH_QDRANTHOST=qdrant
+      - OECS_HUB_SEMANTICSEARCH_QDRANTPORT=6334
+      - OECS_HUB_SEMANTICSEARCH_EMBEDDINGMODEL=${OECS_HUB_SEMANTICSEARCH_EMBEDDINGMODEL:-openai/text-embedding-3-small}
+      # Model-specific: re-tune when the embedding model changes.
+      - OECS_HUB_SEMANTICSEARCH_MINSCORE=${OECS_HUB_SEMANTICSEARCH_MINSCORE:-0.25}
     labels:
       - traefik.enable=true
       # Shared forwardAuth middleware referenced by every protected router, including

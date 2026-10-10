@@ -10,6 +10,9 @@ import (
 var (
 	ErrNotFound    = errors.New("charger not found")
 	ErrInvalidSpec = errors.New("charger spec failed validation")
+	// ErrSemanticSearchDisabled is returned by Service.Reindex when no SemanticIndex is
+	// configured.
+	ErrSemanticSearchDisabled = errors.New("semantic search is disabled")
 )
 
 const (
@@ -54,6 +57,9 @@ type SearchFilters struct {
 	// identity - used by the manufacturer self-service API to scope results to the
 	// caller's own submissions, regardless of status.
 	SubmitterIdentityID *uuid.UUID
+	// RankedIDs, best match first, widens Query to also match these IDs and orders them
+	// after name matches. Set by Service.Search from the SemanticIndex, never by callers.
+	RankedIDs []uuid.UUID
 }
 
 // PriceRange matches chargers with a fixed MSRP in Currency between Min and Max (each
@@ -99,6 +105,15 @@ type Repository interface {
 	// otherwise, same ambiguity as UpdateSpec. Used by the manufacturer self-service
 	// CancelSubmission RPC.
 	CancelSubmission(ctx context.Context, id, submitterIdentityID uuid.UUID) (*Charger, error)
+}
+
+// SemanticIndex is the vector index over verified chargers. Implemented by
+// internal/vector.ChargerIndex.
+type SemanticIndex interface {
+	Upsert(ctx context.Context, c *Charger) error
+	Remove(ctx context.Context, id uuid.UUID) error
+	// Search returns the IDs of the chargers closest to query, best match first.
+	Search(ctx context.Context, query string) ([]uuid.UUID, error)
 }
 
 type Cache interface {

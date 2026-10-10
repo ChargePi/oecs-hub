@@ -887,6 +887,96 @@ func (x *SetManufacturerOwnerResponse) GetOwnerIdentityId() string {
 	return ""
 }
 
+// Rebuilds the semantic search index from every verified charger.
+type ReindexChargersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReindexChargersRequest) Reset() {
+	*x = ReindexChargersRequest{}
+	mi := &file_admin_v1_admin_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReindexChargersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReindexChargersRequest) ProtoMessage() {}
+
+func (x *ReindexChargersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReindexChargersRequest.ProtoReflect.Descriptor instead.
+func (*ReindexChargersRequest) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{15}
+}
+
+type ReindexChargersResponse struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Indexed int32                  `protobuf:"varint,1,opt,name=indexed,proto3" json:"indexed,omitempty"`
+	// Chargers that could not be indexed; see the service logs.
+	Failed        int32 `protobuf:"varint,2,opt,name=failed,proto3" json:"failed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReindexChargersResponse) Reset() {
+	*x = ReindexChargersResponse{}
+	mi := &file_admin_v1_admin_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReindexChargersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReindexChargersResponse) ProtoMessage() {}
+
+func (x *ReindexChargersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_v1_admin_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReindexChargersResponse.ProtoReflect.Descriptor instead.
+func (*ReindexChargersResponse) Descriptor() ([]byte, []int) {
+	return file_admin_v1_admin_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ReindexChargersResponse) GetIndexed() int32 {
+	if x != nil {
+		return x.Indexed
+	}
+	return 0
+}
+
+func (x *ReindexChargersResponse) GetFailed() int32 {
+	if x != nil {
+		return x.Failed
+	}
+	return 0
+}
+
 var File_admin_v1_admin_proto protoreflect.FileDescriptor
 
 const file_admin_v1_admin_proto_rawDesc = "" +
@@ -965,7 +1055,11 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x11owner_identity_id\x18\x02 \x01(\tR\x0fownerIdentityId\"\x89\x01\n" +
 	"\x1cSetManufacturerOwnerResponse\x12=\n" +
 	"\fmanufacturer\x18\x01 \x01(\v2\x19.registry.v1.ManufacturerR\fmanufacturer\x12*\n" +
-	"\x11owner_identity_id\x18\x02 \x01(\tR\x0fownerIdentityId2\xbb\x05\n" +
+	"\x11owner_identity_id\x18\x02 \x01(\tR\x0fownerIdentityId\"\x18\n" +
+	"\x16ReindexChargersRequest\"K\n" +
+	"\x17ReindexChargersResponse\x12\x18\n" +
+	"\aindexed\x18\x01 \x01(\x05R\aindexed\x12\x16\n" +
+	"\x06failed\x18\x02 \x01(\x05R\x06failed2\x93\x06\n" +
 	"\fAdminService\x12P\n" +
 	"\rSearchSchemas\x12\x1e.admin.v1.SearchSchemasRequest\x1a\x1f.admin.v1.SearchSchemasResponse\x12_\n" +
 	"\x12UpdateSchemaStatus\x12#.admin.v1.UpdateSchemaStatusRequest\x1a$.admin.v1.UpdateSchemaStatusResponse\x12Y\n" +
@@ -973,7 +1067,8 @@ const file_admin_v1_admin_proto_rawDesc = "" +
 	"\x12CreateManufacturer\x12#.admin.v1.CreateManufacturerRequest\x1a$.admin.v1.CreateManufacturerResponse\x12\\\n" +
 	"\x11ListManufacturers\x12\".admin.v1.ListManufacturersRequest\x1a#.admin.v1.ListManufacturersResponse\x12w\n" +
 	"\x1aReassignSchemaManufacturer\x12+.admin.v1.ReassignSchemaManufacturerRequest\x1a,.admin.v1.ReassignSchemaManufacturerResponse\x12e\n" +
-	"\x14SetManufacturerOwner\x12%.admin.v1.SetManufacturerOwnerRequest\x1a&.admin.v1.SetManufacturerOwnerResponseB\x94\x01\n" +
+	"\x14SetManufacturerOwner\x12%.admin.v1.SetManufacturerOwnerRequest\x1a&.admin.v1.SetManufacturerOwnerResponse\x12V\n" +
+	"\x0fReindexChargers\x12 .admin.v1.ReindexChargersRequest\x1a!.admin.v1.ReindexChargersResponseB\x94\x01\n" +
 	"\fcom.admin.v1B\n" +
 	"AdminProtoP\x01Z7github.com/ChargePi/oecs-hub/gen/proto/admin/v1;adminv1\xa2\x02\x03AXX\xaa\x02\bAdmin.V1\xca\x02\bAdmin\\V1\xe2\x02\x14Admin\\V1\\GPBMetadata\xea\x02\tAdmin::V1b\x06proto3"
 
@@ -989,7 +1084,7 @@ func file_admin_v1_admin_proto_rawDescGZIP() []byte {
 	return file_admin_v1_admin_proto_rawDescData
 }
 
-var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_admin_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_admin_v1_admin_proto_goTypes = []any{
 	(*SearchSchemasRequest)(nil),               // 0: admin.v1.SearchSchemasRequest
 	(*SearchSchemasResponse)(nil),              // 1: admin.v1.SearchSchemasResponse
@@ -1006,28 +1101,30 @@ var file_admin_v1_admin_proto_goTypes = []any{
 	(*ListManufacturersResponse)(nil),          // 12: admin.v1.ListManufacturersResponse
 	(*SetManufacturerOwnerRequest)(nil),        // 13: admin.v1.SetManufacturerOwnerRequest
 	(*SetManufacturerOwnerResponse)(nil),       // 14: admin.v1.SetManufacturerOwnerResponse
-	(v1.ChargerType)(0),                        // 15: registry.v1.ChargerType
-	(v1.ConnectorType)(0),                      // 16: registry.v1.ConnectorType
-	(v1.SubmissionStatus)(0),                   // 17: registry.v1.SubmissionStatus
-	(*v1.ChargerVariant)(nil),                  // 18: registry.v1.ChargerVariant
-	(*v1.Contact)(nil),                         // 19: registry.v1.Contact
-	(*v1.Manufacturer)(nil),                    // 20: registry.v1.Manufacturer
-	(*v1.ManufacturerSummary)(nil),             // 21: registry.v1.ManufacturerSummary
+	(*ReindexChargersRequest)(nil),             // 15: admin.v1.ReindexChargersRequest
+	(*ReindexChargersResponse)(nil),            // 16: admin.v1.ReindexChargersResponse
+	(v1.ChargerType)(0),                        // 17: registry.v1.ChargerType
+	(v1.ConnectorType)(0),                      // 18: registry.v1.ConnectorType
+	(v1.SubmissionStatus)(0),                   // 19: registry.v1.SubmissionStatus
+	(*v1.ChargerVariant)(nil),                  // 20: registry.v1.ChargerVariant
+	(*v1.Contact)(nil),                         // 21: registry.v1.Contact
+	(*v1.Manufacturer)(nil),                    // 22: registry.v1.Manufacturer
+	(*v1.ManufacturerSummary)(nil),             // 23: registry.v1.ManufacturerSummary
 }
 var file_admin_v1_admin_proto_depIdxs = []int32{
-	15, // 0: admin.v1.SearchSchemasRequest.charger_type:type_name -> registry.v1.ChargerType
-	16, // 1: admin.v1.SearchSchemasRequest.connector_types:type_name -> registry.v1.ConnectorType
-	17, // 2: admin.v1.SearchSchemasRequest.status:type_name -> registry.v1.SubmissionStatus
-	18, // 3: admin.v1.SearchSchemasResponse.variants:type_name -> registry.v1.ChargerVariant
-	17, // 4: admin.v1.UpdateSchemaStatusRequest.status:type_name -> registry.v1.SubmissionStatus
-	18, // 5: admin.v1.UpdateSchemaStatusResponse.variant:type_name -> registry.v1.ChargerVariant
-	18, // 6: admin.v1.UpdateSchemaSpecResponse.variant:type_name -> registry.v1.ChargerVariant
-	19, // 7: admin.v1.CreateManufacturerRequest.contact:type_name -> registry.v1.Contact
-	20, // 8: admin.v1.CreateManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
-	18, // 9: admin.v1.ReassignSchemaManufacturerResponse.variant:type_name -> registry.v1.ChargerVariant
-	21, // 10: admin.v1.AdminManufacturer.summary:type_name -> registry.v1.ManufacturerSummary
+	17, // 0: admin.v1.SearchSchemasRequest.charger_type:type_name -> registry.v1.ChargerType
+	18, // 1: admin.v1.SearchSchemasRequest.connector_types:type_name -> registry.v1.ConnectorType
+	19, // 2: admin.v1.SearchSchemasRequest.status:type_name -> registry.v1.SubmissionStatus
+	20, // 3: admin.v1.SearchSchemasResponse.variants:type_name -> registry.v1.ChargerVariant
+	19, // 4: admin.v1.UpdateSchemaStatusRequest.status:type_name -> registry.v1.SubmissionStatus
+	20, // 5: admin.v1.UpdateSchemaStatusResponse.variant:type_name -> registry.v1.ChargerVariant
+	20, // 6: admin.v1.UpdateSchemaSpecResponse.variant:type_name -> registry.v1.ChargerVariant
+	21, // 7: admin.v1.CreateManufacturerRequest.contact:type_name -> registry.v1.Contact
+	22, // 8: admin.v1.CreateManufacturerResponse.manufacturer:type_name -> registry.v1.Manufacturer
+	20, // 9: admin.v1.ReassignSchemaManufacturerResponse.variant:type_name -> registry.v1.ChargerVariant
+	23, // 10: admin.v1.AdminManufacturer.summary:type_name -> registry.v1.ManufacturerSummary
 	11, // 11: admin.v1.ListManufacturersResponse.manufacturers:type_name -> admin.v1.AdminManufacturer
-	20, // 12: admin.v1.SetManufacturerOwnerResponse.manufacturer:type_name -> registry.v1.Manufacturer
+	22, // 12: admin.v1.SetManufacturerOwnerResponse.manufacturer:type_name -> registry.v1.Manufacturer
 	0,  // 13: admin.v1.AdminService.SearchSchemas:input_type -> admin.v1.SearchSchemasRequest
 	2,  // 14: admin.v1.AdminService.UpdateSchemaStatus:input_type -> admin.v1.UpdateSchemaStatusRequest
 	4,  // 15: admin.v1.AdminService.UpdateSchemaSpec:input_type -> admin.v1.UpdateSchemaSpecRequest
@@ -1035,15 +1132,17 @@ var file_admin_v1_admin_proto_depIdxs = []int32{
 	10, // 17: admin.v1.AdminService.ListManufacturers:input_type -> admin.v1.ListManufacturersRequest
 	8,  // 18: admin.v1.AdminService.ReassignSchemaManufacturer:input_type -> admin.v1.ReassignSchemaManufacturerRequest
 	13, // 19: admin.v1.AdminService.SetManufacturerOwner:input_type -> admin.v1.SetManufacturerOwnerRequest
-	1,  // 20: admin.v1.AdminService.SearchSchemas:output_type -> admin.v1.SearchSchemasResponse
-	3,  // 21: admin.v1.AdminService.UpdateSchemaStatus:output_type -> admin.v1.UpdateSchemaStatusResponse
-	5,  // 22: admin.v1.AdminService.UpdateSchemaSpec:output_type -> admin.v1.UpdateSchemaSpecResponse
-	7,  // 23: admin.v1.AdminService.CreateManufacturer:output_type -> admin.v1.CreateManufacturerResponse
-	12, // 24: admin.v1.AdminService.ListManufacturers:output_type -> admin.v1.ListManufacturersResponse
-	9,  // 25: admin.v1.AdminService.ReassignSchemaManufacturer:output_type -> admin.v1.ReassignSchemaManufacturerResponse
-	14, // 26: admin.v1.AdminService.SetManufacturerOwner:output_type -> admin.v1.SetManufacturerOwnerResponse
-	20, // [20:27] is the sub-list for method output_type
-	13, // [13:20] is the sub-list for method input_type
+	15, // 20: admin.v1.AdminService.ReindexChargers:input_type -> admin.v1.ReindexChargersRequest
+	1,  // 21: admin.v1.AdminService.SearchSchemas:output_type -> admin.v1.SearchSchemasResponse
+	3,  // 22: admin.v1.AdminService.UpdateSchemaStatus:output_type -> admin.v1.UpdateSchemaStatusResponse
+	5,  // 23: admin.v1.AdminService.UpdateSchemaSpec:output_type -> admin.v1.UpdateSchemaSpecResponse
+	7,  // 24: admin.v1.AdminService.CreateManufacturer:output_type -> admin.v1.CreateManufacturerResponse
+	12, // 25: admin.v1.AdminService.ListManufacturers:output_type -> admin.v1.ListManufacturersResponse
+	9,  // 26: admin.v1.AdminService.ReassignSchemaManufacturer:output_type -> admin.v1.ReassignSchemaManufacturerResponse
+	14, // 27: admin.v1.AdminService.SetManufacturerOwner:output_type -> admin.v1.SetManufacturerOwnerResponse
+	16, // 28: admin.v1.AdminService.ReindexChargers:output_type -> admin.v1.ReindexChargersResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
 	13, // [13:13] is the sub-list for extension extendee
 	0,  // [0:13] is the sub-list for field type_name
@@ -1064,7 +1163,7 @@ func file_admin_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_admin_v1_admin_proto_rawDesc), len(file_admin_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

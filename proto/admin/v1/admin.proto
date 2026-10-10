@@ -94,6 +94,15 @@ message SetManufacturerOwnerResponse {
   string owner_identity_id = 2;
 }
 
+// Rebuilds the semantic search index from every verified charger.
+message ReindexChargersRequest {}
+
+message ReindexChargersResponse {
+  int32 indexed = 1;
+  // Chargers that could not be indexed; see the service logs.
+  int32 failed = 2;
+}
+
 service AdminService {
   rpc SearchSchemas(SearchSchemasRequest) returns (SearchSchemasResponse);
   rpc UpdateSchemaStatus(UpdateSchemaStatusRequest) returns (UpdateSchemaStatusResponse);
@@ -102,4 +111,5 @@ service AdminService {
   rpc ListManufacturers(ListManufacturersRequest) returns (ListManufacturersResponse);
   rpc ReassignSchemaManufacturer(ReassignSchemaManufacturerRequest) returns (ReassignSchemaManufacturerResponse);
   rpc SetManufacturerOwner(SetManufacturerOwnerRequest) returns (SetManufacturerOwnerResponse);
+  rpc ReindexChargers(ReindexChargersRequest) returns (ReindexChargersResponse);
 }

@@ -1,0 +1,66 @@
+{{ .Manufacturer.Name }} {{ .Model.Series }} {{ .Model.Name }}
+{{ with .Manufacturer.Country }}Manufacturer country: {{ . }}{{ end }}
+{{ with .Model.Type }}Charger type: {{ . }}{{ end }}
+{{ with .Model.Level }}Charging level: {{ . }}{{ end }}
+{{ with .Model.Status }}Model status: {{ . }}{{ end }}
+{{ with .Model.BrandingOptions }}Branding options: {{ join . }}{{ end }}
+{{- with .Hardware.Housing }}
+{{ with .FormFactor }}Form factor: {{ . }}{{ end }}
+{{ with .Material }}Housing material: {{ . }}{{ end }}
+{{ with .IngressProtection }}Ingress protection: {{ . }}{{ end }}
+{{ with .ImpactRating }}Impact rating: {{ . }}{{ end }}
+{{ with .CoolingMethod }}Cooling: {{ . }}{{ end }}
+{{ with qty .NoiseLevel }}Noise level: {{ . }}{{ end }}
+{{ with qty .Weight }}Weight: {{ . }}{{ end }}
+{{- end }}
+{{- with .Hardware.Electrical }}
+{{- with .Input }}
+{{ if .Phases }}Input phases: {{ .Phases }}{{ end }}
+{{ with .ConnectionType }}Grid connection: {{ . }}{{ end }}
+{{- end }}
+{{- with .Output }}
+{{ with qty .MinPower }}Minimum power: {{ . }}{{ end }}
+{{ with qty .MaxPower }}Maximum power: {{ . }}{{ end }}
+{{ if is .SimultaneousChargingSupported }}Supports simultaneous charging{{ end }}
+{{ if is .DynamicPowerSharing }}Supports dynamic power sharing{{ end }}
+{{- end }}
+{{- with .Protection }}
+{{ with .Features }}Electrical protection: {{ join . }}{{ end }}
+{{- end }}
+{{- end }}
+{{- range .Hardware.Connectors }}
+Connector: {{ .Type }} ({{ .CurrentType }}){{ with qty .MaxPower }}, up to {{ . }}{{ end }}{{ with .Cable }}{{ if is .Attached }}, attached cable{{ with qty .Length }} {{ . }}{{ end }}{{ end }}{{ end }}{{ if is .ISOPlugAndCharge }}, ISO 15118 Plug and Charge{{ end }}{{ if is .Bidirectional }}, bidirectional charging (V2G){{ end }}
+{{- end }}
+{{- with .Hardware.UserInterface }}
+{{ with .Display }}{{ with .Type }}Display: {{ . }}{{ end }}{{ end }}
+{{ with .AuthenticationMethods }}Authentication: {{ join . }}{{ end }}
+{{ with .AccessibilityFeatures }}Accessibility: {{ join . }}{{ end }}
+{{- end }}
+{{- with .Hardware.Connectivity }}
+{{ with .Interfaces }}Connectivity: {{ join . }}{{ end }}
+{{ with .Cellular }}{{ with .Generations }}Cellular: {{ join . }}{{ end }}{{ end }}
+{{- end }}
+{{- with .Hardware.Safety }}
+{{ with .Features }}Safety: {{ join . }}{{ end }}
+{{- end }}
+{{- with .Hardware.Meter }}
+{{ with .Certification }}Meter certification: {{ . }}{{ end }}
+{{- end }}
+{{- range .Hardware.Certifications }}
+Certification: {{ .Type }} {{ .Standard }}
+{{- end }}
+{{- with .Software }}
+{{ with .OperatingSystem }}Operating system: {{ . }}{{ end }}
+{{- range .Protocols }}
+Protocol: {{ .Name }} {{ .OtherName }} {{ .Version }}{{ with .Profiles }} ({{ join . }}){{ end }}{{ with .Transport }}, transport {{ join . }}{{ end }}{{ with .TransportOtherName }}, transport {{ . }}{{ end }}{{ with .SecurityProfile }}, security profile {{ . }}{{ end }}{{ range .Certifications }}, certified {{ .Type }} {{ .Standard }}{{ end }}{{ with .Notes }}. {{ . }}{{ end }}
+{{- end }}
+{{- end }}
+{{- with .Payment }}
+{{ with .AcceptedMethods }}Payment methods: {{ join . }}{{ end }}
+{{- end }}
+{{- with .Pricing }}
+Pricing model: {{ .PricingModel }}
+{{- range .Prices }}
+Price: {{ .Value }} {{ .Currency }}{{ with .Region }} ({{ . }}){{ end }}
+{{- end }}
+{{- end }}

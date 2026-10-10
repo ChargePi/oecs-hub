@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 var tracer = otel.Tracer("charger.service")
@@ -37,10 +38,18 @@ type Service struct {
 	validator    *oecsspec.Validator
 	manufacturer ManufacturerResolver
 	graph        GraphProjector
+	index        SemanticIndex
 }
 
-func NewService(repo Repository, cache Cache, validator *oecsspec.Validator, manufacturer ManufacturerResolver, graph GraphProjector) *Service {
-	return &Service{repo: repo, cache: cache, validator: validator, manufacturer: manufacturer, graph: graph}
+// ReindexResult is the outcome of Service.Reindex.
+type ReindexResult struct {
+	Indexed int
+	Failed  int
+}
+
+// NewService takes a nil index when semantic search is disabled.
+func NewService(repo Repository, cache Cache, validator *oecsspec.Validator, manufacturer ManufacturerResolver, graph GraphProjector, index SemanticIndex) *Service {
+	return &Service{repo: repo, cache: cache, validator: validator, manufacturer: manufacturer, graph: graph, index: index}
 }
 
 // Submit validates raw against the OECS schema, extracts search fields, and inserts it
@@ -149,6 +158,10 @@ func (s *Service) AdminEditSpecification(ctx context.Context, id uuid.UUID, raw 
 
 	_ = s.cache.Delete(ctx, id)
 
+	if updated.Status == StatusVerified {
+		s.indexVariant(ctx, updated)
+	}
+
 	if updated.Status == StatusVerified && updated.ManufacturerID != nil {
 		err := s.graph.UpsertVariant(ctx, *updated.ManufacturerID, updated)
 		if err != nil {
@@ -212,6 +225,8 @@ func (s *Service) reassignManufacturer(ctx context.Context, id, manufacturerID u
 	_ = s.cache.Delete(ctx, id)
 
 	if updated.Status == StatusVerified {
+		s.indexVariant(ctx, updated)
+
 		err := s.graph.MoveVariant(ctx, m.ID, updated)
 		if err != nil {
 			return nil, fmt.Errorf("move variant graph node: %w", err)
@@ -315,10 +330,13 @@ func (s *Service) GetForReview(ctx context.Context, id uuid.UUID) (*Charger, err
 	return c, nil
 }
 
-// Search returns chargers matching filters, paginated.
+// Search returns chargers matching filters, paginated. A free-text query over verified
+// chargers is ranked semantically when a SemanticIndex is configured.
 func (s *Service) Search(ctx context.Context, filters SearchFilters, limit, offset uint32) ([]*Charger, int64, error) {
 	ctx, span := tracer.Start(ctx, "charger.Search")
 	defer span.End()
+
+	filters.RankedIDs = s.rankSemantically(ctx, filters)
 
 	chargers, total, err := s.repo.Search(ctx, filters, clampPageSize(limit), offset)
 	if err != nil {
@@ -392,6 +410,13 @@ func (s *Service) ChangeStatus(ctx context.Context, id uuid.UUID, status Status)
 
 	_ = s.cache.Delete(ctx, id)
 
+	switch {
+	case status == StatusVerified:
+		s.indexVariant(ctx, updated)
+	case existing.Status == StatusVerified:
+		s.unindexVariant(ctx, id)
+	}
+
 	switch status {
 	case StatusVerified:
 		err := s.graph.UpsertVariant(ctx, *manufacturerID, updated)
@@ -416,6 +441,91 @@ func (s *Service) ChangeStatus(ctx context.Context, id uuid.UUID, status Status)
 	}
 
 	return updated, nil
+}
+
+// Reindex rebuilds the semantic index from every verified charger. A charger that fails
+// to index is counted and skipped. Returns ErrSemanticSearchDisabled without an index.
+func (s *Service) Reindex(ctx context.Context) (ReindexResult, error) {
+	ctx, span := tracer.Start(ctx, "charger.Reindex")
+	defer span.End()
+
+	var result ReindexResult
+
+	if s.index == nil {
+		return result, ErrSemanticSearchDisabled
+	}
+
+	filters := SearchFilters{Statuses: []Status{StatusVerified}}
+
+	for offset := uint32(0); ; offset += MaxPageSize {
+		chargers, _, err := s.repo.Search(ctx, filters, MaxPageSize, offset)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
+			return result, fmt.Errorf("list verified chargers: %w", err)
+		}
+
+		for _, c := range chargers {
+			err := s.index.Upsert(ctx, c)
+			if err != nil {
+				zap.L().Warn("failed to index charger", zap.Stringer("id", c.ID), zap.Error(err))
+
+				result.Failed++
+
+				continue
+			}
+
+			result.Indexed++
+		}
+
+		if len(chargers) < MaxPageSize {
+			return result, nil
+		}
+	}
+}
+
+// rankSemantically returns the semantic matches for filters.Query, or nil when the
+// search isn't a free-text one over verified chargers or the index is unavailable.
+func (s *Service) rankSemantically(ctx context.Context, filters SearchFilters) []uuid.UUID {
+	if s.index == nil || filters.Query == nil || *filters.Query == "" {
+		return nil
+	}
+
+	if len(filters.Statuses) != 1 || filters.Statuses[0] != StatusVerified {
+		return nil
+	}
+
+	ids, err := s.index.Search(ctx, *filters.Query)
+	if err != nil {
+		zap.L().Warn("semantic search failed, falling back to name search", zap.Error(err))
+
+		return nil
+	}
+
+	return ids
+}
+
+func (s *Service) indexVariant(ctx context.Context, c *Charger) {
+	if s.index == nil {
+		return
+	}
+
+	err := s.index.Upsert(ctx, c)
+	if err != nil {
+		zap.L().Warn("failed to index charger", zap.Stringer("id", c.ID), zap.Error(err))
+	}
+}
+
+func (s *Service) unindexVariant(ctx context.Context, id uuid.UUID) {
+	if s.index == nil {
+		return
+	}
+
+	err := s.index.Remove(ctx, id)
+	if err != nil {
+		zap.L().Warn("failed to remove charger from index", zap.Stringer("id", id), zap.Error(err))
+	}
 }
 
 func clampPageSize(limit uint32) uint32 {

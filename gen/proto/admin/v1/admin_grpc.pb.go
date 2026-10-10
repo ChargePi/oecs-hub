@@ -26,6 +26,7 @@ const (
 	AdminService_ListManufacturers_FullMethodName          = "/admin.v1.AdminService/ListManufacturers"
 	AdminService_ReassignSchemaManufacturer_FullMethodName = "/admin.v1.AdminService/ReassignSchemaManufacturer"
 	AdminService_SetManufacturerOwner_FullMethodName       = "/admin.v1.AdminService/SetManufacturerOwner"
+	AdminService_ReindexChargers_FullMethodName            = "/admin.v1.AdminService/ReindexChargers"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -39,6 +40,7 @@ type AdminServiceClient interface {
 	ListManufacturers(ctx context.Context, in *ListManufacturersRequest, opts ...grpc.CallOption) (*ListManufacturersResponse, error)
 	ReassignSchemaManufacturer(ctx context.Context, in *ReassignSchemaManufacturerRequest, opts ...grpc.CallOption) (*ReassignSchemaManufacturerResponse, error)
 	SetManufacturerOwner(ctx context.Context, in *SetManufacturerOwnerRequest, opts ...grpc.CallOption) (*SetManufacturerOwnerResponse, error)
+	ReindexChargers(ctx context.Context, in *ReindexChargersRequest, opts ...grpc.CallOption) (*ReindexChargersResponse, error)
 }
 
 type adminServiceClient struct {
@@ -119,6 +121,16 @@ func (c *adminServiceClient) SetManufacturerOwner(ctx context.Context, in *SetMa
 	return out, nil
 }
 
+func (c *adminServiceClient) ReindexChargers(ctx context.Context, in *ReindexChargersRequest, opts ...grpc.CallOption) (*ReindexChargersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReindexChargersResponse)
+	err := c.cc.Invoke(ctx, AdminService_ReindexChargers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -130,6 +142,7 @@ type AdminServiceServer interface {
 	ListManufacturers(context.Context, *ListManufacturersRequest) (*ListManufacturersResponse, error)
 	ReassignSchemaManufacturer(context.Context, *ReassignSchemaManufacturerRequest) (*ReassignSchemaManufacturerResponse, error)
 	SetManufacturerOwner(context.Context, *SetManufacturerOwnerRequest) (*SetManufacturerOwnerResponse, error)
+	ReindexChargers(context.Context, *ReindexChargersRequest) (*ReindexChargersResponse, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedAdminServiceServer) ReassignSchemaManufacturer(context.Contex
 }
 func (UnimplementedAdminServiceServer) SetManufacturerOwner(context.Context, *SetManufacturerOwnerRequest) (*SetManufacturerOwnerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetManufacturerOwner not implemented")
+}
+func (UnimplementedAdminServiceServer) ReindexChargers(context.Context, *ReindexChargersRequest) (*ReindexChargersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReindexChargers not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -308,6 +324,24 @@ func _AdminService_SetManufacturerOwner_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_ReindexChargers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReindexChargersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ReindexChargers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ReindexChargers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ReindexChargers(ctx, req.(*ReindexChargersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -342,6 +376,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetManufacturerOwner",
 			Handler:    _AdminService_SetManufacturerOwner_Handler,
+		},
+		{
+			MethodName: "ReindexChargers",
+			Handler:    _AdminService_ReindexChargers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
