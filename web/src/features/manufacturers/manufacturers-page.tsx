@@ -36,12 +36,12 @@ export function ManufacturersPage() {
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8">
-        <div className="flex items-baseline justify-center gap-3">
-          <h1 className="text-2xl font-semibold">Manufacturers</h1>
+        <h1 className="text-center text-2xl font-semibold">
+          Manufacturers
           {!isLoading && totalSize > 0 && (
-            <span className="text-sm text-muted-foreground tabular-nums">{totalSize}</span>
+            <span className="ml-2 font-normal text-muted-foreground tabular-nums">{totalSize}</span>
           )}
-        </div>
+        </h1>
 
         {isLoading ? (
           <div className={GRID}>
