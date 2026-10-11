@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
 var tracer = otel.Tracer("manufacturer.service")
@@ -23,10 +24,12 @@ type Service struct {
 	repo  Repository
 	cache Cache
 	graph GraphProjector
+	index SemanticIndex
 }
 
-func NewService(repo Repository, cache Cache, graph GraphProjector) *Service {
-	return &Service{repo: repo, cache: cache, graph: graph}
+// NewService takes a nil index when semantic search is disabled.
+func NewService(repo Repository, cache Cache, graph GraphProjector, index SemanticIndex) *Service {
+	return &Service{repo: repo, cache: cache, graph: graph, index: index}
 }
 
 // Get retrieves a manufacturer by ID, cache-aside.
@@ -64,7 +67,9 @@ func (s *Service) List(ctx context.Context, query, country *string, limit, offse
 	ctx, span := tracer.Start(ctx, "manufacturer.List")
 	defer span.End()
 
-	summaries, total, err := s.repo.List(ctx, query, country, clampPageSize(limit), offset)
+	filters := ListFilters{Query: query, Country: country, RankedIDs: s.rankSemantically(ctx, query)}
+
+	summaries, total, err := s.repo.List(ctx, filters, clampPageSize(limit), offset)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -101,6 +106,8 @@ func (s *Service) Create(ctx context.Context, m *Manufacturer) (*Manufacturer, e
 	}
 
 	_ = s.cache.Set(ctx, m)
+
+	s.indexManufacturer(ctx, m)
 
 	return m, nil
 }
@@ -157,7 +164,96 @@ func (s *Service) ResolveIDForIdentity(ctx context.Context, ownerIdentityID uuid
 		return uuid.Nil, fmt.Errorf("upsert manufacturer graph node: %w", err)
 	}
 
+	s.indexManufacturer(ctx, m)
+
 	return m.ID, nil
+}
+
+// RefreshCatalog is called by charger.Service when a manufacturer's verified chargers change.
+func (s *Service) RefreshCatalog(ctx context.Context, id uuid.UUID) error {
+	ctx, span := tracer.Start(ctx, "manufacturer.RefreshCatalog", trace.WithAttributes(idAttr(id)))
+	defer span.End()
+
+	m, err := s.repo.RefreshCatalog(ctx, id)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+
+		return fmt.Errorf("refresh manufacturer catalog: %w", err)
+	}
+
+	_ = s.cache.Delete(ctx, id)
+
+	s.indexManufacturer(ctx, m)
+
+	return nil
+}
+
+// Reindex counts and skips manufacturers that fail to index.
+func (s *Service) Reindex(ctx context.Context) (ReindexResult, error) {
+	ctx, span := tracer.Start(ctx, "manufacturer.Reindex")
+	defer span.End()
+
+	var result ReindexResult
+
+	if s.index == nil {
+		return result, ErrSemanticSearchDisabled
+	}
+
+	for offset := uint32(0); ; offset += MaxPageSize {
+		summaries, _, err := s.repo.List(ctx, ListFilters{}, MaxPageSize, offset)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+
+			return result, fmt.Errorf("list manufacturers: %w", err)
+		}
+
+		for _, summary := range summaries {
+			m := &summary.Manufacturer
+
+			err := s.index.Upsert(ctx, m)
+			if err != nil {
+				zap.L().Warn("failed to index manufacturer", zap.Stringer("id", m.ID), zap.Error(err))
+
+				result.Failed++
+
+				continue
+			}
+
+			result.Indexed++
+		}
+
+		if len(summaries) < MaxPageSize {
+			return result, nil
+		}
+	}
+}
+
+func (s *Service) rankSemantically(ctx context.Context, query *string) []uuid.UUID {
+	if s.index == nil || query == nil || *query == "" {
+		return nil
+	}
+
+	ids, err := s.index.Search(ctx, *query)
+	if err != nil {
+		zap.L().Warn("semantic search failed, falling back to name search", zap.Error(err))
+
+		return nil
+	}
+
+	return ids
+}
+
+func (s *Service) indexManufacturer(ctx context.Context, m *Manufacturer) {
+	if s.index == nil {
+		return
+	}
+
+	err := s.index.Upsert(ctx, m)
+	if err != nil {
+		zap.L().Warn("failed to index manufacturer", zap.Stringer("id", m.ID), zap.Error(err))
+	}
 }
 
 func clampPageSize(limit uint32) uint32 {

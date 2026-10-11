@@ -30,6 +30,7 @@ type AdminManufacturerService interface {
 	Create(ctx context.Context, m *manufacturer.Manufacturer) (*manufacturer.Manufacturer, error)
 	List(ctx context.Context, query, country *string, limit, offset uint32) ([]*manufacturer.Summary, int64, error)
 	SetOwner(ctx context.Context, id, ownerIdentityID uuid.UUID) (*manufacturer.Manufacturer, error)
+	Reindex(ctx context.Context) (manufacturer.ReindexResult, error)
 }
 
 type AdminHandler struct {
@@ -316,6 +317,23 @@ func (h *AdminHandler) ReindexChargers(ctx context.Context, _ *adminv1.ReindexCh
 	}
 
 	return &adminv1.ReindexChargersResponse{
+		Indexed: int32(result.Indexed),
+		Failed:  int32(result.Failed),
+	}, nil
+}
+
+// ReindexManufacturers rebuilds the semantic search index from every manufacturer.
+func (h *AdminHandler) ReindexManufacturers(ctx context.Context, _ *adminv1.ReindexManufacturersRequest) (*adminv1.ReindexManufacturersResponse, error) {
+	result, err := h.manufacturer.Reindex(ctx)
+
+	switch {
+	case errors.Is(err, manufacturer.ErrSemanticSearchDisabled):
+		return nil, status.Error(codes.FailedPrecondition, "semantic search is disabled")
+	case err != nil:
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &adminv1.ReindexManufacturersResponse{
 		Indexed: int32(result.Indexed),
 		Failed:  int32(result.Failed),
 	}, nil

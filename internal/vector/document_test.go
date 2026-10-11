@@ -4,6 +4,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 )
 
 func TestChargerDocument(t *testing.T) {
@@ -52,4 +54,37 @@ func TestChargerDocument(t *testing.T) {
 			t.Fatal("expected an error")
 		}
 	})
+}
+
+func TestManufacturerDocument(t *testing.T) {
+	cases := []struct {
+		name string
+		m    manufacturer.Manufacturer
+		want string
+	}{
+		{
+			"full catalog",
+			manufacturer.Manufacturer{Name: "Acme", Country: "DE", Catalog: manufacturer.Catalog{
+				ChargerTypes:   []string{"AC", "DC"},
+				ConnectorTypes: []string{"CCS2_Combo2", "Type2_Mennekes"},
+				Protocols:      []string{"OCPP"},
+				Series:         []string{"Bolt", "Volt"},
+			}},
+			"Acme\nManufacturer country: DE\nCharger types: AC, DC\nProduct series: Bolt, Volt\nConnectors: CCS2_Combo2, Type2_Mennekes\nProtocols: OCPP",
+		},
+		{"empty catalog", manufacturer.Manufacturer{Name: "Acme"}, "Acme"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc, err := manufacturerDocument(&tc.m)
+			if err != nil {
+				t.Fatalf("manufacturerDocument: %v", err)
+			}
+
+			if doc != tc.want {
+				t.Errorf("got %q, want %q", doc, tc.want)
+			}
+		})
+	}
 }

@@ -3,9 +3,12 @@ package charger
 import (
 	"context"
 	"errors"
+	"os"
 	"slices"
 	"testing"
 
+	"github.com/ChargePi/oecs-hub/internal/manufacturer"
+	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 	"github.com/google/uuid"
 )
 
@@ -23,6 +26,14 @@ func (f *fakeRepository) GetForReview(context.Context, uuid.UUID) (*Charger, err
 
 func (f *fakeRepository) UpdateStatus(_ context.Context, id uuid.UUID, status Status, manufacturerID *uuid.UUID) (*Charger, error) {
 	return &Charger{ID: id, Status: status, ManufacturerID: manufacturerID}, nil
+}
+
+func (f *fakeRepository) AdminUpdateSpec(_ context.Context, id uuid.UUID, c *Charger) (*Charger, error) {
+	return &Charger{ID: id, Status: f.existing.Status, ManufacturerID: f.existing.ManufacturerID, Spec: c.Spec}, nil
+}
+
+func (f *fakeRepository) Reassign(_ context.Context, id uuid.UUID, c *Charger) (*Charger, error) {
+	return &Charger{ID: id, Status: f.existing.Status, ManufacturerID: c.ManufacturerID, Spec: c.Spec}, nil
 }
 
 func (f *fakeRepository) Search(_ context.Context, filters SearchFilters, limit, offset uint32) ([]*Charger, int64, error) {
@@ -79,8 +90,119 @@ func (f *fakeIndex) Search(_ context.Context, query string) ([]uuid.UUID, error)
 	return f.ranked, f.err
 }
 
+type fakeManufacturers struct {
+	refreshed []uuid.UUID
+	err       error
+}
+
+func (f *fakeManufacturers) ResolveIDForIdentity(context.Context, uuid.UUID, string, string) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
+func (f *fakeManufacturers) Get(_ context.Context, id uuid.UUID) (*manufacturer.Manufacturer, error) {
+	return &manufacturer.Manufacturer{ID: id, Name: "Acme", Country: "DE"}, nil
+}
+
+func (f *fakeManufacturers) RefreshCatalog(_ context.Context, id uuid.UUID) error {
+	f.refreshed = append(f.refreshed, id)
+
+	return f.err
+}
+
 func newTestService(repo *fakeRepository, index SemanticIndex) *Service {
-	return NewService(repo, fakeCache{}, nil, nil, fakeGraph{}, index)
+	return NewService(repo, fakeCache{}, nil, &fakeManufacturers{}, fakeGraph{}, index)
+}
+
+func TestService_RefreshesManufacturerCatalog(t *testing.T) {
+	id := uuid.New()
+	manufacturerID := uuid.New()
+	ctx := context.Background()
+
+	validator, err := oecsspec.NewValidator()
+	if err != nil {
+		t.Fatalf("new validator: %v", err)
+	}
+
+	spec, err := os.ReadFile("../oecsspec/testdata/ac-wallbox-full.json")
+	if err != nil {
+		t.Fatalf("read testdata: %v", err)
+	}
+
+	statusCases := []struct {
+		name     string
+		from, to Status
+		want     []uuid.UUID
+	}{
+		{"verify", StatusSubmitted, StatusVerified, []uuid.UUID{manufacturerID}},
+		{"reject a verified charger", StatusVerified, StatusRejected, []uuid.UUID{manufacturerID}},
+		{"reject a submission", StatusSubmitted, StatusRejected, nil},
+	}
+
+	for _, tc := range statusCases {
+		t.Run(tc.name, func(t *testing.T) {
+			manufacturers := &fakeManufacturers{}
+			repo := &fakeRepository{existing: &Charger{ID: id, Status: tc.from, ManufacturerID: &manufacturerID}}
+			svc := NewService(repo, fakeCache{}, validator, manufacturers, fakeGraph{}, nil)
+
+			if _, err := svc.ChangeStatus(ctx, id, tc.to); err != nil {
+				t.Fatalf("ChangeStatus: %v", err)
+			}
+
+			if !slices.Equal(manufacturers.refreshed, tc.want) {
+				t.Errorf("refreshed = %v, want %v", manufacturers.refreshed, tc.want)
+			}
+		})
+	}
+
+	t.Run("refresh failure doesn't fail the status change", func(t *testing.T) {
+		manufacturers := &fakeManufacturers{err: errors.New("boom")}
+		repo := &fakeRepository{existing: &Charger{ID: id, Status: StatusSubmitted, ManufacturerID: &manufacturerID}}
+		svc := NewService(repo, fakeCache{}, validator, manufacturers, fakeGraph{}, nil)
+
+		if _, err := svc.ChangeStatus(ctx, id, StatusVerified); err != nil {
+			t.Fatalf("ChangeStatus: %v", err)
+		}
+	})
+
+	editCases := []struct {
+		name   string
+		status Status
+		want   []uuid.UUID
+	}{
+		{"admin edit of a verified charger", StatusVerified, []uuid.UUID{manufacturerID}},
+		{"admin edit of a submission", StatusSubmitted, nil},
+	}
+
+	for _, tc := range editCases {
+		t.Run(tc.name, func(t *testing.T) {
+			manufacturers := &fakeManufacturers{}
+			repo := &fakeRepository{existing: &Charger{ID: id, Status: tc.status, ManufacturerID: &manufacturerID}}
+			svc := NewService(repo, fakeCache{}, validator, manufacturers, fakeGraph{}, nil)
+
+			if _, err := svc.AdminEditSpecification(ctx, id, spec); err != nil {
+				t.Fatalf("AdminEditSpecification: %v", err)
+			}
+
+			if !slices.Equal(manufacturers.refreshed, tc.want) {
+				t.Errorf("refreshed = %v, want %v", manufacturers.refreshed, tc.want)
+			}
+		})
+	}
+
+	t.Run("reassign refreshes the new and the old manufacturer", func(t *testing.T) {
+		target := uuid.New()
+		manufacturers := &fakeManufacturers{}
+		repo := &fakeRepository{existing: &Charger{ID: id, Status: StatusVerified, ManufacturerID: &manufacturerID, Spec: spec}}
+		svc := NewService(repo, fakeCache{}, validator, manufacturers, fakeGraph{}, nil)
+
+		if _, err := svc.ReassignManufacturer(ctx, id, target); err != nil {
+			t.Fatalf("ReassignManufacturer: %v", err)
+		}
+
+		if !slices.Equal(manufacturers.refreshed, []uuid.UUID{target, manufacturerID}) {
+			t.Errorf("refreshed = %v, want new then old", manufacturers.refreshed)
+		}
+	})
 }
 
 func TestService_ChangeStatus_Index(t *testing.T) {

@@ -1,0 +1,8 @@
+{{ .Name }}
+{{ with .Country }}Manufacturer country: {{ . }}{{ end }}
+{{- with .Catalog }}
+{{ with .ChargerTypes }}Charger types: {{ join . }}{{ end }}
+{{ with .Series }}Product series: {{ join . }}{{ end }}
+{{ with .ConnectorTypes }}Connectors: {{ join . }}{{ end }}
+{{ with .Protocols }}Protocols: {{ join . }}{{ end }}
+{{- end }}

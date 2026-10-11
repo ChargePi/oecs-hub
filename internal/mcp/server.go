@@ -25,6 +25,9 @@ type ChargerService interface {
 //go:embed prompts/search_chargers_description.tmpl
 var searchChargersDescription string
 
+//go:embed prompts/list_manufacturers_description.tmpl
+var listManufacturersDescription string
+
 // getChargersDescription documents get_chargers' purpose for the calling model: an
 // exact-ID batch fetch, never a name/text lookup - callers must resolve a name to an
 // id via search_chargers first.

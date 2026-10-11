@@ -27,8 +27,22 @@ type Manufacturer struct {
 	Name      string
 	Country   string
 	Contact   Contact
+	Catalog   Catalog
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// Catalog lists each value once across the manufacturer's verified chargers.
+type Catalog struct {
+	ChargerTypes   []string
+	ConnectorTypes []string
+	Protocols      []string
+	Series         []string
+}
+
+type ReindexResult struct {
+	Indexed int
+	Failed  int
 }
 
 // Summary is a Manufacturer plus aggregate counts over its verified catalog.

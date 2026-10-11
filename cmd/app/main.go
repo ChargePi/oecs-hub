@@ -140,11 +140,10 @@ var (
 				logger.Fatal("failed to compile OECS schema", zap.Error(err))
 			}
 
-			manufacturerRepo := postgresStorage.NewManufacturerRepository(db)
-			manufacturerCache := redisStorage.NewManufacturerCache(redisClient, cfg.Redis.CacheTTL)
-			manufacturerSvc := manufacturer.NewService(manufacturerRepo, manufacturerCache, graphClient)
-
-			var chargerIndex charger.SemanticIndex
+			var (
+				chargerIndex      charger.SemanticIndex
+				manufacturerIndex manufacturer.SemanticIndex
+			)
 
 			if cfg.SemanticSearch.Enabled {
 				embedder, err := openaiEmbedding.NewEmbedder(ctx, &openaiEmbedding.EmbeddingConfig{
@@ -156,31 +155,56 @@ var (
 					logger.Fatal("failed to create embedder", zap.Error(err))
 				}
 
-				index, err := vector.NewChargerIndex(vector.Config{
+				indexCfg := vector.Config{
 					Host:       cfg.SemanticSearch.QdrantHost,
 					Port:       cfg.SemanticSearch.QdrantPort,
 					Collection: cfg.SemanticSearch.Collection,
 					TopK:       cfg.SemanticSearch.TopK,
 					MinScore:   cfg.SemanticSearch.MinScore,
-				}, embedder)
+				}
+
+				chargers, err := vector.NewChargerIndex(indexCfg, embedder)
 				if err != nil {
 					logger.Fatal("failed to create charger index", zap.Error(err))
 				}
 
 				defer func() {
-					err := index.Close()
+					err := chargers.Close()
 					if err != nil {
 						logger.Error("failed to close charger index", zap.Error(err))
 					}
 				}()
 
 				// Not fatal: search falls back to name matching until Qdrant is reachable.
-				if err := index.EnsureCollection(ctx); err != nil {
+				if err := chargers.EnsureCollection(ctx); err != nil {
 					logger.Warn("failed to ensure charger index collection", zap.Error(err))
 				}
 
-				chargerIndex = index
+				indexCfg.Collection = cfg.SemanticSearch.ManufacturerCollection
+
+				manufacturers, err := vector.NewManufacturerIndex(indexCfg, embedder)
+				if err != nil {
+					logger.Fatal("failed to create manufacturer index", zap.Error(err))
+				}
+
+				defer func() {
+					err := manufacturers.Close()
+					if err != nil {
+						logger.Error("failed to close manufacturer index", zap.Error(err))
+					}
+				}()
+
+				if err := manufacturers.EnsureCollection(ctx); err != nil {
+					logger.Warn("failed to ensure manufacturer index collection", zap.Error(err))
+				}
+
+				chargerIndex = chargers
+				manufacturerIndex = manufacturers
 			}
+
+			manufacturerRepo := postgresStorage.NewManufacturerRepository(db)
+			manufacturerCache := redisStorage.NewManufacturerCache(redisClient, cfg.Redis.CacheTTL)
+			manufacturerSvc := manufacturer.NewService(manufacturerRepo, manufacturerCache, graphClient, manufacturerIndex)
 
 			chargerRepo := postgresStorage.NewChargerRepository(db)
 			chargerCache := redisStorage.NewChargerCache(redisClient, cfg.Redis.CacheTTL)
@@ -383,6 +407,7 @@ func setDefaults() {
 	viper.SetDefault("semanticSearch.qdrantHost", "qdrant")
 	viper.SetDefault("semanticSearch.qdrantPort", 6334)
 	viper.SetDefault("semanticSearch.collection", "oecs_chargers")
+	viper.SetDefault("semanticSearch.manufacturerCollection", "oecs_manufacturers")
 	viper.SetDefault("semanticSearch.embeddingModel", "openai/text-embedding-3-small")
 	viper.SetDefault("semanticSearch.topK", 100)
 	viper.SetDefault("semanticSearch.minScore", 0.25)
