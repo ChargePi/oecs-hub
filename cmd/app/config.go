@@ -103,8 +103,7 @@ type SemanticSearchConfiguration struct {
 	Enabled    bool   `json:"enabled"    mapstructure:"enabled"    yaml:"enabled"`
 	QdrantHost string `json:"qdrantHost" mapstructure:"qdrantHost" yaml:"qdrantHost"`
 	// QdrantPort is Qdrant's gRPC port.
-	QdrantPort int `json:"qdrantPort" mapstructure:"qdrantPort" yaml:"qdrantPort"`
-	// Collection holds chargers, ManufacturerCollection manufacturers.
+	QdrantPort             int    `json:"qdrantPort" mapstructure:"qdrantPort" yaml:"qdrantPort"`
 	Collection             string `json:"collection"             mapstructure:"collection"             yaml:"collection"`
 	ManufacturerCollection string `json:"manufacturerCollection" mapstructure:"manufacturerCollection" yaml:"manufacturerCollection"`
 	// EmbeddingModel is in Bifrost's "provider/model" form. Changing it requires new
@@ -112,8 +111,10 @@ type SemanticSearchConfiguration struct {
 	EmbeddingModel string `json:"embeddingModel" mapstructure:"embeddingModel" yaml:"embeddingModel"`
 	// TopK caps how many semantic matches a search considers.
 	TopK int `json:"topK" mapstructure:"topK" yaml:"topK"`
-	// MinScore is the cosine similarity below which a record isn't a match.
+	// MinScore is the cosine similarity below which a charger isn't a match.
 	MinScore float64 `json:"minScore" mapstructure:"minScore" yaml:"minScore"`
+	// ManufacturerMinScore is separate: short manufacturer documents score higher.
+	ManufacturerMinScore float64 `json:"manufacturerMinScore" mapstructure:"manufacturerMinScore" yaml:"manufacturerMinScore"`
 }
 
 type Configuration struct {

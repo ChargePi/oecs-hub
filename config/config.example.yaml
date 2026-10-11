@@ -72,3 +72,4 @@ semanticSearch:
   embeddingModel: "openai/text-embedding-3-small"
   topK: 100
   minScore: 0.25
+  manufacturerMinScore: 0.25

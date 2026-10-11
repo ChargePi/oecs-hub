@@ -204,6 +204,7 @@ services:
       - OECS_HUB_SEMANTICSEARCH_EMBEDDINGMODEL=${OECS_HUB_SEMANTICSEARCH_EMBEDDINGMODEL:-openai/text-embedding-3-small}
       # Model-specific: re-tune when the embedding model changes.
       - OECS_HUB_SEMANTICSEARCH_MINSCORE=${OECS_HUB_SEMANTICSEARCH_MINSCORE:-0.25}
+      - OECS_HUB_SEMANTICSEARCH_MANUFACTURERMINSCORE=${OECS_HUB_SEMANTICSEARCH_MANUFACTURERMINSCORE:-0.25}
     labels:
       - traefik.enable=true
       # Shared forwardAuth middleware referenced by every protected router, including
