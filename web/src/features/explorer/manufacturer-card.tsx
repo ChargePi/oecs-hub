@@ -23,8 +23,7 @@ export function ManufacturerCard({ manufacturer }: { manufacturer: ManufacturerS
           <ManufacturerLogo
             logoUrl={manufacturer.logoUrl}
             name={manufacturer.name}
-            className="size-12 rounded-xl bg-muted text-base text-foreground"
-            iconClassName="size-6"
+            className="size-12 rounded-xl text-base"
           />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <CardTitle className="line-clamp-2 text-base break-words" title={manufacturer.name}>

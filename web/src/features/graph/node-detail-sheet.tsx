@@ -176,8 +176,8 @@ function NodeDetailBody({
         <div className="flex items-center gap-3 border-b border-border p-4">
           <ManufacturerLogo
             logoUrl={selection.manufacturer.logoUrl}
-            className="size-10"
-            iconClassName="size-5"
+            name={selection.manufacturer.name}
+            className="size-10 text-sm"
           />
           <p className="font-heading text-base font-medium text-foreground">
             {selection.manufacturer.name}

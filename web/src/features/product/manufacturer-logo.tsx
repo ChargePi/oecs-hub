@@ -1,22 +1,19 @@
 import { useState } from 'react'
-import { Factory } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-/** Renders a manufacturer's OECS `manufacturer.logoUrl` inside the same colored icon badge
- *  used across the graph/explorer, falling back to a generic factory icon when the
- *  manufacturer has no logo or the image fails to load. When `name` is given, the fallback is
- *  a monogram of its initials instead, so placeholder badges stay distinguishable. */
+/** Renders a manufacturer's OECS `manufacturer.logoUrl` inside the neutral badge used across
+ *  the graph/explorer, falling back to a monogram of `name`'s initials when the manufacturer
+ *  has no logo or the image fails to load, so placeholder badges stay distinguishable. Size the
+ *  monogram with a text-* class in `className`. */
 export function ManufacturerLogo({
   logoUrl,
   name,
   className,
-  iconClassName,
 }: {
   logoUrl?: string
-  name?: string
+  name: string
   className?: string
-  iconClassName?: string
 }) {
   const [failed, setFailed] = useState(false)
   const showLogo = !!logoUrl && !failed
@@ -24,7 +21,7 @@ export function ManufacturerLogo({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary/15 text-primary',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-foreground',
         className,
       )}
     >
@@ -35,12 +32,10 @@ export function ManufacturerLogo({
           className="size-full object-contain p-1"
           onError={() => setFailed(true)}
         />
-      ) : name ? (
+      ) : (
         <span className="font-semibold tracking-tight select-none" aria-hidden="true">
           {initials(name)}
         </span>
-      ) : (
-        <Factory className={iconClassName} aria-hidden="true" />
       )}
     </div>
   )

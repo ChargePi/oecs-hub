@@ -16,8 +16,8 @@ export function ManufacturerNode({ data, selected }: NodeProps & { data: GraphNo
       <Handle type="source" position={Position.Right} className="!bg-primary" />
       <ManufacturerLogo
         logoUrl={manufacturer.logoUrl}
-        className="size-9"
-        iconClassName="size-4.5"
+        name={manufacturer.name}
+        className="size-9 text-xs"
       />
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{manufacturer.name}</p>
