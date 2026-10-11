@@ -5,7 +5,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ManufacturerCard } from '@/features/explorer/manufacturer-card'
 import { useManufacturerSearch } from './use-manufacturer-search'
 
-const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-4'
+// Fixed-width cards in a centered flex-wrap, so a partial last row stays centered too.
+const GRID = 'flex flex-wrap justify-center gap-4 *:w-full sm:*:w-80'
 
 export function ManufacturersPage() {
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
@@ -35,7 +36,7 @@ export function ManufacturersPage() {
   return (
     <div className="flex flex-1 flex-col overflow-y-auto">
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8">
-        <div className="flex items-baseline gap-3">
+        <div className="flex items-baseline justify-center gap-3">
           <h1 className="text-2xl font-semibold">Manufacturers</h1>
           {!isLoading && totalSize > 0 && (
             <span className="text-sm text-muted-foreground tabular-nums">{totalSize}</span>

@@ -2,7 +2,7 @@ import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router'
 
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
-import { countryFlag, countryName } from '@/lib/oecs/format'
+import { countryName } from '@/lib/oecs/format'
 import type { ManufacturerSummary } from '@/lib/registry/types'
 import { cn } from '@/lib/utils'
 import { ManufacturerLogo } from '@/features/product/manufacturer-logo'
@@ -10,7 +10,6 @@ import { ManufacturerLogo } from '@/features/product/manufacturer-logo'
 export function ManufacturerCard({ manufacturer }: { manufacturer: ManufacturerSummary }) {
   const empty = manufacturer.productCount === 0
   const country = countryName(manufacturer.country)
-  const flag = countryFlag(manufacturer.country)
 
   return (
     <Link to={`/chargers/${manufacturer.id}`} className="group/link">
@@ -31,12 +30,7 @@ export function ManufacturerCard({ manufacturer }: { manufacturer: ManufacturerS
             <CardTitle className="line-clamp-2 text-base break-words" title={manufacturer.name}>
               {manufacturer.name}
             </CardTitle>
-            {country && (
-              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {flag && <span aria-hidden="true">{flag}</span>}
-                {country}
-              </p>
-            )}
+            {country && <p className="text-xs text-muted-foreground">{country}</p>}
             <p className={cn('text-xs text-muted-foreground', empty && 'italic')}>
               {empty ? (
                 'No products yet'
