@@ -218,7 +218,8 @@ func (r *ManufacturerRepository) List(ctx context.Context, query, country *strin
 			WHERE status = 'verified'
 			GROUP BY manufacturer_id
 		) agg ON agg.manufacturer_id = manufacturers.id`).
-		Order("manufacturers.name ASC").
+		// Manufacturers without verified chargers sink to the end so browsing leads with real catalog entries.
+		Order("COALESCE(agg.variant_count, 0) = 0, manufacturers.name ASC, manufacturers.id ASC").
 		Limit(int(limit)).
 		Offset(int(offset)).
 		Find(&rows).Error

@@ -1,18 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
-import { Search } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Card, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { ManufacturerCard } from '@/features/explorer/manufacturer-card'
 import { useManufacturerSearch } from './use-manufacturer-search'
 
+// Fixed-width cards in a centered flex-wrap, so a partial last row stays centered too.
+const GRID = 'flex flex-wrap justify-center gap-4 *:w-full sm:*:w-80'
+
 export function ManufacturersPage() {
-  const [query, setQuery] = useState('')
-  const debouncedQuery = useDebouncedValue(query, 300)
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
-    useManufacturerSearch(debouncedQuery)
+    useManufacturerSearch('')
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const manufacturers = data?.pages.flatMap((page) => page.items) ?? []
@@ -36,69 +34,60 @@ export function ManufacturersPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="relative flex items-center justify-end gap-4 border-b border-border p-4">
-        <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold">Manufacturers</h1>
-        <div className="relative w-full max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search manufacturers…"
-            className="h-9 pl-9 text-sm"
-          />
-        </div>
-      </div>
+    <div className="flex flex-1 flex-col overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8">
+        <h1 className="text-center text-2xl font-semibold">
+          Manufacturers
+          {!isLoading && totalSize > 0 && (
+            <span className="ml-2 font-normal text-muted-foreground tabular-nums">{totalSize}</span>
+          )}
+        </h1>
 
-      {isLoading ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(24rem,1fr))] gap-4 p-4">
-          {Array.from({ length: 6 }, (_, i) => (
-            <ManufacturerCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : manufacturers.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
-          {debouncedQuery ? `No manufacturers match "${debouncedQuery}".` : 'No manufacturers yet.'}
-        </div>
-      ) : (
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
-          <p className="text-xs text-muted-foreground">
-            {totalSize} manufacturer{totalSize === 1 ? '' : 's'}
-          </p>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(24rem,1fr))] gap-4">
-            {manufacturers.map((manufacturer) => (
-              <ManufacturerCard key={manufacturer.id} manufacturer={manufacturer} />
+        {isLoading ? (
+          <div className={GRID}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <ManufacturerCardSkeleton key={i} />
             ))}
           </div>
-          <div ref={sentinelRef} />
-          {isFetchingNextPage && (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(24rem,1fr))] gap-4">
-              {Array.from({ length: 3 }, (_, i) => (
-                <ManufacturerCardSkeleton key={i} />
+        ) : manufacturers.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center p-8 text-sm text-muted-foreground">
+            No manufacturers yet.
+          </div>
+        ) : (
+          <>
+            <div className={GRID}>
+              {manufacturers.map((manufacturer) => (
+                <ManufacturerCard key={manufacturer.id} manufacturer={manufacturer} />
               ))}
             </div>
-          )}
-        </div>
-      )}
+            <div ref={sentinelRef} />
+            {isFetchingNextPage && (
+              <div className={GRID}>
+                {Array.from({ length: 3 }, (_, i) => (
+                  <ManufacturerCardSkeleton key={i} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
 
-/** Mirrors ManufacturerCard's shape (icon block + title/subtitle, no image) so the
+/** Mirrors ManufacturerCard's shape (logo block + name/country/stats lines) so the
  *  loading state doesn't jump/resize once real cards arrive. */
 function ManufacturerCardSkeleton() {
   return (
     <Card>
       <CardHeader className="flex items-center gap-4">
-        <Skeleton className="size-10 shrink-0 rounded-lg" />
+        <Skeleton className="size-12 shrink-0 rounded-xl" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-3 w-1/3" />
+          <Skeleton className="h-3 w-1/2" />
         </div>
       </CardHeader>
-      <CardContent>
-        <Skeleton className="h-4 w-1/2" />
-      </CardContent>
     </Card>
   )
 }

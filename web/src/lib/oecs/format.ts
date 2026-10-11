@@ -22,6 +22,19 @@ export function countryFlag(code?: string): string | undefined {
   return [...code.toUpperCase()].map((c) => String.fromCodePoint(127397 + c.charCodeAt(0))).join('')
 }
 
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+
+/** Resolves an ISO 3166-1 alpha-2 country code (e.g. "CH") to its English name
+ *  ("Switzerland"), falling back to the raw code when it isn't a known region. */
+export function countryName(code?: string): string | undefined {
+  if (!code) return undefined
+  try {
+    return regionNames.of(code.toUpperCase()) ?? code
+  } catch {
+    return code
+  }
+}
+
 /** Turns a schema enum value like "backend-managed-profiles" or "CCS2_Combo2" into readable text. */
 export function humanize(value: string): string {
   const spaced = value.replace(/[_-]/g, ' ')
