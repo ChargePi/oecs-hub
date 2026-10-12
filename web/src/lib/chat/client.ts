@@ -156,6 +156,9 @@ export function proposedActionsFromMetadata(metadata?: Record<string, unknown>):
     .filter((a) => a.actionId !== '')
 }
 
+/** Older agent versions report the model's own knowledge as a document; it isn't one. */
+const MODEL_KNOWLEDGE_SOURCE = 'model_knowledge'
+
 /** The knowledge-base documents a reply drew on (its knowledge_chunk evidence), one
  *  entry per document in first-cited order, each with the sections used. */
 export function knowledgeSourcesFromMetadata(
@@ -164,6 +167,7 @@ export function knowledgeSourcesFromMetadata(
   const byDocument = new Map<string, KnowledgeSource>()
   for (const e of evidenceFromMetadata(metadata)) {
     if (e.sourceType !== 'knowledge_chunk' || (!e.title && !e.sourceUri)) continue
+    if (e.sourceUri === MODEL_KNOWLEDGE_SOURCE) continue
     const key = e.sourceUri || e.title
     const source = byDocument.get(key) ?? { title: e.title, sourceUri: e.sourceUri, sections: [] }
     if (e.section && !source.sections.includes(e.section)) source.sections.push(e.section)
