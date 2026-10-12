@@ -11,7 +11,6 @@ import {
   Wifi,
 } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { describeValue, fieldDescriptions } from '@/lib/oecs/field-descriptions'
@@ -54,12 +53,9 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-xl font-semibold tracking-tight">{model.name}</h2>
-        {model.series && <Badge variant="secondary">{model.series}</Badge>}
-      </div>
-
       <ProductImage src={model.productImageUrl} alt={model.name} className="aspect-square w-full" />
+
+      <h2 className="text-center text-xl font-semibold tracking-tight">{model.name}</h2>
 
       <Separator />
 
