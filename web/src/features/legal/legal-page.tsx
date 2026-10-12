@@ -15,9 +15,7 @@ const LEGAL_MARKDOWN_COMPONENTS: Components = {
   h3: ({ children }) => <h3 className="mt-6 mb-2 text-base font-semibold">{children}</h3>,
   p: ({ children }) => <p className="mb-4 leading-relaxed last:mb-0">{children}</p>,
   ul: ({ children }) => <ul className="mb-4 list-disc space-y-1 pl-6 last:mb-0">{children}</ul>,
-  ol: ({ children }) => (
-    <ol className="mb-4 list-decimal space-y-1 pl-6 last:mb-0">{children}</ol>
-  ),
+  ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1 pl-6 last:mb-0">{children}</ol>,
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   a: ({ children, href }) => (
     <a
@@ -31,6 +29,15 @@ const LEGAL_MARKDOWN_COMPONENTS: Components = {
   ),
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
   em: ({ children }) => <em className="text-muted-foreground">{children}</em>,
+  table: ({ children }) => (
+    <div className="mb-4 overflow-x-auto last:mb-0">
+      <table className="w-full border-collapse text-left">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="border-b border-border px-3 py-2 font-semibold text-foreground">{children}</th>
+  ),
+  td: ({ children }) => <td className="border-b border-border px-3 py-2 align-top">{children}</td>,
 }
 
 export function LegalPage({ title, slug }: { title: string; slug: LegalDocumentSlug }) {

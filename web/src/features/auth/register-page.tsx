@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Registration } from '@ory/elements-react/theme'
 import '@ory/elements-react/theme/styles.css'
 
@@ -27,7 +27,6 @@ function readPending(): { flowId: string; accountType: AccountType } | null {
     return null
   }
 }
-
 
 export function RegisterPage() {
   const [searchParams] = useSearchParams()
@@ -160,6 +159,25 @@ export function RegisterPage() {
               onStepChange={(wizardStep) => setView(wizardStep === 1 ? 2 : 3)}
             />
           </Registration>
+          <p className="text-center text-xs text-muted-foreground">
+            By creating an account you agree to the{' '}
+            <Link
+              to="/terms"
+              target="_blank"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              Terms of Service
+            </Link>{' '}
+            and acknowledge the{' '}
+            <Link
+              to="/privacy"
+              target="_blank"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
       )}
     </RegistrationLayout>
