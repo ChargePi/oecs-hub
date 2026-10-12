@@ -1,9 +1,14 @@
 import { Link } from 'react-router'
-import { GitCompare, Info } from 'lucide-react'
+import { GitCompare, LayoutGrid, Table2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { ChargerVariant } from '@/lib/oecs/types'
-import { MAX_COMPARISON_ITEMS, useComparisonStore } from '@/stores/comparison-store'
+import {
+  MAX_COMPARISON_ITEMS,
+  useComparisonStore,
+  type ComparisonViewMode,
+} from '@/stores/comparison-store'
 import { AddChargerControl } from './add-charger-control'
 import {
   ComparisonGroupCell,
@@ -11,92 +16,132 @@ import {
   ComparisonPricingCell,
   ComparisonRatingsCell,
 } from './comparison-card'
-import { comparisonGroups } from './comparison-rows'
+import { rowDiffers } from './comparison-diff'
+import { ComparisonOptionsSidebar } from './comparison-options-sidebar'
+import { chargerTypeGroup, comparisonGroups, type ComparisonGroup } from './comparison-rows'
+import { ComparisonTable } from './comparison-table'
 import { EvaluateWithAgentButton } from './evaluate-with-agent-button'
 
-/** Docked to the bottom of the viewport while the page scrolls, so the legend stays visible
- *  over the wide comparison grid rather than scrolling away with the first row of cards. Also
- *  carries the "Evaluate using AI" action — a page-level utility, same as the legend text,
- *  rather than a standalone CTA floating above the cards. */
-function ComparisonLegend({ variants }: { variants: ChargerVariant[] }) {
+function ComparisonCarousel({
+  variants,
+  baseline,
+  identityGroup,
+  groups,
+}: {
+  variants: ChargerVariant[]
+  baseline: ChargerVariant
+  identityGroup: ComparisonGroup
+  groups: ComparisonGroup[]
+}) {
+  const remove = useComparisonStore((state) => state.remove)
+  const setReference = useComparisonStore((state) => state.setReference)
+  const canAddMore = variants.length < MAX_COMPARISON_ITEMS
+
   return (
-    <div className="sticky bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-3.5">
-        <div className="flex items-start gap-3.5 text-base text-muted-foreground">
-          <Info className="mt-0.5 size-5 shrink-0 text-primary" />
-          <div className="flex flex-col gap-1.5">
-            <p>
-              <span className="font-medium text-primary">Outlined</span> card is the reference;
-              click <span className="font-medium text-foreground">Set as reference</span> to change
-              it.
-            </p>
-            <p>
-              <span className="font-medium text-success">Green</span>/
-              <span className="font-medium text-destructive">red</span> means better/worse than the
-              reference;{' '}
-              <span className="font-semibold underline decoration-dotted underline-offset-4">
-                underlined
-              </span>{' '}
-              just differs. Solid pills are unique to one charger.
-            </p>
-          </div>
+    <div className="overflow-x-auto pb-4">
+      <div className="mx-auto flex w-fit items-stretch gap-4">
+        <div
+          className="grid gap-x-4"
+          style={{ gridTemplateColumns: `repeat(${variants.length}, minmax(560px, 640px))` }}
+        >
+          {variants.map((variant) => (
+            <ComparisonHeaderCell
+              key={variant.id}
+              rows={identityGroup.rows}
+              variant={variant}
+              baseline={baseline}
+              onRemove={() => remove(variant.id)}
+              onSetReference={() => setReference(variant.id)}
+            />
+          ))}
+
+          {variants.map((variant) => (
+            <ComparisonRatingsCell key={variant.id} variant={variant} baseline={baseline} />
+          ))}
+
+          {groups.map((group) =>
+            variants.map((variant) => (
+              <ComparisonGroupCell
+                key={`${group.title}-${variant.id}`}
+                group={group}
+                variant={variant}
+                baseline={baseline}
+              />
+            )),
+          )}
+
+          {variants.map((variant) => (
+            <ComparisonPricingCell key={variant.id} variant={variant} baseline={baseline} />
+          ))}
         </div>
-        <EvaluateWithAgentButton variants={variants} />
+
+        {canAddMore && <AddChargerControl />}
       </div>
     </div>
   )
 }
 
-export function ComparisonCarousel({ variants }: { variants: ChargerVariant[] }) {
-  const remove = useComparisonStore((state) => state.remove)
+export function ComparisonView({ variants }: { variants: ChargerVariant[] }) {
   const referenceId = useComparisonStore((state) => state.referenceId)
-  const setReference = useComparisonStore((state) => state.setReference)
-  const canAddMore = variants.length < MAX_COMPARISON_ITEMS
+  const viewMode = useComparisonStore((state) => state.viewMode)
+  const setViewMode = useComparisonStore((state) => state.setViewMode)
+  const differencesOnly = useComparisonStore((state) => state.differencesOnly)
   const baseline = variants.find((v) => v.id === referenceId) ?? variants[0]
+  const canAddMore = variants.length < MAX_COMPARISON_ITEMS
+
+  const allGroups = [chargerTypeGroup, ...comparisonGroups]
+  const [identityGroup, ...groups] = allGroups.map((group) => ({
+    ...group,
+    rows: group.rows.filter((row) => !differencesOnly || rowDiffers(row, variants, baseline)),
+  }))
+  const visibleGroups = groups.filter((group) => group.rows.length > 0)
 
   return (
-    <div className="flex flex-col">
-      <div className="pt-6 overflow-x-auto pb-4">
-        <div className="mx-auto flex w-fit items-stretch gap-4">
-          <div
-            className="grid gap-x-4"
-            style={{ gridTemplateColumns: `repeat(${variants.length}, minmax(560px, 640px))` }}
-          >
-            {variants.map((variant) => (
-              <ComparisonHeaderCell
-                key={variant.id}
-                variant={variant}
-                baseline={baseline}
-                onRemove={() => remove(variant.id)}
-                onSetReference={() => setReference(variant.id)}
-              />
-            ))}
+    <div className="flex flex-1 flex-col md:flex-row">
+      <ComparisonOptionsSidebar />
 
-            {comparisonGroups.map((group) =>
-              variants.map((variant) => (
-                <ComparisonGroupCell
-                  key={`${group.title}-${variant.id}`}
-                  group={group}
-                  variant={variant}
-                  baseline={baseline}
-                />
-              )),
-            )}
-
-            {variants.map((variant) => (
-              <ComparisonPricingCell key={variant.id} variant={variant} baseline={baseline} />
-            ))}
-
-            {variants.map((variant) => (
-              <ComparisonRatingsCell key={variant.id} variant={variant} baseline={baseline} />
-            ))}
+      <div className="min-w-0 flex-1 px-4 py-6 md:px-6">
+        <div className="mx-auto mb-4 flex w-full max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {canAddMore && <AddChargerControl compact />}
+            <EvaluateWithAgentButton
+              variants={variants}
+              label="Compare with AI"
+              variant="default"
+            />
           </div>
-
-          {canAddMore && <AddChargerControl />}
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) => setViewMode(value as ComparisonViewMode)}
+          >
+            <TabsList>
+              <TabsTrigger value="cards">
+                <LayoutGrid />
+                Cards
+              </TabsTrigger>
+              <TabsTrigger value="table">
+                <Table2 />
+                Table
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-      </div>
 
-      <ComparisonLegend variants={variants} />
+        {viewMode === 'table' ? (
+          <ComparisonTable
+            variants={variants}
+            baseline={baseline}
+            groups={[identityGroup, ...visibleGroups].filter((group) => group.rows.length > 0)}
+          />
+        ) : (
+          <ComparisonCarousel
+            variants={variants}
+            baseline={baseline}
+            identityGroup={identityGroup}
+            groups={visibleGroups}
+          />
+        )}
+      </div>
     </div>
   )
 }

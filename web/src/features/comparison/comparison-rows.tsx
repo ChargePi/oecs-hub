@@ -4,7 +4,6 @@ import { CreditCard, MonitorSmartphone, Plug, ShieldCheck, Tag, Wifi, Zap } from
 import { describeValue, fieldDescriptions } from '@/lib/oecs/field-descriptions'
 import { formatQuantity, formatValueRange, humanize } from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
-import { badgeGroup, boolBadge } from '@/features/product/spec-badges'
 import { ValueTooltip, type SpecListItem } from '@/features/product/spec-section'
 
 const describeConnectorType = describeValue('connectorType')
@@ -30,6 +29,8 @@ export interface ComparisonRow {
   /** Comparable scalar used to flag when a non-numeric row differs across compared variants
    *  (e.g. charger type) — highlighted, but without a "better/worse" judgment. */
   diffKey?: (variant: ChargerVariant) => string | number | undefined
+  /** Yes/No capability — rendered as a pill, and having it counts as better than not. */
+  boolValue?: (variant: ChargerVariant) => boolean | undefined
   /** CSV-style row items — items not shared by every compared variant are called out as a
    *  differing pill. */
   items?: (variant: ChargerVariant) => SpecListItem[] | undefined
@@ -53,13 +54,6 @@ function enumItems(
   return values.map((value) => ({ text: humanize(value), description: describe(value) }))
 }
 
-function humanizedBadges(
-  values?: string[],
-  describe?: (item: string) => string | undefined,
-): ReactNode {
-  return badgeGroup(values, true, describe)
-}
-
 /**
  * Manufacturer/model identity fields — rendered in the header cell's second half, next to the
  * product image, rather than as a body group like the rest of `comparisonGroups`.
@@ -68,8 +62,14 @@ export const chargerTypeGroup: ComparisonGroup = {
   title: 'Charger type',
   icon: Tag,
   rows: [
-    { label: 'Manufacturer', render: (v) => v.manufacturer.name },
-    { label: 'Product line', render: (v) => v.model.series ?? '—' },
+    {
+      label: 'Manufacturer',
+      render: (v) => v.manufacturer.name,
+    },
+    {
+      label: 'Product line',
+      render: (v) => v.model.series ?? '—',
+    },
     {
       label: 'Type',
       render: (v) => (
@@ -78,9 +78,16 @@ export const chargerTypeGroup: ComparisonGroup = {
       diffKey: (v) => v.model.type,
       description: fieldDescriptions['model.type'],
     },
-    { label: 'Level', render: (v) => v.model.level ?? '—' },
-    { label: 'Status', render: (v) => (v.model.status ? humanize(v.model.status) : '—') },
-    { label: 'Release date', render: (v) => v.model.releaseDate ?? '—' },
+    { label: 'Level', render: (v) => v.model.level ?? '—', diffKey: (v) => v.model.level },
+    {
+      label: 'Status',
+      render: (v) => (v.model.status ? humanize(v.model.status) : '—'),
+      diffKey: (v) => v.model.status,
+    },
+    {
+      label: 'Release date',
+      render: (v) => v.model.releaseDate ?? '—',
+    },
   ],
 }
 
@@ -129,8 +136,7 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Simultaneous charging',
-        render: (v) =>
-          boolBadge(v.hardware.electrical?.output?.simultaneousChargingSupported ?? false),
+        boolValue: (v) => v.hardware.electrical?.output?.simultaneousChargingSupported,
         inline: true,
       },
     ],
@@ -141,11 +147,8 @@ export const comparisonGroups: ComparisonGroup[] = [
     rows: [
       {
         label: 'Connector types',
-        render: (v) =>
-          humanizedBadges(
-            v.hardware.connectors.map((c) => c.type),
-            describeConnectorType,
-          ),
+        items: (v) =>
+          enumItems([...new Set(v.hardware.connectors.map((c) => c.type))], describeConnectorType),
         description: fieldDescriptions['hardware.connectors[].type'],
       },
       {
@@ -159,7 +162,7 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Plug & Charge (ISO 15118)',
-        render: (v) => boolBadge(v.hardware.connectors.some((c) => c.isoPlugAndCharge)),
+        boolValue: (v) => v.hardware.connectors.some((c) => c.isoPlugAndCharge),
         inline: true,
       },
     ],
@@ -174,6 +177,7 @@ export const comparisonGroups: ComparisonGroup[] = [
           v.hardware.userInterface?.display?.type
             ? humanize(v.hardware.userInterface.display.type)
             : '—',
+        diffKey: (v) => v.hardware.userInterface?.display?.type,
       },
       {
         label: 'Authentication methods',
@@ -194,7 +198,7 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Ad-hoc payment',
-        render: (v) => boolBadge(v.payment?.adHocPaymentSupported ?? false),
+        boolValue: (v) => v.payment?.adHocPaymentSupported,
         inline: true,
       },
     ],
@@ -214,13 +218,12 @@ export const comparisonGroups: ComparisonGroup[] = [
       },
       {
         label: 'Smart charging features',
-        render: (v) =>
-          humanizedBadges(v.software.smartCharging?.features, describeSmartChargingFeature),
+        items: (v) => enumItems(v.software.smartCharging?.features, describeSmartChargingFeature),
         description: fieldDescriptions['software.smartCharging.features'],
       },
       {
         label: 'Offline charging',
-        render: (v) => boolBadge(v.software.offlineChargingSupported ?? false),
+        boolValue: (v) => v.software.offlineChargingSupported,
         inline: true,
       },
       {

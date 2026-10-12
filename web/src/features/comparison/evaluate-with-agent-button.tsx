@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useIdentity } from '@/lib/auth/use-identity'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 import type { ChargerVariant } from '@/lib/oecs/types'
-import { useChatDrawerStore } from '@/stores/chat-drawer-store'
+import { useOpenAssistant } from '@/features/chat/use-open-assistant'
 
 function chargerLabel(variant: ChargerVariant): string {
   return `${variant.manufacturer.name} ${variant.model.name}`
@@ -36,12 +36,17 @@ function buildComparisonPrompt(variants: ChargerVariant[]): string {
 export function EvaluateWithAgentButton({
   variants,
   className,
+  label = 'Evaluate using AI',
+  variant = 'outline',
 }: {
   variants: ChargerVariant[]
   className?: string
+  label?: string
+  variant?: 'outline' | 'default'
 }) {
   const navigate = useNavigate()
   const { identity } = useIdentity()
+  const assistant = useOpenAssistant()
 
   if (!CHAT_ENABLED || variants.length < 2) return null
 
@@ -49,7 +54,7 @@ export function EvaluateWithAgentButton({
     const prompt = buildComparisonPrompt(variants)
     const chargerIds = variants.map((v) => v.id)
     if (identity) {
-      useChatDrawerStore.getState().ask(prompt, chargerIds)
+      assistant.ask(prompt, chargerIds)
       return
     }
     const params = new URLSearchParams({
@@ -63,9 +68,9 @@ export function EvaluateWithAgentButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button variant="outline" size="sm" className={className} onClick={handleClick}>
+        <Button variant={variant} size="sm" className={className} onClick={handleClick}>
           <Sparkles />
-          Evaluate using AI
+          {label}
         </Button>
       </TooltipTrigger>
       <TooltipContent>

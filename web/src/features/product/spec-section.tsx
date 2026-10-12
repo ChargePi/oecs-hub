@@ -3,10 +3,11 @@ import { FileText, Info } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
 /** Wraps a row label with an info-icon tooltip explaining what the field means. Renders the
  *  label plain when no description is given, so this stays a no-op for unwired rows. */
-function FieldLabel({ label, description }: { label: string; description?: string }) {
+export function FieldLabel({ label, description }: { label: string; description?: string }) {
   if (!description) return <>{label}</>
   return (
     <span className="inline-flex items-center gap-1">
@@ -80,6 +81,7 @@ export function SpecRow({
   inline = false,
   description,
   valueDescription,
+  className,
 }: {
   label: string
   value?: ReactNode
@@ -92,12 +94,18 @@ export function SpecRow({
   description?: string
   /** Tooltip explaining what this specific value means, e.g. an enum value like "DC". */
   valueDescription?: string
+  className?: string
 }) {
   if (value == null || value === '') return null
   const valueNode = <ValueTooltip description={valueDescription}>{value}</ValueTooltip>
   if (inline && wide) {
     return (
-      <div className="col-span-full grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-baseline gap-3 border-b border-border/60 py-1.5 text-sm">
+      <div
+        className={cn(
+          'col-span-full grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] items-baseline gap-3 border-b border-border/60 py-1.5 text-sm',
+          className,
+        )}
+      >
         <span className="text-muted-foreground break-words">
           <FieldLabel label={label} description={description} />
         </span>
@@ -110,7 +118,9 @@ export function SpecRow({
     // side-by-side split above (long labels would break mid-word), so stack instead, same as
     // the default row below.
     return (
-      <div className="flex flex-col gap-0.5 border-b border-border/60 py-1.5 text-sm">
+      <div
+        className={cn('flex flex-col gap-0.5 border-b border-border/60 py-1.5 text-sm', className)}
+      >
         <span className="text-muted-foreground">
           <FieldLabel label={label} description={description} />
         </span>
@@ -120,7 +130,11 @@ export function SpecRow({
   }
   return (
     <div
-      className={`flex flex-col gap-0.5 border-b border-border/60 py-1.5 text-sm ${wide ? 'col-span-full' : ''}`}
+      className={cn(
+        'flex flex-col gap-0.5 border-b border-border/60 py-1.5 text-sm',
+        wide && 'col-span-full',
+        className,
+      )}
     >
       <span className="text-muted-foreground">
         <FieldLabel label={label} description={description} />

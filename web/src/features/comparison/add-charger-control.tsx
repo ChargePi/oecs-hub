@@ -2,12 +2,19 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, Search } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { registryClient } from '@/lib/registry/client'
 import { useComparisonStore } from '@/stores/comparison-store'
 
-export function AddChargerControl() {
+export function AddChargerControl({
+  compact = false,
+  className,
+}: {
+  compact?: boolean
+  className?: string
+}) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const variantIds = useComparisonStore((state) => state.variantIds)
@@ -37,14 +44,21 @@ export function AddChargerControl() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex h-full min-h-64 w-[40rem] shrink-0 flex-col items-center justify-center gap-2 self-stretch rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-      >
-        <Plus className="size-6" />
-        <span className="text-sm font-medium">Add charger</span>
-      </button>
+      {compact ? (
+        <Button variant="outline" size="sm" className={className} onClick={() => setOpen(true)}>
+          <Plus className="size-4" />
+          Add charger
+        </Button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-full min-h-64 w-[40rem] shrink-0 flex-col items-center justify-center gap-2 self-stretch rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          <Plus className="size-6" />
+          <span className="text-sm font-medium">Add charger</span>
+        </button>
+      )}
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent>
