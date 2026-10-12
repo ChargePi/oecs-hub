@@ -5,6 +5,7 @@ import (
 
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type manufacturerEntity struct {
@@ -16,8 +17,14 @@ type manufacturerEntity struct {
 	ContactEmail    *string    `gorm:"column:contact_email"`
 	ContactPhone    *string    `gorm:"column:contact_phone"`
 	ContactWebsite  *string    `gorm:"column:contact_website"`
-	CreatedAt       time.Time  `gorm:"column:created_at;autoCreateTime"`
-	UpdatedAt       time.Time  `gorm:"column:updated_at;autoUpdateTime"`
+
+	ChargerTypes   pq.StringArray `gorm:"column:charger_types;type:text[];default:'{}'"`
+	ConnectorTypes pq.StringArray `gorm:"column:connector_types;type:text[];default:'{}'"`
+	Protocols      pq.StringArray `gorm:"column:protocols;type:text[];default:'{}'"`
+	Series         pq.StringArray `gorm:"column:series;type:text[];default:'{}'"`
+
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
 }
 
 func (manufacturerEntity) TableName() string {
@@ -34,6 +41,10 @@ func manufacturerToEntity(m *manufacturer.Manufacturer) *manufacturerEntity {
 		ContactEmail:    strPtrOrNil(m.Contact.Email),
 		ContactPhone:    strPtrOrNil(m.Contact.Phone),
 		ContactWebsite:  strPtrOrNil(m.Contact.Website),
+		ChargerTypes:    m.Catalog.ChargerTypes,
+		ConnectorTypes:  m.Catalog.ConnectorTypes,
+		Protocols:       m.Catalog.Protocols,
+		Series:          m.Catalog.Series,
 		CreatedAt:       m.CreatedAt,
 		UpdatedAt:       m.UpdatedAt,
 	}
@@ -50,6 +61,12 @@ func manufacturerToDomain(e *manufacturerEntity) *manufacturer.Manufacturer {
 			Email:   strOrEmpty(e.ContactEmail),
 			Phone:   strOrEmpty(e.ContactPhone),
 			Website: strOrEmpty(e.ContactWebsite),
+		},
+		Catalog: manufacturer.Catalog{
+			ChargerTypes:   e.ChargerTypes,
+			ConnectorTypes: e.ConnectorTypes,
+			Protocols:      e.Protocols,
+			Series:         e.Series,
 		},
 		CreatedAt: e.CreatedAt,
 		UpdatedAt: e.UpdatedAt,

@@ -51,9 +51,14 @@ func (f *fakeAdminChargerService) Reindex(context.Context) (charger.ReindexResul
 }
 
 type fakeAdminManufacturerService struct {
-	got      *manufacturer.Manufacturer
-	gotOwner uuid.UUID
-	err      error
+	got       *manufacturer.Manufacturer
+	gotOwner  uuid.UUID
+	reindexed manufacturer.ReindexResult
+	err       error
+}
+
+func (f *fakeAdminManufacturerService) Reindex(context.Context) (manufacturer.ReindexResult, error) {
+	return f.reindexed, f.err
 }
 
 func (f *fakeAdminManufacturerService) Create(_ context.Context, m *manufacturer.Manufacturer) (*manufacturer.Manufacturer, error) {
@@ -298,6 +303,41 @@ func TestAdminHandler_ReindexChargers(t *testing.T) {
 		h := NewAdminHandler(&fakeAdminChargerService{reindexed: charger.ReindexResult{Indexed: 7, Failed: 2}}, nil)
 
 		resp, err := h.ReindexChargers(context.Background(), &adminv1.ReindexChargersRequest{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if resp.GetIndexed() != 7 || resp.GetFailed() != 2 {
+			t.Fatalf("got indexed=%d failed=%d, want 7 and 2", resp.GetIndexed(), resp.GetFailed())
+		}
+	})
+}
+
+func TestAdminHandler_ReindexManufacturers(t *testing.T) {
+	errorCases := []struct {
+		name string
+		err  error
+		want codes.Code
+	}{
+		{"disabled", fmt.Errorf("reindex: %w", manufacturer.ErrSemanticSearchDisabled), codes.FailedPrecondition},
+		{"other failure", errors.New("boom"), codes.Internal},
+	}
+
+	for _, tc := range errorCases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := NewAdminHandler(nil, &fakeAdminManufacturerService{err: tc.err})
+
+			_, err := h.ReindexManufacturers(context.Background(), &adminv1.ReindexManufacturersRequest{})
+			if status.Code(err) != tc.want {
+				t.Fatalf("expected %v, got %v", tc.want, err)
+			}
+		})
+	}
+
+	t.Run("success", func(t *testing.T) {
+		h := NewAdminHandler(nil, &fakeAdminManufacturerService{reindexed: manufacturer.ReindexResult{Indexed: 7, Failed: 2}})
+
+		resp, err := h.ReindexManufacturers(context.Background(), &adminv1.ReindexManufacturersRequest{})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

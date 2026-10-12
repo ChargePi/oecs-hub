@@ -9,7 +9,9 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type ManufacturerRepository struct {
@@ -166,6 +168,10 @@ type manufacturerListRow struct {
 	ContactEmail    *string
 	ContactPhone    *string
 	ContactWebsite  *string
+	ChargerTypes    pq.StringArray `gorm:"type:text[]"`
+	ConnectorTypes  pq.StringArray `gorm:"type:text[]"`
+	Protocols       pq.StringArray `gorm:"type:text[]"`
+	Series          pq.StringArray `gorm:"type:text[]"`
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	ProductCount    int64
@@ -182,21 +188,92 @@ func (row *manufacturerListRow) entity() *manufacturerEntity {
 		ContactEmail:    row.ContactEmail,
 		ContactPhone:    row.ContactPhone,
 		ContactWebsite:  row.ContactWebsite,
+		ChargerTypes:    row.ChargerTypes,
+		ConnectorTypes:  row.ConnectorTypes,
+		Protocols:       row.Protocols,
+		Series:          row.Series,
 		CreatedAt:       row.CreatedAt,
 		UpdatedAt:       row.UpdatedAt,
 	}
 }
 
-// List returns manufacturers matching query/country, paginated, with product/variant
-// counts derived from their verified charger_variants.
-func (r *ManufacturerRepository) List(ctx context.Context, query, country *string, limit, offset uint32) ([]*manufacturer.Summary, int64, error) {
-	base := r.db.WithContext(ctx).Model(&manufacturerEntity{})
-	if query != nil && *query != "" {
-		base = base.Where("name ILIKE ?", "%"+*query+"%")
+const refreshCatalogQuery = `UPDATE manufacturers SET
+	charger_types = COALESCE((
+		SELECT array_agg(DISTINCT cv.charger_type ORDER BY cv.charger_type)
+		FROM charger_variants cv
+		WHERE cv.manufacturer_id = manufacturers.id AND cv.status = 'verified' AND cv.charger_type <> ''
+	), '{}'),
+	connector_types = COALESCE((
+		SELECT array_agg(DISTINCT t ORDER BY t)
+		FROM charger_variants cv, unnest(cv.connector_types) AS t
+		WHERE cv.manufacturer_id = manufacturers.id AND cv.status = 'verified' AND t <> ''
+	), '{}'),
+	protocols = COALESCE((
+		SELECT array_agg(DISTINCT p ORDER BY p)
+		FROM charger_variants cv, unnest(cv.protocols) AS p
+		WHERE cv.manufacturer_id = manufacturers.id AND cv.status = 'verified' AND p <> ''
+	), '{}'),
+	series = COALESCE((
+		SELECT array_agg(DISTINCT s ORDER BY s)
+		FROM charger_variants cv, LATERAL (SELECT COALESCE(NULLIF(cv.series, ''), cv.model_name)) AS named(s)
+		WHERE cv.manufacturer_id = manufacturers.id AND cv.status = 'verified' AND s <> ''
+	), '{}')
+WHERE id = ?
+RETURNING *`
+
+func (r *ManufacturerRepository) RefreshCatalog(ctx context.Context, id uuid.UUID) (*manufacturer.Manufacturer, error) {
+	var entities []*manufacturerEntity
+
+	err := r.db.WithContext(ctx).Raw(refreshCatalogQuery, id).Scan(&entities).Error
+	switch {
+	case err != nil:
+		return nil, fmt.Errorf("refresh manufacturer catalog: %w", err)
+	case len(entities) == 0:
+		return nil, manufacturer.ErrNotFound
 	}
 
-	if country != nil && *country != "" {
-		base = base.Where("country = ?", *country)
+	return manufacturerToDomain(entities[0]), nil
+}
+
+// Manufacturers without verified chargers sink to the end so browsing leads with real catalog entries.
+const manufacturerNameOrder = "COALESCE(agg.variant_count, 0) = 0, manufacturers.name ASC, manufacturers.id ASC"
+
+// manufacturerListOrder puts name matches first, then filters.RankedIDs in their given order.
+func manufacturerListOrder(filters manufacturer.ListFilters) any {
+	if len(filters.RankedIDs) == 0 || filters.Query == nil {
+		return manufacturerNameOrder
+	}
+
+	ids := make([]string, len(filters.RankedIDs))
+	for i, id := range filters.RankedIDs {
+		ids[i] = id.String()
+	}
+
+	return clause.OrderBy{Expression: clause.Expr{
+		SQL:                "(manufacturers.name ILIKE ?) DESC, array_position(?::uuid[], manufacturers.id), " + manufacturerNameOrder,
+		Vars:               []any{"%" + *filters.Query + "%", pq.Array(ids)},
+		WithoutParentheses: true,
+	}}
+}
+
+// List returns manufacturers matching filters, paginated, with product/variant counts
+// derived from their verified charger_variants.
+func (r *ManufacturerRepository) List(ctx context.Context, filters manufacturer.ListFilters, limit, offset uint32) ([]*manufacturer.Summary, int64, error) {
+	base := r.db.WithContext(ctx).Model(&manufacturerEntity{})
+
+	if filters.Query != nil && *filters.Query != "" {
+		q := "%" + *filters.Query + "%"
+
+		switch {
+		case len(filters.RankedIDs) > 0:
+			base = base.Where("(manufacturers.id IN ? OR manufacturers.name ILIKE ?)", filters.RankedIDs, q)
+		default:
+			base = base.Where("manufacturers.name ILIKE ?", q)
+		}
+	}
+
+	if filters.Country != nil && *filters.Country != "" {
+		base = base.Where("manufacturers.country = ?", *filters.Country)
 	}
 
 	var total int64
@@ -218,8 +295,7 @@ func (r *ManufacturerRepository) List(ctx context.Context, query, country *strin
 			WHERE status = 'verified'
 			GROUP BY manufacturer_id
 		) agg ON agg.manufacturer_id = manufacturers.id`).
-		// Manufacturers without verified chargers sink to the end so browsing leads with real catalog entries.
-		Order("COALESCE(agg.variant_count, 0) = 0, manufacturers.name ASC, manufacturers.id ASC").
+		Order(manufacturerListOrder(filters)).
 		Limit(int(limit)).
 		Offset(int(offset)).
 		Find(&rows).Error

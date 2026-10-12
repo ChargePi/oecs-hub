@@ -103,6 +103,15 @@ message ReindexChargersResponse {
   int32 failed = 2;
 }
 
+// Rebuilds the semantic search index from every manufacturer.
+message ReindexManufacturersRequest {}
+
+message ReindexManufacturersResponse {
+  int32 indexed = 1;
+  // Manufacturers that could not be indexed; see the service logs.
+  int32 failed = 2;
+}
+
 service AdminService {
   rpc SearchSchemas(SearchSchemasRequest) returns (SearchSchemasResponse);
   rpc UpdateSchemaStatus(UpdateSchemaStatusRequest) returns (UpdateSchemaStatusResponse);
@@ -112,4 +121,5 @@ service AdminService {
   rpc ReassignSchemaManufacturer(ReassignSchemaManufacturerRequest) returns (ReassignSchemaManufacturerResponse);
   rpc SetManufacturerOwner(SetManufacturerOwnerRequest) returns (SetManufacturerOwnerResponse);
   rpc ReindexChargers(ReindexChargersRequest) returns (ReindexChargersResponse);
+  rpc ReindexManufacturers(ReindexManufacturersRequest) returns (ReindexManufacturersResponse);
 }

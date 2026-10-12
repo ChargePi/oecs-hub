@@ -22,6 +22,7 @@ var tracer = otel.Tracer("charger.service")
 type ManufacturerResolver interface {
 	ResolveIDForIdentity(ctx context.Context, ownerIdentityID uuid.UUID, name, country string) (uuid.UUID, error)
 	Get(ctx context.Context, id uuid.UUID) (*manufacturer.Manufacturer, error)
+	RefreshCatalog(ctx context.Context, id uuid.UUID) error
 }
 
 // GraphProjector upserts/removes the read-side Memgraph projection. Implemented by
@@ -160,6 +161,7 @@ func (s *Service) AdminEditSpecification(ctx context.Context, id uuid.UUID, raw 
 
 	if updated.Status == StatusVerified {
 		s.indexVariant(ctx, updated)
+		s.refreshCatalog(ctx, updated.ManufacturerID)
 	}
 
 	if updated.Status == StatusVerified && updated.ManufacturerID != nil {
@@ -226,6 +228,11 @@ func (s *Service) reassignManufacturer(ctx context.Context, id, manufacturerID u
 
 	if updated.Status == StatusVerified {
 		s.indexVariant(ctx, updated)
+		s.refreshCatalog(ctx, &m.ID)
+
+		if existing.ManufacturerID != nil && *existing.ManufacturerID != m.ID {
+			s.refreshCatalog(ctx, existing.ManufacturerID)
+		}
 
 		err := s.graph.MoveVariant(ctx, m.ID, updated)
 		if err != nil {
@@ -413,8 +420,10 @@ func (s *Service) ChangeStatus(ctx context.Context, id uuid.UUID, status Status)
 	switch {
 	case status == StatusVerified:
 		s.indexVariant(ctx, updated)
+		s.refreshCatalog(ctx, manufacturerID)
 	case existing.Status == StatusVerified:
 		s.unindexVariant(ctx, id)
+		s.refreshCatalog(ctx, existing.ManufacturerID)
 	}
 
 	switch status {
@@ -525,6 +534,18 @@ func (s *Service) unindexVariant(ctx context.Context, id uuid.UUID) {
 	err := s.index.Remove(ctx, id)
 	if err != nil {
 		zap.L().Warn("failed to remove charger from index", zap.Stringer("id", id), zap.Error(err))
+	}
+}
+
+// refreshCatalog is best-effort: a stale catalog only affects manufacturer search.
+func (s *Service) refreshCatalog(ctx context.Context, manufacturerID *uuid.UUID) {
+	if manufacturerID == nil {
+		return
+	}
+
+	err := s.manufacturer.RefreshCatalog(ctx, *manufacturerID)
+	if err != nil {
+		zap.L().Warn("failed to refresh manufacturer catalog", zap.Stringer("manufacturerId", *manufacturerID), zap.Error(err))
 	}
 }
 

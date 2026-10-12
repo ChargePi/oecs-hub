@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
 )
 
@@ -20,6 +21,13 @@ var chargerDocumentTemplate = template.Must(template.New("charger_document").Fun
 	"is":   isTrue,
 }).Parse(chargerDocumentSource))
 
+//go:embed templates/manufacturer_document.tmpl
+var manufacturerDocumentSource string
+
+var manufacturerDocumentTemplate = template.Must(template.New("manufacturer_document").Funcs(template.FuncMap{
+	"join": joinValues,
+}).Parse(manufacturerDocumentSource))
+
 // chargerDocument renders the text embedded for a charger from its raw OECS spec.
 func chargerDocument(rawSpec []byte) (string, error) {
 	var spec oecsspec.Charger
@@ -27,9 +35,18 @@ func chargerDocument(rawSpec []byte) (string, error) {
 		return "", fmt.Errorf("unmarshal spec: %w", err)
 	}
 
+	return render(chargerDocumentTemplate, &spec)
+}
+
+func manufacturerDocument(m *manufacturer.Manufacturer) (string, error) {
+	return render(manufacturerDocumentTemplate, m)
+}
+
+// render executes tmpl and drops blank lines and redundant whitespace.
+func render(tmpl *template.Template, data any) (string, error) {
 	var rendered strings.Builder
-	if err := chargerDocumentTemplate.Execute(&rendered, &spec); err != nil {
-		return "", fmt.Errorf("render charger document: %w", err)
+	if err := tmpl.Execute(&rendered, data); err != nil {
+		return "", fmt.Errorf("render %s: %w", tmpl.Name(), err)
 	}
 
 	lines := make([]string, 0)

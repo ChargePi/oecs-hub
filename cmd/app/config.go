@@ -97,21 +97,24 @@ type PromptSuggestionsConfiguration struct {
 	ReturnCount int `json:"returnCount" mapstructure:"returnCount" validate:"required" yaml:"returnCount"`
 }
 
-// SemanticSearchConfiguration configures the Qdrant index behind semantic charger search
-// (internal/vector). Embeddings go through Bifrost, see BifrostConfiguration.
+// SemanticSearchConfiguration configures the Qdrant indexes behind semantic charger and
+// manufacturer search (internal/vector). Embeddings go through Bifrost, see BifrostConfiguration.
 type SemanticSearchConfiguration struct {
 	Enabled    bool   `json:"enabled"    mapstructure:"enabled"    yaml:"enabled"`
 	QdrantHost string `json:"qdrantHost" mapstructure:"qdrantHost" yaml:"qdrantHost"`
 	// QdrantPort is Qdrant's gRPC port.
-	QdrantPort int    `json:"qdrantPort" mapstructure:"qdrantPort" yaml:"qdrantPort"`
-	Collection string `json:"collection" mapstructure:"collection" yaml:"collection"`
-	// EmbeddingModel is in Bifrost's "provider/model" form. Changing it requires a new
-	// collection and a reindex.
+	QdrantPort             int    `json:"qdrantPort" mapstructure:"qdrantPort" yaml:"qdrantPort"`
+	Collection             string `json:"collection"             mapstructure:"collection"             yaml:"collection"`
+	ManufacturerCollection string `json:"manufacturerCollection" mapstructure:"manufacturerCollection" yaml:"manufacturerCollection"`
+	// EmbeddingModel is in Bifrost's "provider/model" form. Changing it requires new
+	// collections and a reindex.
 	EmbeddingModel string `json:"embeddingModel" mapstructure:"embeddingModel" yaml:"embeddingModel"`
 	// TopK caps how many semantic matches a search considers.
 	TopK int `json:"topK" mapstructure:"topK" yaml:"topK"`
 	// MinScore is the cosine similarity below which a charger isn't a match.
 	MinScore float64 `json:"minScore" mapstructure:"minScore" yaml:"minScore"`
+	// ManufacturerMinScore is separate: short manufacturer documents score higher.
+	ManufacturerMinScore float64 `json:"manufacturerMinScore" mapstructure:"manufacturerMinScore" yaml:"manufacturerMinScore"`
 }
 
 type Configuration struct {
