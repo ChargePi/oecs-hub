@@ -23,6 +23,7 @@ export interface FacetDefinition {
   field: string
   control: FacetControl
   options?: FacetOption[]
+  basic?: boolean
 }
 
 export interface FacetGroup {
@@ -46,6 +47,7 @@ export const FILTER_GROUPS: FacetGroup[] = [
     facets: [
       {
         id: 'charger-type',
+        basic: true,
         label: 'Charger type',
         field: 'model.type',
         control: 'multi-select',
@@ -66,6 +68,7 @@ export const FILTER_GROUPS: FacetGroup[] = [
     facets: [
       {
         id: 'connector-type',
+        basic: true,
         label: 'Connector type',
         field: 'hardware.connectors.type',
         control: 'multi-select',
@@ -87,6 +90,7 @@ export const FILTER_GROUPS: FacetGroup[] = [
       },
       {
         id: 'cable-attached',
+        basic: true,
         label: 'Tethered cable',
         field: 'hardware.connectors.cable.attached',
         control: 'toggle',
@@ -160,6 +164,7 @@ export const FILTER_GROUPS: FacetGroup[] = [
     facets: [
       {
         id: 'phases',
+        basic: true,
         label: 'Input phases',
         field: 'hardware.electrical.input.phases',
         control: 'multi-select',

@@ -4,6 +4,7 @@ import { GitCompare, LayoutGrid, Table2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { ChargerVariant } from '@/lib/oecs/types'
+import { useIsSimplified } from '@/lib/preferences/use-preferences'
 import {
   MAX_COMPARISON_ITEMS,
   useComparisonStore,
@@ -83,7 +84,9 @@ function ComparisonCarousel({
 
 export function ComparisonView({ variants }: { variants: ChargerVariant[] }) {
   const referenceId = useComparisonStore((state) => state.referenceId)
-  const viewMode = useComparisonStore((state) => state.viewMode)
+  const simplified = useIsSimplified()
+  const storedViewMode = useComparisonStore((state) => state.viewMode)
+  const viewMode: ComparisonViewMode = simplified ? 'table' : storedViewMode
   const setViewMode = useComparisonStore((state) => state.setViewMode)
   const differencesOnly = useComparisonStore((state) => state.differencesOnly)
   const baseline = variants.find((v) => v.id === referenceId) ?? variants[0]
@@ -110,21 +113,23 @@ export function ComparisonView({ variants }: { variants: ChargerVariant[] }) {
               variant="default"
             />
           </div>
-          <Tabs
-            value={viewMode}
-            onValueChange={(value) => setViewMode(value as ComparisonViewMode)}
-          >
-            <TabsList>
-              <TabsTrigger value="cards">
-                <LayoutGrid />
-                Cards
-              </TabsTrigger>
-              <TabsTrigger value="table">
-                <Table2 />
-                Table
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {!simplified && (
+            <Tabs
+              value={viewMode}
+              onValueChange={(value) => setViewMode(value as ComparisonViewMode)}
+            >
+              <TabsList>
+                <TabsTrigger value="cards">
+                  <LayoutGrid />
+                  Cards
+                </TabsTrigger>
+                <TabsTrigger value="table">
+                  <Table2 />
+                  Table
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
         </div>
 
         {viewMode === 'table' ? (

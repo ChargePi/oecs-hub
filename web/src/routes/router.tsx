@@ -23,8 +23,8 @@ const ManufacturersPage = lazy(() =>
     default: m.ManufacturersPage,
   })),
 )
-const ChatRedirect = lazy(() =>
-  import('@/features/chat/chat-redirect').then((m) => ({ default: m.ChatRedirect })),
+const ChatRoute = lazy(() =>
+  import('@/features/chat/chat-route').then((m) => ({ default: m.ChatRoute })),
 )
 
 const LoginPage = lazy(() =>
@@ -79,11 +79,10 @@ export const router = createBrowserRouter([
       ...(CHAT_ENABLED
         ? [
             {
-              // The assistant lives in a drawer now (see ChatDrawer); these just open it.
               path: 'chat/:conversationId?',
               element: (
                 <RequireAuth>
-                  <ChatRedirect />
+                  <ChatRoute />
                 </RequireAuth>
               ),
             },

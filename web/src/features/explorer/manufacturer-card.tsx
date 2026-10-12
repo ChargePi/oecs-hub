@@ -3,16 +3,21 @@ import { Link } from 'react-router'
 
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { countryName } from '@/lib/oecs/format'
+import { useIsSimplified } from '@/lib/preferences/use-preferences'
 import type { ManufacturerSummary } from '@/lib/registry/types'
 import { cn } from '@/lib/utils'
 import { ManufacturerLogo } from '@/features/product/manufacturer-logo'
 
 export function ManufacturerCard({ manufacturer }: { manufacturer: ManufacturerSummary }) {
+  const simplified = useIsSimplified()
   const empty = manufacturer.productCount === 0
   const country = countryName(manufacturer.country)
 
   return (
-    <Link to={`/chargers/${manufacturer.id}`} className="group/link">
+    <Link
+      to={simplified ? `/chargers?m=${manufacturer.id}` : `/chargers/${manufacturer.id}`}
+      className="group/link"
+    >
       <Card
         className={cn(
           'h-full transition-all group-hover/link:bg-muted/40 group-hover/link:ring-primary/40',

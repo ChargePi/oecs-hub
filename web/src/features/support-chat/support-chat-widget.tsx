@@ -11,6 +11,7 @@ import {
 import { resetSupportChat, type ChatwootColorScheme } from '@/lib/support-chat/chatwoot'
 import { buildChatwootContact } from '@/lib/support-chat/contact'
 import { useSupportChatIdentity } from '@/lib/support-chat/use-support-chat-identity'
+import { useEffectiveChatLayout } from '@/lib/preferences/use-preferences'
 import { useChatDrawerStore } from '@/stores/chat-drawer-store'
 
 const HIDDEN_PATH_PREFIXES = ['/auth']
@@ -51,7 +52,9 @@ function ChatwootBridge() {
   const identity = session?.identity
   const { data: chatIdentity } = useSupportChatIdentity(identity?.id)
   // Its bubble would sit on top of the assistant drawer's composer.
-  const assistantOpen = useChatDrawerStore((s) => s.open) && CHAT_ENABLED
+  const drawerOpen = useChatDrawerStore((s) => s.open)
+  const drawerLayout = useEffectiveChatLayout() === 'drawer'
+  const assistantOpen = drawerOpen && drawerLayout && CHAT_ENABLED
   const [ready, setReady] = useState(() => !!window.$chatwoot)
   const identifiedAs = useRef<string | null>(null)
 

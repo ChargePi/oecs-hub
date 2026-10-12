@@ -220,7 +220,7 @@
     # gRPC-Method-shaped, like registry-service-default above - matches AFTER Traefik's
     # strip-admin-api middleware already ran (see this file's header comment), so no
     # "/admin-api" prefix here.
-    url: "http://<.*>/adminapi.v1.AdminApiService/<GetDashboardStats|SearchChargers|UpdateChargerStatus|UpdateChargerSpec|ListManufacturers|CreateManufacturer|ReassignChargerManufacturer|SetManufacturerOwner>"
+    url: "http://<.*>/adminapi.v1.AdminApiService/<GetDashboardStats|SearchChargers|UpdateChargerStatus|UpdateChargerSpec|ListManufacturers|CreateManufacturer|ReassignChargerManufacturer|SetManufacturerOwner|GetFeedbackStats|ListFeedback|UploadKnowledgeDocument|ListKnowledgeDocuments|GetKnowledgeDocument|UpdateKnowledgeDocument|DeleteKnowledgeDocument>"
     methods: ["POST"]
   # Browser SPA session, unlike admin-service below (CLI/tooling bearer token) - admin-web
   # is a logged-in browser app, not grpcurl/a Go client. Same Keto admin-relation
@@ -277,6 +277,20 @@
   # No anonymous fallback - a session is required. Individual/business eligibility isn't
   # checked here (same as registry-service-submit-variant-rating) - it's enforced in the
   # Go handler instead.
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
+- id: preferences-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # Every account type, self-service - no anonymous fallback.
+    url: "http://<.*>/preferences.v1.PreferencesService/<GetPreferences|UpdatePreferences>"
+    methods: ["POST"]
   authenticators:
     - handler: cookie_session
   authorizer:

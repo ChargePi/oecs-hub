@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 
@@ -21,6 +22,8 @@ import {
 import { Slider } from '@/components/ui/slider'
 import { StarRatingInput } from '@/components/ui/star-rating-input'
 import { Switch } from '@/components/ui/switch'
+import { PRICE_CURRENCIES } from '@/lib/oecs/currencies'
+import { useIsSimplified } from '@/lib/preferences/use-preferences'
 import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import { registryClient } from '@/lib/registry/client'
 import { FILTER_GROUPS } from './filter-manifest'
@@ -28,7 +31,6 @@ import { EMPTY_FILTER_STATE, isFilterStateEmpty, type FilterState } from './filt
 import { ProtocolFilter } from './protocol-filter'
 
 const MAX_POWER_KW = 400
-const PRICE_CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN']
 
 function parsePriceInput(value: string): number | undefined {
   if (value === '') return undefined
@@ -54,6 +56,12 @@ export function FilterSidebar({
     setInternalCollapsed(next)
     onCollapsedChange?.(next)
   }
+  const simplified = useIsSimplified()
+  const groups = simplified
+    ? FILTER_GROUPS.map((g) => ({ ...g, facets: g.facets.filter((f) => f.basic) })).filter(
+        (g) => g.facets.length > 0,
+      )
+    : FILTER_GROUPS
   const { data: manufacturers } = useQuery({
     queryKey: ['manufacturers'],
     queryFn: () => registryClient.listManufacturers(),
@@ -214,26 +222,31 @@ export function FilterSidebar({
       </div>
 
       <Accordion type="multiple" className="flex flex-col gap-1">
-        <AccordionItem value="ratings">
-          <AccordionTrigger>Ratings</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-2">
-            {RATING_CATEGORIES.map((category) => (
-              <div key={category.name} className="flex items-center justify-between gap-2 text-sm">
-                <span title={category.description}>{category.label}</span>
-                <StarRatingInput
-                  value={filters.minRatings[category.name] ?? 0}
-                  onChange={(stars) => setMinRating(category.name, stars)}
-                  aria-label={`Minimum ${category.label} rating`}
-                />
-              </div>
-            ))}
-            <p className="text-xs text-muted-foreground">
-              Minimum average rating. Click the selected star again to clear.
-            </p>
-          </AccordionContent>
-        </AccordionItem>
+        {!simplified && (
+          <AccordionItem value="ratings">
+            <AccordionTrigger>Ratings</AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-2">
+              {RATING_CATEGORIES.map((category) => (
+                <div
+                  key={category.name}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span title={category.description}>{category.label}</span>
+                  <StarRatingInput
+                    value={filters.minRatings[category.name] ?? 0}
+                    onChange={(stars) => setMinRating(category.name, stars)}
+                    aria-label={`Minimum ${category.label} rating`}
+                  />
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground">
+                Minimum average rating. Click the selected star again to clear.
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        )}
 
-        {FILTER_GROUPS.map((group) => (
+        {groups.map((group) => (
           <Fragment key={group.id}>
             <AccordionItem value={group.id}>
               <AccordionTrigger>{group.label}</AccordionTrigger>
@@ -274,7 +287,7 @@ export function FilterSidebar({
                 )}
               </AccordionContent>
             </AccordionItem>
-            {group.id === 'connectivity-smart-charging' && (
+            {!simplified && group.id === 'connectivity-smart-charging' && (
               <AccordionItem value="protocols">
                 <AccordionTrigger>Protocols</AccordionTrigger>
                 <AccordionContent>
@@ -288,6 +301,16 @@ export function FilterSidebar({
           </Fragment>
         ))}
       </Accordion>
+
+      {simplified && (
+        <p className="text-xs text-muted-foreground">
+          More filters are available in the{' '}
+          <Link to="/profile?tab=preferences" className="underline underline-offset-2">
+            advanced view
+          </Link>
+          .
+        </p>
+      )}
     </div>
   )
 }

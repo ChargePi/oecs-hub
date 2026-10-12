@@ -13,6 +13,7 @@ import (
 
 	billingv1 "github.com/ChargePi/oecs-hub/gen/proto/billing/v1"
 	manufacturerv1 "github.com/ChargePi/oecs-hub/gen/proto/manufacturer/v1"
+	preferencesv1 "github.com/ChargePi/oecs-hub/gen/proto/preferences/v1"
 	promptsv1 "github.com/ChargePi/oecs-hub/gen/proto/prompts/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
 	userchargersv1 "github.com/ChargePi/oecs-hub/gen/proto/userchargers/v1"
@@ -27,6 +28,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
+	"github.com/ChargePi/oecs-hub/internal/preferences"
 	"github.com/ChargePi/oecs-hub/internal/promptsuggestion"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
 	redisStorage "github.com/ChargePi/oecs-hub/internal/storage/redis"
@@ -248,9 +250,12 @@ var (
 				cfg.PendingActions.TTL,
 			)
 
+			preferencesSvc := preferences.NewService(postgresStorage.NewPreferencesRepository(db))
+
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
 			mcp.RegisterUserTools(mcpSrv, userChargersSvc, pendingActionSvc)
+			mcp.RegisterPreferencesTool(mcpSrv, preferencesSvc)
 			// The user tools act for whoever the gateway-secret-backed x-user-* headers name,
 			// resolved per request exactly like the gRPC interceptor does.
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv,
@@ -314,6 +319,7 @@ var (
 			userchargersv1.RegisterProjectServiceServer(grpcServer, grpcHandler.NewProjectHandler(userChargersSvc))
 			userchargersv1.RegisterRatingServiceServer(grpcServer, grpcHandler.NewRatingHandler(userChargersSvc))
 			userchargersv1.RegisterPendingActionServiceServer(grpcServer, grpcHandler.NewPendingActionHandler(pendingActionSvc))
+			preferencesv1.RegisterPreferencesServiceServer(grpcServer, grpcHandler.NewPreferencesHandler(preferencesSvc))
 			promptsv1.RegisterPromptSuggestionsServiceServer(grpcServer, grpcHandler.NewPromptSuggestionHandler(suggestionSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service

@@ -35,10 +35,14 @@ export function ChatDrawer() {
     <Sheet open onOpenChange={(next) => useChatDrawerStore.getState().setOpen(next)}>
       <SheetContent showCloseButton={false} aria-describedby={undefined} className="sm:max-w-full">
         <SheetTitle className="sr-only">Assistant</SheetTitle>
-        <DrawerBody />
+        <ChatPanel onHide={hideDrawer} />
       </SheetContent>
     </Sheet>
   )
+}
+
+function hideDrawer() {
+  useChatDrawerStore.getState().setOpen(false)
 }
 
 function DockedDrawer() {
@@ -63,12 +67,12 @@ function DockedDrawer() {
         )}
         {...handle}
       />
-      <DrawerBody />
+      <ChatPanel onHide={hideDrawer} />
     </aside>
   )
 }
 
-function DrawerBody() {
+export function ChatPanel({ onHide }: { onHide?: () => void }) {
   const { identity, isLoading } = useIdentity()
   const view = useChatDrawerStore((s) => s.view)
   const key = useChatDrawerStore((s) => s.activeConversationId ?? s.draftKey)
@@ -81,6 +85,7 @@ function DrawerBody() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <DrawerHeader
+        onHide={onHide}
         view={identity ? shown : 'chat'}
         signedIn={!!identity}
         resultCount={hasResults ? resultCount : undefined}
@@ -103,10 +108,12 @@ function DrawerBody() {
 }
 
 function DrawerHeader({
+  onHide,
   view,
   signedIn,
   resultCount,
 }: {
+  onHide?: () => void
   view: ChatDrawerView
   signedIn: boolean
   /** Undefined while the conversation has nothing to show in Results. */
@@ -114,7 +121,7 @@ function DrawerHeader({
 }) {
   const { identity } = useIdentity()
   const conversationId = useChatDrawerStore((s) => s.activeConversationId)
-  const { setView, newConversation, setOpen } = useChatDrawerStore.getState()
+  const { setView, newConversation } = useChatDrawerStore.getState()
   const { data: conversations } = useQuery({
     queryKey: ['chat', 'conversations', identity?.id],
     queryFn: () => listConversations(identity!.id),
@@ -174,15 +181,17 @@ function DrawerHeader({
             </Button>
           </>
         )}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setOpen(false)}
-          title="Hide assistant"
-          aria-label="Hide assistant"
-        >
-          <PanelRightClose />
-        </Button>
+        {onHide && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onHide}
+            title="Hide assistant"
+            aria-label="Hide assistant"
+          >
+            <PanelRightClose />
+          </Button>
+        )}
       </div>
 
       {signedIn && view !== 'history' && (

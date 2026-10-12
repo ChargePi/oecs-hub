@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useIdentity } from '@/lib/auth/use-identity'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 import type { ChargerVariant } from '@/lib/oecs/types'
+import { useEffectiveChatLayout } from '@/lib/preferences/use-preferences'
 import { useOpenAssistant } from '@/features/chat/use-open-assistant'
 
 function chargerLabel(variant: ChargerVariant): string {
@@ -28,9 +29,10 @@ function buildComparisonPrompt(variants: ChargerVariant[]): string {
 }
 
 /** Starts a new agent chat in the assistant drawer, pre-loaded with a comparison prompt
- *  for the currently compared chargers. Signed out, it goes through the `/chat?prompt=`
- *  handoff instead (see ChatRedirect), which survives the detour through login and
- *  lands back here. Also carries the exact catalog ids (`chargerIds`) so the agent's ResolveChargers can
+ *  for the currently compared chargers. Signed out, the drawer opens on its sign-in
+ *  prompt, which carries the queued prompt through login; only the page layout, which
+ *  has no drawer, goes straight through the `/chat?prompt=` handoff (see ChatRedirect).
+ *  Also carries the exact catalog ids (`chargerIds`) so the agent's ResolveChargers can
  *  skip its name-based resolution loop entirely - the prompt text still names every
  *  charger too, for AnalyzeIntent's own compare_chargers classification. */
 export function EvaluateWithAgentButton({
@@ -47,13 +49,14 @@ export function EvaluateWithAgentButton({
   const navigate = useNavigate()
   const { identity } = useIdentity()
   const assistant = useOpenAssistant()
+  const layout = useEffectiveChatLayout()
 
   if (!CHAT_ENABLED || variants.length < 2) return null
 
   function handleClick() {
     const prompt = buildComparisonPrompt(variants)
     const chargerIds = variants.map((v) => v.id)
-    if (identity) {
+    if (identity || layout === 'drawer') {
       assistant.ask(prompt, chargerIds)
       return
     }

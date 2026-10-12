@@ -8,8 +8,10 @@ import {
   formatPercentDelta,
   formatPriceDelta,
   formatRegionalPrice,
+  sortByPreferredCurrency,
 } from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
+import { usePreferences } from '@/lib/preferences/use-preferences'
 import { cn } from '@/lib/utils'
 import { useComparisonStore } from '@/stores/comparison-store'
 import { boolBadge, diffBadgeGroup } from '@/features/product/spec-badges'
@@ -86,16 +88,19 @@ export function PricingValue({
   variant: ChargerVariant
   baseline: ChargerVariant
 }) {
+  const { currency } = usePreferences()
   const highlight = useComparisonStore((state) => state.highlightDifferences)
   const isBaseline = variant.id === baseline.id
   const isFixed = variant.pricing?.pricingModel === 'fixed'
-  const comparisons = !isBaseline ? comparePricing(variant.pricing, baseline.pricing) : undefined
+  const comparisons = !isBaseline
+    ? comparePricing(variant.pricing, baseline.pricing, currency)
+    : undefined
 
   return (
     <div className="flex flex-col gap-2">
       {isFixed && variant.pricing?.prices?.length ? (
         <div className="flex flex-col gap-1.5">
-          {variant.pricing.prices.map((price, i) => {
+          {sortByPreferredCurrency(variant.pricing.prices, currency).map((price, i) => {
             const comparison = comparisons?.find(
               (c) => c.currency === price.currency && c.region === price.region,
             )
