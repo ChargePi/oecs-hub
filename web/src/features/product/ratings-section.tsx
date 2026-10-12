@@ -36,8 +36,8 @@ function ratingBadge(rating: CategoryRating) {
   )
 }
 
-/** Individual-submitted ratings for a charger, always the last section in the charger detail
- *  drawer and comparison view - see ProductDetail / comparison-rows.tsx. */
+/** Individual-submitted ratings for a charger - the last section in the charger detail
+ *  drawer, the first in the comparison view. */
 export function RatingsSection({ ratings }: { ratings: CategoryRating[] }) {
   if (ratings.length === 0) {
     return (
@@ -62,5 +62,23 @@ export function RatingsSection({ ratings }: { ratings: CategoryRating[] }) {
         )
       })}
     </SpecSection>
+  )
+}
+
+/** Compact, heading-less variant of RatingsSection for the comparison table. */
+export function RatingsSummary({ ratings }: { ratings: CategoryRating[] }) {
+  if (ratings.length === 0) {
+    return <span className="text-sm text-muted-foreground">No ratings yet.</span>
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 text-sm">
+      {orderRatings(ratings).map((rating) => (
+        <div key={rating.categoryName} className="flex items-center justify-between gap-3">
+          <span className="text-muted-foreground">{displayInfo(rating.categoryName).label}</span>
+          {ratingBadge(rating)}
+        </div>
+      ))}
+    </div>
   )
 }

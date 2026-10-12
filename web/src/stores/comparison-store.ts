@@ -6,17 +6,27 @@ const MAX_COMPARISON_ITEMS = 4
 /** dataTransfer MIME type used to drag a variant card onto the comparison sidebar. */
 const VARIANT_DRAG_MIME_TYPE = 'application/x-oecs-variant-id'
 
+type ComparisonViewMode = 'cards' | 'table'
+
 interface ComparisonState {
   variantIds: string[]
   /** The variant every other compared value is measured against; falls back to the first
    *  added variant when unset or when the chosen reference is removed. */
   referenceId: string | null
+  viewMode: ComparisonViewMode
+  /** Hides fields that are identical across every compared variant. */
+  differencesOnly: boolean
+  /** Rings fields that differ from the reference. */
+  highlightDifferences: boolean
   add: (variantId: string) => void
   remove: (variantId: string) => void
   toggle: (variantId: string) => void
   clear: () => void
   has: (variantId: string) => boolean
   setReference: (variantId: string) => void
+  setViewMode: (viewMode: ComparisonViewMode) => void
+  setDifferencesOnly: (differencesOnly: boolean) => void
+  setHighlightDifferences: (highlightDifferences: boolean) => void
 }
 
 export const useComparisonStore = create<ComparisonState>()(
@@ -24,6 +34,9 @@ export const useComparisonStore = create<ComparisonState>()(
     (set, get) => ({
       variantIds: [],
       referenceId: null,
+      viewMode: 'cards',
+      differencesOnly: false,
+      highlightDifferences: true,
       add: (variantId) =>
         set((state) =>
           state.variantIds.includes(variantId) || state.variantIds.length >= MAX_COMPARISON_ITEMS
@@ -40,9 +53,13 @@ export const useComparisonStore = create<ComparisonState>()(
       clear: () => set({ variantIds: [], referenceId: null }),
       has: (variantId) => get().variantIds.includes(variantId),
       setReference: (variantId) => set({ referenceId: variantId }),
+      setViewMode: (viewMode) => set({ viewMode }),
+      setDifferencesOnly: (differencesOnly) => set({ differencesOnly }),
+      setHighlightDifferences: (highlightDifferences) => set({ highlightDifferences }),
     }),
     { name: 'oecs-comparison' },
   ),
 )
 
 export { MAX_COMPARISON_ITEMS, VARIANT_DRAG_MIME_TYPE }
+export type { ComparisonViewMode }

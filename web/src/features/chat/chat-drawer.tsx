@@ -238,6 +238,18 @@ function TabButton({
 
 function SignInPrompt() {
   const location = useLocation()
+  const pendingPrompt = useChatDrawerStore((s) => s.pendingPrompt)
+  const clearPendingPrompt = useChatDrawerStore((s) => s.clearPendingPrompt)
+  const from = location.pathname + location.search
+  // A queued prompt is in-memory only, so it rides through login on the /chat?prompt=
+  // handoff (see ChatRedirect) and lands back on this page.
+  const handoff = pendingPrompt
+    ? new URLSearchParams({
+        prompt: pendingPrompt.text,
+        chargerIds: pendingPrompt.chargerIds?.join(',') ?? '',
+        from,
+      })
+    : undefined
 
   return (
     <div className="flex flex-col items-center gap-4 px-6 py-12 text-center">
@@ -249,7 +261,14 @@ function SignInPrompt() {
         </p>
       </div>
       <Button asChild>
-        <Link to={loginRedirect(location.pathname, location.search)}>
+        <Link
+          to={
+            handoff
+              ? loginRedirect('/chat', `?${handoff}`)
+              : loginRedirect(location.pathname, location.search)
+          }
+          onClick={clearPendingPrompt}
+        >
           <LogIn />
           Sign in
         </Link>
