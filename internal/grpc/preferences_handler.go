@@ -29,7 +29,7 @@ func NewPreferencesHandler(preferences PreferencesService) *PreferencesHandler {
 }
 
 func (h *PreferencesHandler) GetPreferences(ctx context.Context, _ *emptypb.Empty) (*preferencesv1.GetPreferencesResponse, error) {
-	identityID, err := requirePreferencesIdentity(ctx)
+	identityID, err := auth.RequireIdentityID(ctx)
 	if err != nil {
 		return nil, preferencesError(err)
 	}
@@ -43,7 +43,7 @@ func (h *PreferencesHandler) GetPreferences(ctx context.Context, _ *emptypb.Empt
 }
 
 func (h *PreferencesHandler) UpdatePreferences(ctx context.Context, req *preferencesv1.UpdatePreferencesRequest) (*preferencesv1.UpdatePreferencesResponse, error) {
-	identityID, err := requirePreferencesIdentity(ctx)
+	identityID, err := auth.RequireIdentityID(ctx)
 	if err != nil {
 		return nil, preferencesError(err)
 	}
@@ -58,20 +58,6 @@ func (h *PreferencesHandler) UpdatePreferences(ctx context.Context, req *prefere
 	}
 
 	return &preferencesv1.UpdatePreferencesResponse{Preferences: preferencesToProto(p)}, nil
-}
-
-func requirePreferencesIdentity(ctx context.Context) (uuid.UUID, error) {
-	identity, err := auth.RequireIdentity(ctx)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	identityID, err := uuid.Parse(identity.ID)
-	if err != nil {
-		return uuid.Nil, status.Error(codes.Unauthenticated, "invalid identity id")
-	}
-
-	return identityID, nil
 }
 
 func preferencesError(err error) error {

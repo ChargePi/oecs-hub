@@ -79,6 +79,21 @@ func RequireIdentity(ctx context.Context) (*Identity, error) {
 	return identity, nil
 }
 
+// RequireIdentityID resolves the authenticated caller's identity ID, for any account type.
+func RequireIdentityID(ctx context.Context) (uuid.UUID, error) {
+	identity, err := RequireIdentity(ctx)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	identityID, err := uuid.Parse(identity.ID)
+	if err != nil {
+		return uuid.Nil, status.Error(codes.Internal, "invalid identity id from proxy")
+	}
+
+	return identityID, nil
+}
+
 // RequireUserChargersIdentity resolves the authenticated caller and rejects anyone who
 // isn't an individual or business account, returning their identity ID for scoping
 // favorites, projects, ratings and pending actions. Shared by the gRPC handlers and the

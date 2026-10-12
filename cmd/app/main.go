@@ -250,9 +250,12 @@ var (
 				cfg.PendingActions.TTL,
 			)
 
+			preferencesSvc := preferences.NewService(postgresStorage.NewPreferencesRepository(db))
+
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
 			mcp.RegisterUserTools(mcpSrv, userChargersSvc, pendingActionSvc)
+			mcp.RegisterPreferencesTool(mcpSrv, preferencesSvc)
 			// The user tools act for whoever the gateway-secret-backed x-user-* headers name,
 			// resolved per request exactly like the gRPC interceptor does.
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv,
@@ -316,7 +319,7 @@ var (
 			userchargersv1.RegisterProjectServiceServer(grpcServer, grpcHandler.NewProjectHandler(userChargersSvc))
 			userchargersv1.RegisterRatingServiceServer(grpcServer, grpcHandler.NewRatingHandler(userChargersSvc))
 			userchargersv1.RegisterPendingActionServiceServer(grpcServer, grpcHandler.NewPendingActionHandler(pendingActionSvc))
-			preferencesv1.RegisterPreferencesServiceServer(grpcServer, grpcHandler.NewPreferencesHandler(preferences.NewService(postgresStorage.NewPreferencesRepository(db))))
+			preferencesv1.RegisterPreferencesServiceServer(grpcServer, grpcHandler.NewPreferencesHandler(preferencesSvc))
 			promptsv1.RegisterPromptSuggestionsServiceServer(grpcServer, grpcHandler.NewPromptSuggestionHandler(suggestionSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service
