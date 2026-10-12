@@ -9,13 +9,16 @@ import { cn } from '@/lib/utils'
 import { AuthFlowError } from '../auth/auth-flow-error'
 import { useFlow } from '../auth/use-flow'
 import { DeleteAccountSection } from './delete-account-section'
+import { PreferencesSection } from './preferences-section'
 import { SettingsFlowSection } from './settings-flow-section'
 import { PROFILE_SECTION, SECURITY_SECTION, SOCIAL_LINKS_SECTION } from './settings-node-groups'
 
-type ProfileTab = 'general' | 'security' | 'social-links' | 'billing' | 'delete-account'
+type ProfileTab =
+  'general' | 'preferences' | 'security' | 'social-links' | 'billing' | 'delete-account'
 
 const NAV_ITEMS: { value: ProfileTab; label: string }[] = [
   { value: 'general', label: 'General' },
+  { value: 'preferences', label: 'Preferences' },
   { value: 'security', label: 'Security' },
   { value: 'social-links', label: 'Social Links' },
   ...(BILLING_ENABLED ? [{ value: 'billing' as const, label: 'Billing' }] : []),
@@ -77,6 +80,7 @@ export function ProfilePage() {
               Ory's context, but there's no reason to remount it on tab switches. */}
           <Settings flow={flow} config={oryClientConfiguration}>
             {tab === 'general' && <SettingsFlowSection sections={[PROFILE_SECTION]} />}
+            {tab === 'preferences' && <PreferencesSection />}
             {tab === 'security' && <SettingsFlowSection sections={[SECURITY_SECTION]} />}
             {tab === 'social-links' && <SettingsFlowSection sections={[SOCIAL_LINKS_SECTION]} />}
             {tab === 'billing' && <BillingSection />}

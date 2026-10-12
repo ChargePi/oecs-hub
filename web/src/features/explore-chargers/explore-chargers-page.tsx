@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { NodeDetailPanel, type GraphSelection } from '@/features/graph/node-detail-sheet'
 import type { ChargerVariant } from '@/lib/oecs/types'
+import { useIsSimplified, usePreferences } from '@/lib/preferences/use-preferences'
 import { useComparisonStore } from '@/stores/comparison-store'
 import { FilterSidebar } from './filter-sidebar'
 import {
@@ -20,8 +21,10 @@ import { useChargerSearch } from './use-charger-search'
 
 export function ExploreChargersPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const filterState = parseFiltersFromSearchParams(searchParams)
-  const view: ExploreView = searchParams.get('view') === 'graph' ? 'graph' : 'grid'
+  const { currency } = usePreferences()
+  const simplified = useIsSimplified()
+  const filterState = parseFiltersFromSearchParams(searchParams, currency)
+  const view: ExploreView = !simplified && searchParams.get('view') === 'graph' ? 'graph' : 'grid'
   const [selection, setSelection] = useState<GraphSelection>(null)
   const [filtersCollapsed, setFiltersCollapsed] = useState(false)
   // Whether the filters were collapsed by opening details (rather than by the user), so
@@ -109,12 +112,14 @@ export function ExploreChargersPage() {
             >
               {allFilteredSelected ? 'Deselect all filtered' : 'Select all filtered'}
             </Button>
-            <Tabs value={view} onValueChange={(next) => setView(next as ExploreView)}>
-              <TabsList>
-                <TabsTrigger value="grid">Grid</TabsTrigger>
-                <TabsTrigger value="graph">Graph</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {!simplified && (
+              <Tabs value={view} onValueChange={(next) => setView(next as ExploreView)}>
+                <TabsList>
+                  <TabsTrigger value="grid">Grid</TabsTrigger>
+                  <TabsTrigger value="graph">Graph</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
           </div>
         </div>
         {view === 'grid' ? (

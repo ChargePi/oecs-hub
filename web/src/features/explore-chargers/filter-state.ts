@@ -48,7 +48,10 @@ function parseMinRatings(value: string | null): Record<string, number> {
   return minRatings
 }
 
-export function parseFiltersFromSearchParams(params: URLSearchParams): FilterState {
+export function parseFiltersFromSearchParams(
+  params: URLSearchParams,
+  defaultCurrency = DEFAULT_PRICE_CURRENCY,
+): FilterState {
   const facets: Record<string, string[]> = {}
   for (const facet of ALL_FACETS) {
     const values = parseList(params.get(facet.id))
@@ -60,7 +63,7 @@ export function parseFiltersFromSearchParams(params: URLSearchParams): FilterSta
     manufacturerId: params.get('m') ?? undefined,
     minPowerKw: parseNumber(params.get('minKw')),
     maxPowerKw: parseNumber(params.get('maxKw')),
-    priceCurrency: params.get('cur') ?? DEFAULT_PRICE_CURRENCY,
+    priceCurrency: params.get('cur') ?? defaultCurrency,
     minPrice: parseNumber(params.get('minPrice')),
     maxPrice: parseNumber(params.get('maxPrice')),
     protocols: parseList(params.get('protocol')),

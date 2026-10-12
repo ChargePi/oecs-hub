@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import {
   Banknote,
+  ChevronDown,
   CreditCard,
   FileText,
   MonitorSmartphone,
@@ -10,10 +12,18 @@ import {
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { describeValue, fieldDescriptions } from '@/lib/oecs/field-descriptions'
-import { formatPricing, formatQuantity, formatValueRange, humanize } from '@/lib/oecs/format'
+import {
+  formatDimensions,
+  formatPricing,
+  formatQuantity,
+  formatValueRange,
+  humanize,
+} from '@/lib/oecs/format'
 import type { ChargerVariant } from '@/lib/oecs/types'
+import { useIsSimplified, usePreferences } from '@/lib/preferences/use-preferences'
 import { ManufacturerCard } from './manufacturer-card'
 import { ProductImage } from './product-image'
 import { RateVariantControl } from './rate-variant-control'
@@ -33,8 +43,14 @@ const describeConnectivityInterface = describeValue('connectivityInterface')
 export function ProductDetail({ variant }: { variant: ChargerVariant }) {
   const { model, manufacturer, hardware, software, payment, pricing, metadata } = variant
 
+  const { currency, unitSystem } = usePreferences()
+  const simplified = useIsSimplified()
+  const [showFullSpecs, setShowFullSpecs] = useState(false)
+  const detailed = !simplified || showFullSpecs
+
   const electrical = hardware.electrical
   const housing = hardware.housing
+  const temperature = housing?.operatingTemperature
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,11 +59,7 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
         {model.series && <Badge variant="secondary">{model.series}</Badge>}
       </div>
 
-      <ProductImage
-        src={model.productImageUrl}
-        alt={model.name}
-        className="aspect-square w-full"
-      />
+      <ProductImage src={model.productImageUrl} alt={model.name} className="aspect-square w-full" />
 
       <Separator />
 
@@ -91,7 +103,12 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
             label="Form factor"
             value={housing?.formFactor && humanize(housing.formFactor)}
           />
-          <SpecRow label="Weight" value={formatQuantity(housing?.weight)} />
+          <SpecRow label="Weight" value={formatQuantity(housing?.weight, unitSystem)} />
+          <SpecRow label="Dimensions" value={formatDimensions(housing?.dimensions, unitSystem)} />
+          <SpecRow
+            label="Operating temperature"
+            value={temperature && formatValueRange(temperature, unitSystem)}
+          />
         </SpecSection>
 
         <SpecSection title="Connectors" icon={SPEC_ICONS.connectors}>
@@ -109,6 +126,8 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
                     {humanize(connector.type)}
                   </ValueTooltip>{' '}
                   ({connector.currentType})
+                  {connector.cable?.length &&
+                    ` · ${formatQuantity(connector.cable.length, unitSystem)} cable`}
                 </span>
                 <span className="shrink-0 text-right font-medium">
                   {formatQuantity(connector.maxPower) ?? '—'}
@@ -118,102 +137,123 @@ export function ProductDetail({ variant }: { variant: ChargerVariant }) {
           })}
         </SpecSection>
 
-        <SpecSection title="User interface" icon={MonitorSmartphone}>
-          <SpecRow
-            label="Display"
-            value={
-              hardware.userInterface?.display?.type && humanize(hardware.userInterface.display.type)
-            }
-          />
-          <SpecListRow
-            label="Authentication"
-            description={fieldDescriptions['hardware.userInterface.authenticationMethods']}
-            items={hardware.userInterface?.authenticationMethods?.map((method) => ({
-              text: humanize(method),
-              description: describeAuthenticationMethod(method),
-            }))}
-          />
-        </SpecSection>
-
-        <SpecSection title="Payment" icon={CreditCard}>
-          <SpecRow
-            label="Ad-hoc payment"
-            value={boolBadge(payment?.adHocPaymentSupported)}
-            inline
-            wide
-          />
-          <SpecListRow
-            label="Supported payment options"
-            description={fieldDescriptions['payment.acceptedMethods']}
-            items={payment?.acceptedMethods?.map((method) => ({
-              text: humanize(method),
-              description: describePaymentMethod(method),
-            }))}
-          />
-        </SpecSection>
-
         {pricing && (
           <SpecSection title="Pricing" icon={Banknote}>
-            <SpecListRow label="MSRP" items={formatPricing(pricing)?.map((text) => ({ text }))} />
+            <SpecListRow
+              label="MSRP"
+              items={formatPricing(pricing, currency)?.map((text) => ({ text }))}
+            />
             <SpecRow label="Notes" value={pricing.notes} />
           </SpecSection>
         )}
 
-        <SpecSection title="Software & connectivity" icon={Wifi}>
-          <SpecRow
-            label="Offline charging"
-            value={boolBadge(software.offlineChargingSupported)}
-            inline
-            wide
-          />
-          <SpecListRow
-            label="Protocols"
-            description={fieldDescriptions['software.protocols[]']}
-            items={software.protocols.map((p) => ({
-              text: `${p.name} ${p.version}`,
-              description: describeProtocolName(p.name),
-            }))}
-          />
-          <SpecListRow
-            label="Smart charging"
-            description={fieldDescriptions['software.smartCharging.features']}
-            items={software.smartCharging?.features?.map((feature) => ({
-              text: humanize(feature),
-              description: describeSmartChargingFeature(feature),
-            }))}
-          />
-          <SpecListRow
-            label="Connectivity"
-            description={fieldDescriptions['hardware.connectivity.interfaces']}
-            items={hardware.connectivity?.interfaces?.map((iface) => ({
-              text: humanize(iface),
-              description: describeConnectivityInterface(iface),
-            }))}
-          />
-        </SpecSection>
-
-        {hardware.certifications && hardware.certifications.length > 0 && (
-          <SpecSection title="Certifications" icon={ShieldCheck}>
-            <SpecLinkRow
-              label="Standards"
-              items={hardware.certifications.map((cert) => ({
-                label: cert.standard,
-                url: cert.documentUrl,
-              }))}
-            />
-          </SpecSection>
+        {simplified && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setShowFullSpecs((v) => !v)}
+            aria-expanded={showFullSpecs}
+          >
+            {showFullSpecs ? 'Hide full specifications' : 'Show full specifications'}
+            <ChevronDown className={showFullSpecs ? 'rotate-180' : undefined} />
+          </Button>
         )}
 
-        {metadata?.sources && metadata.sources.length > 0 && (
-          <SpecSection title="Documents" icon={FileText}>
-            <SpecLinkRow
-              label="Manuals & specifications"
-              items={metadata.sources.map((source) => ({
-                label: source.title,
-                url: source.url,
-              }))}
-            />
-          </SpecSection>
+        {detailed && (
+          <>
+            <SpecSection title="User interface" icon={MonitorSmartphone}>
+              <SpecRow
+                label="Display"
+                value={
+                  hardware.userInterface?.display?.type &&
+                  humanize(hardware.userInterface.display.type)
+                }
+              />
+              <SpecListRow
+                label="Authentication"
+                description={fieldDescriptions['hardware.userInterface.authenticationMethods']}
+                items={hardware.userInterface?.authenticationMethods?.map((method) => ({
+                  text: humanize(method),
+                  description: describeAuthenticationMethod(method),
+                }))}
+              />
+            </SpecSection>
+
+            <SpecSection title="Payment" icon={CreditCard}>
+              <SpecRow
+                label="Ad-hoc payment"
+                value={boolBadge(payment?.adHocPaymentSupported)}
+                inline
+                wide
+              />
+              <SpecListRow
+                label="Supported payment options"
+                description={fieldDescriptions['payment.acceptedMethods']}
+                items={payment?.acceptedMethods?.map((method) => ({
+                  text: humanize(method),
+                  description: describePaymentMethod(method),
+                }))}
+              />
+            </SpecSection>
+
+            <SpecSection title="Software & connectivity" icon={Wifi}>
+              <SpecRow
+                label="Offline charging"
+                value={boolBadge(software.offlineChargingSupported)}
+                inline
+                wide
+              />
+              <SpecListRow
+                label="Protocols"
+                description={fieldDescriptions['software.protocols[]']}
+                items={software.protocols.map((p) => ({
+                  text: `${p.name} ${p.version}`,
+                  description: describeProtocolName(p.name),
+                }))}
+              />
+              <SpecListRow
+                label="Smart charging"
+                description={fieldDescriptions['software.smartCharging.features']}
+                items={software.smartCharging?.features?.map((feature) => ({
+                  text: humanize(feature),
+                  description: describeSmartChargingFeature(feature),
+                }))}
+              />
+              <SpecListRow
+                label="Connectivity"
+                description={fieldDescriptions['hardware.connectivity.interfaces']}
+                items={hardware.connectivity?.interfaces?.map((iface) => ({
+                  text: humanize(iface),
+                  description: describeConnectivityInterface(iface),
+                }))}
+              />
+            </SpecSection>
+
+            {hardware.certifications && hardware.certifications.length > 0 && (
+              <SpecSection title="Certifications" icon={ShieldCheck}>
+                <SpecLinkRow
+                  label="Standards"
+                  items={hardware.certifications.map((cert) => ({
+                    label: cert.standard,
+                    url: cert.documentUrl,
+                  }))}
+                />
+              </SpecSection>
+            )}
+
+            {metadata?.sources && metadata.sources.length > 0 && (
+              <SpecSection title="Documents" icon={FileText}>
+                <SpecLinkRow
+                  label="Manuals & specifications"
+                  items={metadata.sources.map((source) => ({
+                    label: source.title,
+                    url: source.url,
+                  }))}
+                />
+              </SpecSection>
+            )}
+          </>
         )}
 
         <RatingsSection ratings={variant.ratings} />

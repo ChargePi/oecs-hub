@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package preferences.v1;
+
+import "google/protobuf/empty.proto";
+
+enum UnitSystem {
+  UNIT_SYSTEM_UNSPECIFIED = 0;
+  UNIT_SYSTEM_METRIC = 1;
+  UNIT_SYSTEM_IMPERIAL = 2;
+}
+
+enum ViewMode {
+  VIEW_MODE_UNSPECIFIED = 0;
+  VIEW_MODE_SIMPLIFIED = 1;
+  VIEW_MODE_ADVANCED = 2;
+}
+
+// UNSPECIFIED follows the view mode: a page in simplified view, the drawer in advanced view.
+enum ChatLayout {
+  CHAT_LAYOUT_UNSPECIFIED = 0;
+  CHAT_LAYOUT_DRAWER = 1;
+  CHAT_LAYOUT_PAGE = 2;
+}
+
+message Preferences {
+  // ISO 4217 code.
+  string currency = 1;
+  UnitSystem unit_system = 2;
+  ViewMode view_mode = 3;
+  ChatLayout chat_layout = 4;
+  // BCP 47 language tag.
+  string language = 5;
+}
+
+message GetPreferencesResponse {
+  Preferences preferences = 1;
+}
+
+message UpdatePreferencesRequest {
+  Preferences preferences = 1;
+}
+
+message UpdatePreferencesResponse {
+  Preferences preferences = 1;
+}
+
+service PreferencesService {
+  rpc GetPreferences(google.protobuf.Empty) returns (GetPreferencesResponse);
+  rpc UpdatePreferences(UpdatePreferencesRequest) returns (UpdatePreferencesResponse);
+}

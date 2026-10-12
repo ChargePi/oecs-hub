@@ -5,8 +5,8 @@ import { ArrowUp, BookOpen, GitCompare, Search, Sparkles } from 'lucide-react'
 
 import { Reveal } from '@/components/reveal'
 import { loginRedirect, useIdentity } from '@/lib/auth/use-identity'
+import { useOpenAssistant } from '@/features/chat/use-open-assistant'
 import { useSuggestedPrompts } from '@/features/chat/use-suggested-prompts'
-import { useChatDrawerStore } from '@/stores/chat-drawer-store'
 
 const SUGGESTED_PROMPT_COUNT = 4
 
@@ -31,7 +31,7 @@ const CAPABILITIES: Capability[] = [
 ]
 
 export function AiSection() {
-  const ask = useChatDrawerStore((s) => s.ask)
+  const { ask } = useOpenAssistant()
   const { identity, isLoading } = useIdentity()
   const navigate = useNavigate()
   const prompts = useSuggestedPrompts().slice(0, SUGGESTED_PROMPT_COUNT)
