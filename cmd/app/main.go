@@ -13,6 +13,7 @@ import (
 
 	billingv1 "github.com/ChargePi/oecs-hub/gen/proto/billing/v1"
 	manufacturerv1 "github.com/ChargePi/oecs-hub/gen/proto/manufacturer/v1"
+	onboardingv1 "github.com/ChargePi/oecs-hub/gen/proto/onboarding/v1"
 	preferencesv1 "github.com/ChargePi/oecs-hub/gen/proto/preferences/v1"
 	promptsv1 "github.com/ChargePi/oecs-hub/gen/proto/prompts/v1"
 	registryv1 "github.com/ChargePi/oecs-hub/gen/proto/registry/v1"
@@ -28,6 +29,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/mcp"
 	"github.com/ChargePi/oecs-hub/internal/oecsspec"
+	"github.com/ChargePi/oecs-hub/internal/onboarding"
 	"github.com/ChargePi/oecs-hub/internal/preferences"
 	"github.com/ChargePi/oecs-hub/internal/promptsuggestion"
 	postgresStorage "github.com/ChargePi/oecs-hub/internal/storage/postgres"
@@ -251,6 +253,12 @@ var (
 			)
 
 			preferencesSvc := preferences.NewService(postgresStorage.NewPreferencesRepository(db))
+			onboardingCatalog, err := onboarding.LoadCatalog(cfg.Onboarding.QuestionnairesPath)
+			if err != nil {
+				logger.Fatal("Failed to load onboarding questionnaires", zap.Error(err))
+			}
+
+			onboardingSvc := onboarding.NewService(postgresStorage.NewOnboardingRepository(db), onboardingCatalog)
 
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
 			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
@@ -320,6 +328,7 @@ var (
 			userchargersv1.RegisterRatingServiceServer(grpcServer, grpcHandler.NewRatingHandler(userChargersSvc))
 			userchargersv1.RegisterPendingActionServiceServer(grpcServer, grpcHandler.NewPendingActionHandler(pendingActionSvc))
 			preferencesv1.RegisterPreferencesServiceServer(grpcServer, grpcHandler.NewPreferencesHandler(preferencesSvc))
+			onboardingv1.RegisterOnboardingServiceServer(grpcServer, grpcHandler.NewOnboardingHandler(onboardingSvc))
 			promptsv1.RegisterPromptSuggestionsServiceServer(grpcServer, grpcHandler.NewPromptSuggestionHandler(suggestionSvc))
 
 			// Wraps grpcServer so the same port serves both native gRPC (grpcurl, service-to-service

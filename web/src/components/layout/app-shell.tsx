@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Outlet } from 'react-router'
 
+import { OnboardingBanner } from '@/features/onboarding/onboarding-banner'
 import { SupportChatWidget } from '@/features/support-chat/support-chat-widget'
 import { CHAT_ENABLED } from '@/lib/chat/config'
 import {
@@ -29,6 +30,7 @@ export function AppShell() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
+      <OnboardingBanner />
       <SupportChatWidget />
       <div className="flex flex-1">
         <main className="flex min-w-0 flex-1 flex-col overflow-x-clip">
