@@ -30,7 +30,7 @@ export function StepBreadcrumb({ currentStep, labels, onStepClick }: StepBreadcr
           <>
             <span
               className={cn(
-                'flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium',
+                'flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium transition-colors duration-300',
                 done && 'border-primary bg-primary text-primary-foreground',
                 active && 'border-primary text-primary',
                 !done && !active && 'border-border/60 text-muted-foreground',
@@ -40,7 +40,7 @@ export function StepBreadcrumb({ currentStep, labels, onStepClick }: StepBreadcr
             </span>
             <span
               className={cn(
-                'whitespace-nowrap text-xs',
+                'whitespace-nowrap text-xs transition-colors duration-300',
                 active ? 'font-medium text-foreground' : 'text-muted-foreground',
               )}
             >
@@ -54,7 +54,10 @@ export function StepBreadcrumb({ currentStep, labels, onStepClick }: StepBreadcr
             {i > 0 && (
               <span
                 aria-hidden="true"
-                className={cn('mx-1.5 h-px w-6 sm:w-10', done ? 'bg-primary' : 'bg-border')}
+                className={cn(
+                  'mx-1.5 h-px w-6 transition-colors duration-300 sm:w-10',
+                  done ? 'bg-primary' : 'bg-border',
+                )}
               />
             )}
             {onStepClick ? (
