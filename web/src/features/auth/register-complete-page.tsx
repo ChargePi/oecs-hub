@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router'
+import { useCallback, useEffect, useState } from 'react'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 
 import { BILLING_ENABLED } from '@/lib/billing/config'
@@ -9,7 +10,6 @@ import { useIdentity } from '@/lib/auth/use-identity'
 import { BillingStep } from './billing-step'
 import { REGISTRATION_STEP_LABELS } from './registration-steps'
 import { RegistrationLayout } from './registration-layout'
-import { useAuthSuccess } from './use-auth-success'
 
 // Reached only via Kratos's own post-registration redirect (kratos.yml's
 // registration.after.*.default_browser_return_url) - never rendered in-SPA as a step
@@ -23,7 +23,14 @@ import { useAuthSuccess } from './use-auth-success'
 // carrying any state across that hard navigation.
 export function RegisterCompletePage() {
   const { identity, isLoading: identityLoading } = useIdentity()
-  const onAuthSuccess = useAuthSuccess()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const [searchParams] = useSearchParams()
+
+  const continueToOnboarding = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['auth', 'session'] })
+    navigate({ pathname: '/onboarding', search: searchParams.toString() }, { replace: true })
+  }, [navigate, queryClient, searchParams])
 
   const [tier, setTier] = useState<PlanTier | null>(null)
   const [planName, setPlanName] = useState<string | null>(null)
@@ -54,8 +61,8 @@ export function RegisterCompletePage() {
   }, [identity])
 
   useEffect(() => {
-    if (identity && !BILLING_ENABLED) onAuthSuccess()
-  }, [identity, onAuthSuccess])
+    if (identity && !BILLING_ENABLED) continueToOnboarding()
+  }, [identity, continueToOnboarding])
 
   if (identityLoading) return null
   // Direct/bookmarked visit with no session - nothing to show.
@@ -65,7 +72,7 @@ export function RegisterCompletePage() {
   return (
     <RegistrationLayout currentStep={4} labels={REGISTRATION_STEP_LABELS}>
       {checkedUsage ? (
-        <BillingStep tier={tier} planName={planName} onFinish={onAuthSuccess} />
+        <BillingStep tier={tier} planName={planName} onFinish={continueToOnboarding} />
       ) : (
         <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-5 animate-spin" aria-hidden="true" />
