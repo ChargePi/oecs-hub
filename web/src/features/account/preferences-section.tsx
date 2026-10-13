@@ -107,7 +107,7 @@ export function PreferencesSection() {
       <div>
         <h2 className="font-heading text-lg font-semibold text-foreground">Preferences</h2>
         <p className="text-sm text-muted-foreground">
-          Changes are saved automatically and apply on every device you sign in on.
+          Changes are saved automatically and apply on every device you log in on.
         </p>
       </div>
 

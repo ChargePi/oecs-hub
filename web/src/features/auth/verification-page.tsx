@@ -2,7 +2,9 @@ import { Verification } from '@ory/elements-react/theme'
 import '@ory/elements-react/theme/styles.css'
 
 import { frontendApi, oryClientConfiguration } from '@/lib/auth/client'
+import { authComponents } from './auth-overrides'
 import { AuthFlowError } from './auth-flow-error'
+import { AuthFormSkeleton, AuthLayout } from './auth-layout'
 import { useFlow } from './use-flow'
 
 export function VerificationPage() {
@@ -12,11 +14,13 @@ export function VerificationPage() {
   )
 
   if (error) return <AuthFlowError />
-  if (!flow) return null
-
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4 py-16">
-      <Verification flow={flow} config={oryClientConfiguration} />
-    </div>
+    <AuthLayout title="Verify your email">
+      {flow ? (
+        <Verification flow={flow} config={oryClientConfiguration} components={authComponents} />
+      ) : (
+        <AuthFormSkeleton />
+      )}
+    </AuthLayout>
   )
 }

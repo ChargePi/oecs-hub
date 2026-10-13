@@ -23,6 +23,16 @@ export const oryClientConfiguration: OryClientConfiguration = {
     url: BASE_PATH,
     options: { credentials: 'include' as const, headers: JSON_HEADERS },
   },
+  intl: {
+    locale: 'en',
+    customTranslations: {
+      en: {
+        'identities.messages.1010002': 'Continue with {provider}',
+        'identities.messages.1040002': 'Continue with {provider}',
+        'identities.messages.1010022': 'Log in',
+      },
+    },
+  },
   project: {
     name: 'OECS Hub',
     // Purely a frontend rendering flag in elements-react - not gated behind an Ory
