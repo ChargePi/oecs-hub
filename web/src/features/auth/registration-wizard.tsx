@@ -36,12 +36,14 @@ interface RegistrationWizardProps {
   // type - this component has no idea it's step 2-3 of a larger sequence.
   step: Step
   onStepChange: (step: Step) => void
+  // Transition classes for whichever step container is visible.
+  stepClassName?: string
 }
 
 // Never pair native `hidden` with a `display`-setting class like "flex" on one element -
 // the author class wins over `[hidden]`, so it'd stay visible. Toggle the class instead.
-function stepClassName(active: boolean): string {
-  return active ? 'flex flex-col gap-8' : 'hidden'
+function stepContainerClassName(active: boolean, transition?: string): string {
+  return active ? cn('flex flex-col gap-8', transition) : 'hidden'
 }
 
 // The Ory form is noValidate and step 1 is CSS-hidden once on step 2, so a required field
@@ -97,6 +99,7 @@ export function RegistrationWizard({
   onPlanSelect,
   step,
   onStepChange,
+  stepClassName,
 }: RegistrationWizardProps) {
   const flowContainer = useOryFlow()
   const [selectedPlanCode, setSelectedPlanCode] = useState<string | null>(null)
@@ -158,7 +161,7 @@ export function RegistrationWizard({
         <OryForm>
           {renderNodes(defaultNodes)}
 
-          <div className={stepClassName(step === 1)}>
+          <div className={stepContainerClassName(step === 1, stepClassName)}>
             {oidcNodes.length > 0 && (
               <>
                 <div className="flex flex-col gap-3">{renderNodes(oidcNodes)}</div>
@@ -172,7 +175,9 @@ export function RegistrationWizard({
             </div>
             {billingDetailNodes.length > 0 && (
               <div className="border-t border-border/60 pt-6">
-                <h2 className="mb-4 text-lg font-semibold text-foreground">{billingDetailsLabel}</h2>
+                <h2 className="mb-4 text-lg font-semibold text-foreground">
+                  {billingDetailsLabel}
+                </h2>
                 {renderNodes(billingDetailNodes)}
               </div>
             )}
@@ -197,9 +202,13 @@ export function RegistrationWizard({
           </div>
 
           {!skipPlan && (
-            <div className={stepClassName(step === 2)}>
+            <div className={stepContainerClassName(step === 2, stepClassName)}>
               <h2 className="text-center text-xl font-semibold text-foreground">Choose a plan</h2>
-              <PlanStep accountType={accountType} selectedCode={selectedPlanCode} onSelect={handlePlanSelect} />
+              <PlanStep
+                accountType={accountType}
+                selectedCode={selectedPlanCode}
+                onSelect={handlePlanSelect}
+              />
               {/* No Back button here - the breadcrumb's "General info" step is already
                   clickable and goes back to the same place (register-page.tsx's
                   handleStepClick), so this would've been a second way to do the same

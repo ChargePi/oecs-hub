@@ -14,6 +14,7 @@ import { REGISTRATION_STEP_LABELS } from './registration-steps'
 import { RegistrationWizard } from './registration-wizard'
 import { RequiredLabel } from './required-label'
 import { useFlow } from './use-flow'
+import { useStepTransition } from './use-step-transition'
 
 // sessionStorage key for the {flowId, accountType} pair stashed just before a full-page
 // redirect away to an OIDC provider mid-registration (see the isResuming comment below).
@@ -27,7 +28,6 @@ function readPending(): { flowId: string; accountType: AccountType } | null {
     return null
   }
 }
-
 
 export function RegisterPage() {
   const [searchParams] = useSearchParams()
@@ -52,6 +52,9 @@ export function RegisterPage() {
   // What's currently visible - 1: account type, 2: general info, 3: plan. Deliberately
   // separate from `confirmed`: stepping back to 1 must not touch the underlying flow.
   const [view, setView] = useState<1 | 2 | 3>(isResuming ? 2 : 1)
+
+  // `shown` trails `view` while the outgoing step animates out.
+  const { shown, className: transitionClassName } = useStepTransition(view)
 
   // Ref, not state: read by transientPayload's function form at submit time, not via re-render.
   const planCodeRef = useRef<string | null>(null)
@@ -120,16 +123,16 @@ export function RegisterPage() {
 
   // A creation failure while actively viewing the picker (e.g. retrying after switching
   // account type) shouldn't block the picker itself - only block once they've moved past it.
-  if (error && view !== 1) return <AuthFlowError />
+  if (error && shown !== 1) return <AuthFlowError />
 
   return (
     <RegistrationLayout
       currentStep={view}
       labels={REGISTRATION_STEP_LABELS}
       onStepClick={handleStepClick}
-      wide={view === 3}
+      wide={shown === 3}
     >
-      <div className={view === 1 ? 'contents' : 'hidden'}>
+      <div className={shown === 1 ? cn('flex flex-col gap-4', transitionClassName) : 'hidden'}>
         <h1 className="text-center text-lg font-semibold">Choose your account type</h1>
         <AccountTypeSelector value={accountType} onChange={setAccountType} />
         <Button size="lg" onClick={handleContinue}>
@@ -144,7 +147,7 @@ export function RegisterPage() {
         // actually arrived - keying on accountType instead would remount one render too
         // early (accountType updates before the refetch resolves), permanently baking in
         // the previous schema's fields under the newly-selected type's label.
-        <div className={cn('oecs-auth-unboxed', view === 1 ? 'hidden' : 'contents')}>
+        <div className={cn('oecs-auth-unboxed', shown === 1 ? 'hidden' : 'contents')}>
           <Registration
             key={flow.id}
             flow={flow}
@@ -156,7 +159,8 @@ export function RegisterPage() {
             <RegistrationWizard
               accountType={accountType}
               onPlanSelect={handlePlanSelect}
-              step={view === 3 ? 2 : 1}
+              step={shown === 3 ? 2 : 1}
+              stepClassName={transitionClassName}
               onStepChange={(wizardStep) => setView(wizardStep === 1 ? 2 : 3)}
             />
           </Registration>
