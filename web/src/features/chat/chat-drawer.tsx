@@ -261,7 +261,7 @@ function SignInPrompt() {
       <div>
         <h2 className="font-heading text-lg font-semibold">Ask the assistant</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Sign in to get charger recommendations and comparisons for your use case.
+          Log in to get charger recommendations and comparisons for your use case.
         </p>
       </div>
       <Button asChild>
@@ -274,7 +274,7 @@ function SignInPrompt() {
           onClick={clearPendingPrompt}
         >
           <LogIn />
-          Sign in
+          Log in
         </Link>
       </Button>
     </div>

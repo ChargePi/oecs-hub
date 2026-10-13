@@ -50,6 +50,7 @@ selfservice:
         providers:
           - id: google
             provider: google
+            label: Google
             client_id: ${OECS_HUB_KRATOS_GOOGLE_CLIENT_ID}
             client_secret: ${OECS_HUB_KRATOS_GOOGLE_CLIENT_SECRET}
             mapper_url: file:///etc/config/kratos/oidc.google.jsonnet
