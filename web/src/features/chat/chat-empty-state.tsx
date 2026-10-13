@@ -1,15 +1,21 @@
 import { Sparkles } from 'lucide-react'
 
 import { ChatComposer } from './chat-composer'
+import { ChatQuotaNotice } from './chat-quota-notice'
+import { LOCKED_PLACEHOLDER } from './use-chat-quota'
 import { useSuggestedPrompts } from './use-suggested-prompts'
 
 export function ChatEmptyState({
   onSend,
   disabled,
+  locked,
 }: {
   onSend: (message: string) => void
   disabled?: boolean
+  /** The plan's allowance is used up - nothing can be sent. */
+  locked?: boolean
 }) {
+  const blocked = disabled || locked
   const suggestedPrompts = useSuggestedPrompts()
 
   return (
@@ -31,7 +37,7 @@ export function ChatEmptyState({
           <button
             key={prompt}
             type="button"
-            disabled={disabled}
+            disabled={blocked}
             onClick={() => onSend(prompt)}
             className="rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
           >
@@ -40,8 +46,14 @@ export function ChatEmptyState({
         ))}
       </div>
 
-      <div className="w-full">
-        <ChatComposer onSend={onSend} disabled={disabled} autoFocus />
+      <div className="flex w-full flex-col gap-2">
+        {locked && <ChatQuotaNotice />}
+        <ChatComposer
+          onSend={onSend}
+          disabled={blocked}
+          placeholder={locked ? LOCKED_PLACEHOLDER : undefined}
+          autoFocus={!locked}
+        />
       </div>
     </div>
   )

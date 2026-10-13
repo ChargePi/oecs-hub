@@ -29,12 +29,15 @@ function LiveAssistantBubble({ text }: { text: string }) {
 export function ChatMessageList({
   messages,
   isStreaming,
+  disabled = isStreaming,
   streamingText,
   onSubmitClarification,
   onResend,
 }: {
   messages: ChatMessage[]
   isStreaming: boolean
+  /** Blocks every send path in the list (clarification submit, Resend). */
+  disabled?: boolean
   streamingText: string
   onSubmitClarification?: (summary: string, choices: SelectedChoice[]) => void
   /** Loads a failed message's originating user turn into the composer - see
@@ -67,7 +70,7 @@ export function ChatMessageList({
               key={message.id}
               message={message}
               isLast={i === messages.length - 1}
-              disabled={isStreaming}
+              disabled={disabled}
               onSubmitClarification={onSubmitClarification}
               historicalSelectedChoices={historicalSelectedChoices}
               resendMessage={messages[i - 1]}

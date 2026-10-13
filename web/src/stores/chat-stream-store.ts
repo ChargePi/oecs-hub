@@ -57,8 +57,19 @@ function makeOptimisticMessage(message: string, selectedChoices?: SelectedChoice
   }
 }
 
+/** Drops the never-confirmed optimistic message so a retry doesn't duplicate it. */
+function withoutOptimistic(messages: ChatMessage[] = []): ChatMessage[] {
+  return messages.filter((m) => !m.id.startsWith(OPTIMISTIC_ID_PREFIX))
+}
+
+const USAGE_QUERY_KEY = ['billing', 'usage']
+const QUOTA_EXCEEDED_MESSAGE = "You've used up this month's token allowance."
+
 interface ChatStreamStoreState {
   entries: Record<string, ChatStreamEntry>
+  /** Set once the server rejects a send over the plan's allowance - the cached usage
+   *  can lag behind it. */
+  quotaExceeded: boolean
   /** Seeds a key from a REST fetch. No-ops if a send is already live under it, so a
    *  stale snapshot can't clobber one still in progress. */
   hydrate: (key: string, detail: ConversationDetail) => void
@@ -82,6 +93,7 @@ const cancelers: Record<string, () => void> = {}
 
 export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
   entries: {},
+  quotaExceeded: false,
 
   hydrate: (key, detail) => {
     set((s) => {
@@ -190,17 +202,27 @@ export const useChatStreamStore = create<ChatStreamStoreState>((set, get) => ({
           useChatActivityStore.getState().stopStreaming(key)
           useChatActivityStore.getState().stopStreaming(payload.conversationId)
           void queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] })
+          void queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY })
+        },
+        onQuotaExceeded: () => {
+          pendingDelta = ''
+          writeBoth({
+            phase: 'idle',
+            error: null,
+            messages: withoutOptimistic(get().entries[key]?.messages),
+            streamingText: '',
+          })
+          set({ quotaExceeded: true })
+          useChatActivityStore.getState().stopStreaming(key)
+          void queryClient.invalidateQueries({ queryKey: USAGE_QUERY_KEY })
+          toastError(QUOTA_EXCEEDED_MESSAGE, "Message couldn't be sent", 'restricted')
         },
         onError: (message, severity) => {
           pendingDelta = ''
-          // Drops the never-confirmed optimistic message so a retry doesn't duplicate it.
-          const current = get().entries[key]
           writeBoth({
             phase: 'error',
             error: message,
-            messages: (current?.messages ?? []).filter(
-              (m) => !m.id.startsWith(OPTIMISTIC_ID_PREFIX),
-            ),
+            messages: withoutOptimistic(get().entries[key]?.messages),
             streamingText: '',
           })
           useChatActivityStore.getState().stopStreaming(key)

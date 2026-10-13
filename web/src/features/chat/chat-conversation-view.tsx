@@ -12,6 +12,8 @@ import { useChatStreamStore } from '@/stores/chat-stream-store'
 import { ChatComposer } from './chat-composer'
 import { ChatEmptyState } from './chat-empty-state'
 import { ChatMessageList } from './chat-message-list'
+import { ChatQuotaNotice } from './chat-quota-notice'
+import { LOCKED_PLACEHOLDER, useChatQuota } from './use-chat-quota'
 
 /** The drawer's chat body: the active conversation (or a fresh draft) from
  *  chat-drawer-store, rendered from chat-stream-store so an in-flight reply keeps
@@ -30,6 +32,7 @@ export function ChatConversationView() {
   // Tracks the pending prompt already sent, so StrictMode's double-invoke can't
   // double-send while a second "Evaluate using AI" click (new token) still can.
   const sentPromptTokenRef = useRef<number | undefined>(undefined)
+  const { exhausted: locked, isLoading: quotaLoading } = useChatQuota()
 
   const key = conversationId ?? draftKey
   const entry = useChatStreamStore((s) => (key ? s.entries[key] : undefined))
@@ -46,6 +49,7 @@ export function ChatConversationView() {
   })
 
   function handleSend(text: string, selectedChoices?: SelectedChoice[], chargerIds?: string[]) {
+    if (locked) return
     const sendKey = useChatDrawerStore.getState().ensureKey()
     useChatStreamStore
       .getState()
@@ -54,12 +58,14 @@ export function ChatConversationView() {
 
   useEffect(() => {
     if (!pendingPrompt || !draftKey || sentPromptTokenRef.current === pendingPrompt.token) return
+    if (quotaLoading) return
     sentPromptTokenRef.current = pendingPrompt.token
     useChatDrawerStore.getState().clearPendingPrompt()
+    if (locked) return
     useChatStreamStore
       .getState()
       .send(draftKey, userId, queryClient, pendingPrompt.text, undefined, pendingPrompt.chargerIds)
-  }, [pendingPrompt, draftKey, userId, queryClient])
+  }, [pendingPrompt, draftKey, userId, queryClient, locked, quotaLoading])
 
   useEffect(() => {
     // Only seeds an empty entry: anything already in memory is at least as new as the
@@ -107,7 +113,7 @@ export function ChatConversationView() {
     !!entry && (entry.conversationId != null || entry.messages.length > 0 || isStreaming)
 
   if (!hasActiveConversation) {
-    return <ChatEmptyState onSend={handleSend} disabled={isStreaming} />
+    return <ChatEmptyState onSend={handleSend} disabled={isStreaming} locked={locked} />
   }
 
   return (
@@ -115,12 +121,19 @@ export function ChatConversationView() {
       <ChatMessageList
         messages={entry.messages}
         isStreaming={isStreaming}
+        disabled={isStreaming || locked}
         streamingText={entry.streamingText}
         onSubmitClarification={handleSend}
         onResend={(text) => setResendDraft({ text, token: Date.now() })}
       />
-      <div className="border-t border-border p-3">
-        <ChatComposer onSend={handleSend} disabled={isStreaming} prefill={resendDraft} />
+      <div className="flex flex-col gap-2 border-t border-border p-3">
+        {locked && <ChatQuotaNotice />}
+        <ChatComposer
+          onSend={handleSend}
+          disabled={isStreaming || locked}
+          placeholder={locked ? LOCKED_PLACEHOLDER : undefined}
+          prefill={resendDraft}
+        />
       </div>
     </>
   )

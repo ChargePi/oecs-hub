@@ -18,7 +18,6 @@ import { listConversations } from '@/lib/chat/client'
 import { cn } from '@/lib/utils'
 import { type ChatDrawerView, useChatDrawerStore } from '@/stores/chat-drawer-store'
 import { useChatStreamStore } from '@/stores/chat-stream-store'
-import { ChatAccessGate } from './chat-access-gate'
 import { ChatConversationView } from './chat-conversation-view'
 import { ConversationList } from './conversation-list'
 import { ItemsPanel } from './items-panel'
@@ -92,16 +91,12 @@ export function ChatPanel({ onHide }: { onHide?: () => void }) {
       />
       {isLoading ? null : !identity ? (
         <SignInPrompt />
+      ) : shown === 'history' ? (
+        <ConversationList />
+      ) : shown === 'results' && entry ? (
+        <ItemsPanel candidates={entry.candidates} evidence={entry.evidence} />
       ) : (
-        <ChatAccessGate>
-          {shown === 'history' ? (
-            <ConversationList />
-          ) : shown === 'results' && entry ? (
-            <ItemsPanel candidates={entry.candidates} evidence={entry.evidence} />
-          ) : (
-            <ChatConversationView />
-          )}
-        </ChatAccessGate>
+        <ChatConversationView />
       )}
     </div>
   )

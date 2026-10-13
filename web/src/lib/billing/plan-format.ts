@@ -12,10 +12,10 @@ export function commitmentLine(plan: Plan): string {
   return plan.tier === 'paid' ? `Billed ${plan.interval}, cancel anytime` : 'No credit card required'
 }
 
-// GetPlans's `tokens` metric is the same one chat-access-gate.tsx reads from GetUsage
+// GetPlans's `tokens` metric is the same one use-chat-quota.ts reads from GetUsage
 // (metrics.find(m => m.code === 'tokens')) - the one billable metric this system meters,
 // spent by the AI chat feature (recommendations, charger comparisons, general EV/charger
-// Q&A - see chat-access-gate.tsx's own "token allowance" copy). `includedUnits` is that
+// Q&A - see chat-quota-notice.tsx's own "token allowance" copy). `includedUnits` is that
 // metric's free monthly allowance; unset on a paid, pay-per-use plan, which is why
 // "unlimited usage" is always true for those.
 export function usageLine(plan: Plan): string {

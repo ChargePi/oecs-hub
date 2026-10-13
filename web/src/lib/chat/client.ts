@@ -4,6 +4,7 @@ import { redirectToLoginIfSessionDead } from '@/lib/auth/use-identity'
 import {
   errorSeverity,
   isAuthError,
+  isQuotaError,
   normalizeAndDispatch,
   toErrorMessage,
   type ToastSeverity,
@@ -358,6 +359,8 @@ export interface StreamHandlers {
    *  fires over the SSE path. */
   onReset?: () => void
   onDone?: (payload: StreamDonePayload) => void
+  /** The send was rejected because the plan's allowance is used up. Replaces onError. */
+  onQuotaExceeded?: () => void
   onError?: (message: string, severity: ToastSeverity) => void
 }
 
@@ -554,6 +557,10 @@ export function streamChat(
       // looks auth-shaped falls through to a normal error instead of bouncing via /auth/login.
       if (isAuthError(err) && (await redirectToLoginIfSessionDead())) return
       if (cancelled) return
+      if (isQuotaError(err) && handlers.onQuotaExceeded) {
+        handlers.onQuotaExceeded()
+        return
+      }
       handlers.onError?.(
         toErrorMessage(err, 'streamChat', 'chat request failed'),
         errorSeverity(err),

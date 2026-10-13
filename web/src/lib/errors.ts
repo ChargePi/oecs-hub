@@ -58,6 +58,10 @@ export function isAuthError(err: unknown): boolean {
   return err.code == null && err.message.length <= GATEWAY_REJECTION_MAX_LENGTH
 }
 
+export function isQuotaError(err: unknown): boolean {
+  return err instanceof RpcError && err.code === StatusCode.RESOURCE_EXHAUSTED
+}
+
 /** Logs a caught RPC error under `logPrefix` and returns its display message,
  *  without throwing - for callers that report failures via callback rather than a
  *  rejected promise (chat/client.ts's streamChat).
