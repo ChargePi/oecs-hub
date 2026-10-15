@@ -11,9 +11,15 @@ export function AssistantToggle() {
   if (!CHAT_ENABLED) return null
 
   return (
-    <Button variant={open ? 'secondary' : 'ghost'} size="sm" onClick={toggle} aria-pressed={open}>
+    <Button
+      variant={open ? 'secondary' : 'ghost'}
+      size="sm"
+      onClick={toggle}
+      aria-pressed={open}
+      aria-label="Assistant"
+    >
       <Sparkles />
-      Assistant
+      <span className="hidden sm:inline">Assistant</span>
     </Button>
   )
 }

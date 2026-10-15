@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { useIsMobile } from '@/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 import { useComparisonStore } from '@/stores/comparison-store'
 import { diffToneClasses, type DiffTone } from './comparison-diff'
@@ -33,7 +34,8 @@ function LegendSwatch({ tone, children }: { tone: DiffTone; children: string }) 
 /** Difference options for the compare page, docked left like the chargers filter
  *  sidebar; stacks above the comparison on narrow screens. */
 export function ComparisonOptionsSidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+  const isMobile = useIsMobile()
+  const [collapsed, setCollapsed] = useState(isMobile)
   const differencesOnly = useComparisonStore((state) => state.differencesOnly)
   const setDifferencesOnly = useComparisonStore((state) => state.setDifferencesOnly)
   const highlightDifferences = useComparisonStore((state) => state.highlightDifferences)
@@ -48,7 +50,8 @@ export function ComparisonOptionsSidebar() {
         className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3 text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground md:sticky md:top-14 md:h-[calc(100svh-3.5rem)] md:w-10 md:flex-col md:border-r md:border-b-0 md:px-0 md:py-4"
       >
         <SlidersHorizontal className="size-4" />
-        <ChevronRight className="size-4" />
+        <span className="text-sm md:hidden">Comparison options</span>
+        <ChevronRight className="size-4 max-md:rotate-90" />
       </button>
     )
   }

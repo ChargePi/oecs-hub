@@ -174,13 +174,13 @@ export function ProjectDetail({ projectId, onBack }: { projectId: string; onBack
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-2">
+        <div className="flex min-w-0 items-start gap-2">
           <Button variant="ghost" size="icon" className="shrink-0" onClick={onBack}>
             <ArrowLeft className="size-4" />
             <span className="sr-only">Back to projects</span>
           </Button>
-          <div>
-            <h2 className="font-heading text-lg font-semibold">{project.name}</h2>
+          <div className="min-w-0">
+            <h2 className="font-heading text-lg font-semibold break-words">{project.name}</h2>
             {project.description ? (
               <p className="text-sm text-muted-foreground">{project.description}</p>
             ) : null}
@@ -188,15 +188,20 @@ export function ProjectDetail({ projectId, onBack }: { projectId: string; onBack
         </div>
 
         <div className="flex shrink-0 gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditOpen(true)}
+            aria-label="Edit project"
+          >
             <Pencil className="size-4" />
-            Edit
+            <span className="hidden sm:inline">Edit</span>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" aria-label="Delete project">
                 <Trash2 className="size-4" />
-                Delete
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

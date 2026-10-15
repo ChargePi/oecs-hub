@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { SlidersHorizontal } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { useIsMobile } from '@/hooks/use-media-query'
 import { NodeDetailPanel, type GraphSelection } from '@/features/graph/node-detail-sheet'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { useIsSimplified, usePreferences } from '@/lib/preferences/use-preferences'
@@ -26,6 +29,8 @@ export function ExploreChargersPage() {
   const filterState = parseFiltersFromSearchParams(searchParams, currency)
   const view: ExploreView = !simplified && searchParams.get('view') === 'graph' ? 'graph' : 'grid'
   const [selection, setSelection] = useState<GraphSelection>(null)
+  const isMobile = useIsMobile()
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [filtersCollapsed, setFiltersCollapsed] = useState(false)
   // Whether the filters were collapsed by opening details (rather than by the user), so
   // closing the details only re-expands what it collapsed itself.
@@ -93,24 +98,49 @@ export function ExploreChargersPage() {
 
   return (
     <div className="flex h-[calc(100svh-3.5rem-1px)]">
-      <FilterSidebar
-        filters={filterState}
-        onChange={updateFilters}
-        collapsed={filtersCollapsed}
-        onCollapsedChange={setFiltersCollapsedByUser}
-      />
+      {isMobile ? (
+        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <SheetContent
+            side="left"
+            aria-describedby={undefined}
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <SheetTitle className="sr-only">Filters</SheetTitle>
+            <FilterSidebar filters={filterState} onChange={updateFilters} inSheet />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <FilterSidebar
+          filters={filterState}
+          onChange={updateFilters}
+          collapsed={filtersCollapsed}
+          onCollapsedChange={setFiltersCollapsedByUser}
+        />
+      )}
       <NodeDetailPanel selection={selection} onSelectionChange={select} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="relative flex items-center justify-end border-b border-border p-4">
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold">Chargers</h1>
-          <div className="flex items-center gap-3">
+        <div className="relative flex items-center gap-2 border-b border-border p-3 md:justify-end md:p-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setMobileFiltersOpen(true)}
+          >
+            <SlidersHorizontal />
+            Filters
+          </Button>
+          <h1 className="hidden text-lg font-semibold md:absolute md:left-1/2 md:block md:-translate-x-1/2">
+            Chargers
+          </h1>
+          <div className="ml-auto flex items-center gap-2 md:ml-0 md:gap-3">
             <Button
               variant="outline"
               size="sm"
               onClick={toggleSelectAllFiltered}
               disabled={filteredVariants.length === 0}
             >
-              {allFilteredSelected ? 'Deselect all filtered' : 'Select all filtered'}
+              {allFilteredSelected ? 'Deselect all' : 'Select all'}
+              <span className="hidden md:inline">filtered</span>
             </Button>
             {!simplified && (
               <Tabs value={view} onValueChange={(next) => setView(next as ExploreView)}>

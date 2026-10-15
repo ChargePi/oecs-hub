@@ -43,7 +43,9 @@ function ComparisonCarousel({
       <div className="mx-auto flex w-fit items-stretch gap-4">
         <div
           className="grid gap-x-4"
-          style={{ gridTemplateColumns: `repeat(${variants.length}, minmax(560px, 640px))` }}
+          style={{
+            gridTemplateColumns: `repeat(${variants.length}, minmax(min(560px, calc(100vw - 2rem)), 640px))`,
+          }}
         >
           {variants.map((variant) => (
             <ComparisonHeaderCell

@@ -95,7 +95,7 @@ export function SearchBar({ size = 'default', className }: SearchBarProps) {
           className={cn(
             hero
               ? 'h-14 rounded-xl bg-card/80 pr-20 pl-12 text-base shadow-2xl shadow-black/40 backdrop-blur md:text-base'
-              : 'h-9 pr-16 pl-9 text-sm',
+              : 'h-9 pr-16 pl-9 text-base md:text-sm',
             isFocused &&
               'rounded-b-none bg-card focus-visible:border-b-transparent focus-visible:ring-0 dark:bg-card',
           )}

@@ -42,7 +42,7 @@ export function GridView({
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4 p-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-4 p-4">
         {Array.from({ length: 6 }, (_, i) => (
           <CardSkeleton key={i} />
         ))}
@@ -63,7 +63,7 @@ export function GridView({
       <p className="text-xs text-muted-foreground">
         {totalSize} charger{totalSize === 1 ? '' : 's'}
       </p>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-4">
         {variants.map((variant) => (
           <ChargerCard
             key={variant.id}
@@ -75,7 +75,7 @@ export function GridView({
       </div>
       <div ref={sentinelRef} />
       {isFetchingNextPage && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(20rem,1fr))] gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-4">
           {Array.from({ length: 3 }, (_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -90,7 +90,7 @@ export function GridView({
 function CardSkeleton() {
   return (
     <div className="overflow-hidden rounded-xl ring-1 ring-foreground/10">
-      <Skeleton className="aspect-[5/6] w-full rounded-none" />
+      <Skeleton className="aspect-[4/3] w-full rounded-none sm:aspect-[5/6]" />
       <div className="flex flex-col gap-3 p-4">
         <div className="flex flex-col items-center gap-2">
           <Skeleton className="h-5 w-3/4" />
