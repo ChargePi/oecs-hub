@@ -19,7 +19,7 @@ import { diffToneClasses, evaluateRow, rowDiffers } from './comparison-diff'
 import type { ComparisonGroup } from './comparison-rows'
 import { ComparisonValue, PricingValue, VariantActions } from './comparison-value'
 
-const LABEL_CELL = 'sticky left-0 z-10 w-56 min-w-56 bg-card'
+const LABEL_CELL = 'sticky left-0 z-10 w-32 min-w-32 bg-card whitespace-normal md:w-56 md:min-w-56'
 
 // Drawn as inset shadows: real borders collapse into the neighbouring cells and get
 // painted over by the sticky label column.
@@ -31,7 +31,10 @@ const REFERENCE_OUTLINE = {
 }
 
 function columnClass(isBaseline: boolean, edge: keyof typeof REFERENCE_OUTLINE = 'middle') {
-  return cn('min-w-64 align-top', isBaseline && ['bg-primary/5', REFERENCE_OUTLINE[edge]])
+  return cn(
+    'min-w-48 align-top md:min-w-64',
+    isBaseline && ['bg-primary/5', REFERENCE_OUTLINE[edge]],
+  )
 }
 
 export function ComparisonTable({

@@ -53,7 +53,7 @@ export function AddChargerControl({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-full min-h-64 w-[40rem] shrink-0 flex-col items-center justify-center gap-2 self-stretch rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          className="flex h-full min-h-64 w-[min(40rem,calc(100vw-2rem))] shrink-0 flex-col items-center justify-center gap-2 self-stretch rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
         >
           <Plus className="size-6" />
           <span className="text-sm font-medium">Add charger</span>

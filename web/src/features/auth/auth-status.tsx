@@ -23,7 +23,10 @@ export function AuthStatus() {
   if (!identity) {
     return (
       <Button asChild size="sm">
-        <Link to="/auth/login">Log in / Sign up</Link>
+        <Link to="/auth/login">
+          <span className="sm:hidden">Log in</span>
+          <span className="hidden sm:inline">Log in / Sign up</span>
+        </Link>
       </Button>
     )
   }
@@ -35,9 +38,14 @@ export function AuthStatus() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="max-w-40 rounded-full sm:max-w-56">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="max-w-40 rounded-full sm:max-w-56"
+          aria-label={displayName}
+        >
           <CircleUserRound className="size-5 shrink-0" aria-hidden="true" />
-          <span className="truncate">{displayName}</span>
+          <span className="hidden truncate sm:inline">{displayName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

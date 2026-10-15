@@ -54,7 +54,7 @@ export function ChargerCard({
         <ProductImage
           src={variant.model.productImageUrl}
           alt={variant.model.name}
-          className="aspect-[5/6] w-full rounded-none border-0 border-b border-border"
+          className="aspect-[4/3] w-full rounded-none sm:aspect-[5/6] border-0 border-b border-border"
         />
         <div
           className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-md bg-background/90 shadow-sm backdrop-blur"

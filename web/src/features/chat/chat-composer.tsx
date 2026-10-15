@@ -70,7 +70,7 @@ export function ChatComposer({
         autoFocus={autoFocus}
         rows={1}
         className={cn(
-          'placeholder:text-muted-foreground max-h-40 min-h-9 w-full flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50',
+          'placeholder:text-muted-foreground max-h-40 min-h-9 w-full flex-1 resize-none bg-transparent px-2 py-1.5 text-base outline-none md:text-sm disabled:cursor-not-allowed disabled:opacity-50',
         )}
       />
       <Button size="icon" onClick={submit} disabled={disabled || !value.trim()} aria-label="Send">

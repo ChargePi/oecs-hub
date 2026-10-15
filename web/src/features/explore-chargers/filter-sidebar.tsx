@@ -26,6 +26,7 @@ import { PRICE_CURRENCIES } from '@/lib/oecs/currencies'
 import { useIsSimplified } from '@/lib/preferences/use-preferences'
 import { RATING_CATEGORIES } from '@/lib/oecs/rating-categories'
 import { registryClient } from '@/lib/registry/client'
+import { cn } from '@/lib/utils'
 import { FILTER_GROUPS } from './filter-manifest'
 import { EMPTY_FILTER_STATE, isFilterStateEmpty, type FilterState } from './filter-state'
 import { ProtocolFilter } from './protocol-filter'
@@ -43,12 +44,15 @@ export function FilterSidebar({
   onChange,
   collapsed: controlledCollapsed,
   onCollapsedChange,
+  inSheet = false,
 }: {
   filters: FilterState
   onChange: (next: FilterState) => void
   /** Controls the collapsed rail from outside; falls back to internal state when omitted. */
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
+  /** Rendered inside a mobile Sheet: fills it and drops the collapse rail. */
+  inSheet?: boolean
 }) {
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const collapsed = controlledCollapsed ?? internalCollapsed
@@ -90,7 +94,7 @@ export function FilterSidebar({
     onChange({ ...filters, minRatings })
   }
 
-  if (collapsed) {
+  if (collapsed && !inSheet) {
     return (
       <button
         type="button"
@@ -105,8 +109,13 @@ export function FilterSidebar({
   }
 
   return (
-    <div className="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto border-r border-border p-4">
-      <div className="flex items-center justify-between">
+    <div
+      className={cn(
+        'flex flex-col gap-4 overflow-y-auto p-4',
+        inSheet ? 'min-h-0 flex-1' : 'w-72 shrink-0 border-r border-border',
+      )}
+    >
+      <div className={cn('flex items-center justify-between', inSheet && 'pr-10')}>
         <span className="text-sm font-medium">Filters</span>
         <div className="flex items-center gap-1">
           <Button
@@ -119,14 +128,16 @@ export function FilterSidebar({
           >
             Clear all
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setCollapsed(true)}
-            aria-label="Hide filters"
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
+          {!inSheet && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setCollapsed(true)}
+              aria-label="Hide filters"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+          )}
         </div>
       </div>
 

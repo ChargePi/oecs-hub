@@ -49,7 +49,7 @@ export function ProfilePage() {
       </div>
 
       <div className="flex flex-col gap-8 md:flex-row">
-        <nav className="flex shrink-0 flex-row gap-1 md:w-48 md:flex-col">
+        <nav className="-mx-4 flex shrink-0 flex-row gap-1 overflow-x-auto px-4 md:mx-0 md:w-48 md:flex-col md:overflow-visible md:px-0">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.value}
@@ -64,7 +64,7 @@ export function ProfilePage() {
                 )
               }
               className={cn(
-                'rounded-md px-3 py-2 text-left text-sm transition-colors',
+                'shrink-0 rounded-md px-3 py-2 text-left text-sm whitespace-nowrap transition-colors',
                 tab === item.value
                   ? 'bg-accent text-accent-foreground'
                   : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',

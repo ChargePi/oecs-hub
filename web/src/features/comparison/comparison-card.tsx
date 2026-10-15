@@ -79,7 +79,7 @@ export function ComparisonHeaderCell({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-4 sm:grid-cols-2">
         <ProductImage
           src={variant.model.productImageUrl}
           alt={variant.model.name}
