@@ -24,6 +24,9 @@ const (
 	BillingService_GetPaymentPortalUrl_FullMethodName = "/billing.v1.BillingService/GetPaymentPortalUrl"
 	BillingService_ChangePlan_FullMethodName          = "/billing.v1.BillingService/ChangePlan"
 	BillingService_GetPlans_FullMethodName            = "/billing.v1.BillingService/GetPlans"
+	BillingService_GetEntitlements_FullMethodName     = "/billing.v1.BillingService/GetEntitlements"
+	BillingService_SubscribeAddon_FullMethodName      = "/billing.v1.BillingService/SubscribeAddon"
+	BillingService_CancelAddon_FullMethodName         = "/billing.v1.BillingService/CancelAddon"
 )
 
 // BillingServiceClient is the client API for BillingService service.
@@ -45,6 +48,12 @@ type BillingServiceClient interface {
 	// The one public/anonymous RPC on this service - called from the still-unauthenticated
 	// registration wizard. See access-rules.yml's billing-service-public rule.
 	GetPlans(ctx context.Context, in *GetPlansRequest, opts ...grpc.CallOption) (*GetPlansResponse, error)
+	// Tier and active addons without usage, cheap enough for per-request gating.
+	GetEntitlements(ctx context.Context, in *GetEntitlementsRequest, opts ...grpc.CallOption) (*GetEntitlementsResponse, error)
+	// Gated like an upgrade, plus the addon's required tier if it has one.
+	SubscribeAddon(ctx context.Context, in *SubscribeAddonRequest, opts ...grpc.CallOption) (*SubscribeAddonResponse, error)
+	// Ends the addon at the end of its billing period.
+	CancelAddon(ctx context.Context, in *CancelAddonRequest, opts ...grpc.CallOption) (*CancelAddonResponse, error)
 }
 
 type billingServiceClient struct {
@@ -105,6 +114,36 @@ func (c *billingServiceClient) GetPlans(ctx context.Context, in *GetPlansRequest
 	return out, nil
 }
 
+func (c *billingServiceClient) GetEntitlements(ctx context.Context, in *GetEntitlementsRequest, opts ...grpc.CallOption) (*GetEntitlementsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetEntitlementsResponse)
+	err := c.cc.Invoke(ctx, BillingService_GetEntitlements_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) SubscribeAddon(ctx context.Context, in *SubscribeAddonRequest, opts ...grpc.CallOption) (*SubscribeAddonResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SubscribeAddonResponse)
+	err := c.cc.Invoke(ctx, BillingService_SubscribeAddon_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *billingServiceClient) CancelAddon(ctx context.Context, in *CancelAddonRequest, opts ...grpc.CallOption) (*CancelAddonResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelAddonResponse)
+	err := c.cc.Invoke(ctx, BillingService_CancelAddon_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility.
@@ -124,6 +163,12 @@ type BillingServiceServer interface {
 	// The one public/anonymous RPC on this service - called from the still-unauthenticated
 	// registration wizard. See access-rules.yml's billing-service-public rule.
 	GetPlans(context.Context, *GetPlansRequest) (*GetPlansResponse, error)
+	// Tier and active addons without usage, cheap enough for per-request gating.
+	GetEntitlements(context.Context, *GetEntitlementsRequest) (*GetEntitlementsResponse, error)
+	// Gated like an upgrade, plus the addon's required tier if it has one.
+	SubscribeAddon(context.Context, *SubscribeAddonRequest) (*SubscribeAddonResponse, error)
+	// Ends the addon at the end of its billing period.
+	CancelAddon(context.Context, *CancelAddonRequest) (*CancelAddonResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -148,6 +193,15 @@ func (UnimplementedBillingServiceServer) ChangePlan(context.Context, *ChangePlan
 }
 func (UnimplementedBillingServiceServer) GetPlans(context.Context, *GetPlansRequest) (*GetPlansResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPlans not implemented")
+}
+func (UnimplementedBillingServiceServer) GetEntitlements(context.Context, *GetEntitlementsRequest) (*GetEntitlementsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetEntitlements not implemented")
+}
+func (UnimplementedBillingServiceServer) SubscribeAddon(context.Context, *SubscribeAddonRequest) (*SubscribeAddonResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubscribeAddon not implemented")
+}
+func (UnimplementedBillingServiceServer) CancelAddon(context.Context, *CancelAddonRequest) (*CancelAddonResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CancelAddon not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 func (UnimplementedBillingServiceServer) testEmbeddedByValue()                        {}
@@ -260,6 +314,60 @@ func _BillingService_GetPlans_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_GetEntitlements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEntitlementsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).GetEntitlements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_GetEntitlements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).GetEntitlements(ctx, req.(*GetEntitlementsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_SubscribeAddon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscribeAddonRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).SubscribeAddon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_SubscribeAddon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).SubscribeAddon(ctx, req.(*SubscribeAddonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BillingService_CancelAddon_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelAddonRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).CancelAddon(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BillingService_CancelAddon_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).CancelAddon(ctx, req.(*CancelAddonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -286,6 +394,18 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPlans",
 			Handler:    _BillingService_GetPlans_Handler,
+		},
+		{
+			MethodName: "GetEntitlements",
+			Handler:    _BillingService_GetEntitlements_Handler,
+		},
+		{
+			MethodName: "SubscribeAddon",
+			Handler:    _BillingService_SubscribeAddon_Handler,
+		},
+		{
+			MethodName: "CancelAddon",
+			Handler:    _BillingService_CancelAddon_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

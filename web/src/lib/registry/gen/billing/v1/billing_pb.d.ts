@@ -44,6 +44,15 @@ export class Plan extends jspb.Message {
   hasIncludedUnits(): boolean;
   clearIncludedUnits(): Plan;
 
+  getKind(): PlanKind;
+  setKind(value: PlanKind): Plan;
+
+  getAddonKey(): string;
+  setAddonKey(value: string): Plan;
+
+  getRequiresTier(): PlanTier;
+  setRequiresTier(value: PlanTier): Plan;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Plan.AsObject;
   static toObject(includeInstance: boolean, msg: Plan): Plan.AsObject;
@@ -62,6 +71,9 @@ export namespace Plan {
     accountType: AccountType;
     tier: PlanTier;
     includedUnits?: number;
+    kind: PlanKind;
+    addonKey: string;
+    requiresTier: PlanTier;
   };
 
   export enum IncludedUnitsCase {
@@ -180,6 +192,11 @@ export class GetUsageResponse extends jspb.Message {
   hasNextPlanAt(): boolean;
   clearNextPlanAt(): GetUsageResponse;
 
+  getAddonsList(): Array<AddonSubscription>;
+  setAddonsList(value: Array<AddonSubscription>): GetUsageResponse;
+  clearAddonsList(): GetUsageResponse;
+  addAddons(value?: AddonSubscription, index?: number): AddonSubscription;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetUsageResponse.AsObject;
   static toObject(includeInstance: boolean, msg: GetUsageResponse): GetUsageResponse.AsObject;
@@ -198,6 +215,7 @@ export namespace GetUsageResponse {
     planCode: string;
     nextPlanCode?: string;
     nextPlanAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    addonsList: Array<AddonSubscription.AsObject>;
   };
 
   export enum NextPlanCodeCase {
@@ -209,6 +227,176 @@ export namespace GetUsageResponse {
     _NEXT_PLAN_AT_NOT_SET = 0,
     NEXT_PLAN_AT = 8,
   }
+}
+
+export class AddonSubscription extends jspb.Message {
+  getAddonKey(): string;
+  setAddonKey(value: string): AddonSubscription;
+
+  getPlanCode(): string;
+  setPlanCode(value: string): AddonSubscription;
+
+  getPlanName(): string;
+  setPlanName(value: string): AddonSubscription;
+
+  getStatus(): AddonStatus;
+  setStatus(value: AddonStatus): AddonSubscription;
+
+  getEndsAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setEndsAt(value?: google_protobuf_timestamp_pb.Timestamp): AddonSubscription;
+  hasEndsAt(): boolean;
+  clearEndsAt(): AddonSubscription;
+
+  getMetricsList(): Array<UsageMetric>;
+  setMetricsList(value: Array<UsageMetric>): AddonSubscription;
+  clearMetricsList(): AddonSubscription;
+  addMetrics(value?: UsageMetric, index?: number): UsageMetric;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AddonSubscription.AsObject;
+  static toObject(includeInstance: boolean, msg: AddonSubscription): AddonSubscription.AsObject;
+  static serializeBinaryToWriter(message: AddonSubscription, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AddonSubscription;
+  static deserializeBinaryFromReader(message: AddonSubscription, reader: jspb.BinaryReader): AddonSubscription;
+}
+
+export namespace AddonSubscription {
+  export type AsObject = {
+    addonKey: string;
+    planCode: string;
+    planName: string;
+    status: AddonStatus;
+    endsAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+    metricsList: Array<UsageMetric.AsObject>;
+  };
+
+  export enum EndsAtCase {
+    _ENDS_AT_NOT_SET = 0,
+    ENDS_AT = 5,
+  }
+}
+
+export class GetEntitlementsRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetEntitlementsRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: GetEntitlementsRequest): GetEntitlementsRequest.AsObject;
+  static serializeBinaryToWriter(message: GetEntitlementsRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetEntitlementsRequest;
+  static deserializeBinaryFromReader(message: GetEntitlementsRequest, reader: jspb.BinaryReader): GetEntitlementsRequest;
+}
+
+export namespace GetEntitlementsRequest {
+  export type AsObject = {
+  };
+}
+
+export class GetEntitlementsResponse extends jspb.Message {
+  getTier(): PlanTier;
+  setTier(value: PlanTier): GetEntitlementsResponse;
+
+  getAddonsList(): Array<AddonSubscription>;
+  setAddonsList(value: Array<AddonSubscription>): GetEntitlementsResponse;
+  clearAddonsList(): GetEntitlementsResponse;
+  addAddons(value?: AddonSubscription, index?: number): AddonSubscription;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetEntitlementsResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: GetEntitlementsResponse): GetEntitlementsResponse.AsObject;
+  static serializeBinaryToWriter(message: GetEntitlementsResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetEntitlementsResponse;
+  static deserializeBinaryFromReader(message: GetEntitlementsResponse, reader: jspb.BinaryReader): GetEntitlementsResponse;
+}
+
+export namespace GetEntitlementsResponse {
+  export type AsObject = {
+    tier: PlanTier;
+    addonsList: Array<AddonSubscription.AsObject>;
+  };
+}
+
+export class SubscribeAddonRequest extends jspb.Message {
+  getPlanCode(): string;
+  setPlanCode(value: string): SubscribeAddonRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubscribeAddonRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: SubscribeAddonRequest): SubscribeAddonRequest.AsObject;
+  static serializeBinaryToWriter(message: SubscribeAddonRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubscribeAddonRequest;
+  static deserializeBinaryFromReader(message: SubscribeAddonRequest, reader: jspb.BinaryReader): SubscribeAddonRequest;
+}
+
+export namespace SubscribeAddonRequest {
+  export type AsObject = {
+    planCode: string;
+  };
+}
+
+export class SubscribeAddonResponse extends jspb.Message {
+  getStatus(): PlanChangeStatus;
+  setStatus(value: PlanChangeStatus): SubscribeAddonResponse;
+
+  getActionUrl(): string;
+  setActionUrl(value: string): SubscribeAddonResponse;
+  hasActionUrl(): boolean;
+  clearActionUrl(): SubscribeAddonResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubscribeAddonResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: SubscribeAddonResponse): SubscribeAddonResponse.AsObject;
+  static serializeBinaryToWriter(message: SubscribeAddonResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): SubscribeAddonResponse;
+  static deserializeBinaryFromReader(message: SubscribeAddonResponse, reader: jspb.BinaryReader): SubscribeAddonResponse;
+}
+
+export namespace SubscribeAddonResponse {
+  export type AsObject = {
+    status: PlanChangeStatus;
+    actionUrl?: string;
+  };
+
+  export enum ActionUrlCase {
+    _ACTION_URL_NOT_SET = 0,
+    ACTION_URL = 2,
+  }
+}
+
+export class CancelAddonRequest extends jspb.Message {
+  getPlanCode(): string;
+  setPlanCode(value: string): CancelAddonRequest;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CancelAddonRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: CancelAddonRequest): CancelAddonRequest.AsObject;
+  static serializeBinaryToWriter(message: CancelAddonRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CancelAddonRequest;
+  static deserializeBinaryFromReader(message: CancelAddonRequest, reader: jspb.BinaryReader): CancelAddonRequest;
+}
+
+export namespace CancelAddonRequest {
+  export type AsObject = {
+    planCode: string;
+  };
+}
+
+export class CancelAddonResponse extends jspb.Message {
+  getEffectiveAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setEffectiveAt(value?: google_protobuf_timestamp_pb.Timestamp): CancelAddonResponse;
+  hasEffectiveAt(): boolean;
+  clearEffectiveAt(): CancelAddonResponse;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CancelAddonResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: CancelAddonResponse): CancelAddonResponse.AsObject;
+  static serializeBinaryToWriter(message: CancelAddonResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): CancelAddonResponse;
+  static deserializeBinaryFromReader(message: CancelAddonResponse, reader: jspb.BinaryReader): CancelAddonResponse;
+}
+
+export namespace CancelAddonResponse {
+  export type AsObject = {
+    effectiveAt?: google_protobuf_timestamp_pb.Timestamp.AsObject;
+  };
 }
 
 export class ListInvoicesRequest extends jspb.Message {
@@ -402,6 +590,16 @@ export namespace ChangePlanResponse {
   }
 }
 
+export enum PlanKind {
+  PLAN_KIND_UNSPECIFIED = 0,
+  PLAN_KIND_BASE = 1,
+  PLAN_KIND_ADDON = 2,
+}
+export enum AddonStatus {
+  ADDON_STATUS_UNSPECIFIED = 0,
+  ADDON_STATUS_ACTIVE = 1,
+  ADDON_STATUS_ENDING = 2,
+}
 export enum AccountType {
   ACCOUNT_TYPE_UNSPECIFIED = 0,
   ACCOUNT_TYPE_INDIVIDUAL = 1,

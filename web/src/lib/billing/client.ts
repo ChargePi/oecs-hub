@@ -2,17 +2,23 @@ import { normalizeAndDispatch } from '@/lib/errors'
 import { BillingServiceClient } from '@/lib/registry/gen/billing/v1/BillingServiceClientPb'
 import {
   AccountType as ProtoAccountType,
+  AddonStatus as ProtoAddonStatus,
+  CancelAddonRequest,
   ChangePlanRequest,
   GetPaymentPortalUrlRequest,
   GetPlansRequest,
   GetUsageRequest,
   ListInvoicesRequest,
   PlanChangeStatus as ProtoPlanChangeStatus,
+  PlanKind as ProtoPlanKind,
   PlanTier as ProtoPlanTier,
+  SubscribeAddonRequest,
+  UsageMetric as ProtoUsageMetric,
 } from '@/lib/registry/gen/billing/v1/billing_pb'
 
 import { BILLING_API_BASE } from './config'
 import type {
+  AddonPlan,
   Invoice,
   InvoicesPage,
   Plan,
@@ -21,6 +27,7 @@ import type {
   PlanChangeStatus,
   PlanTier,
   Usage,
+  UsageMetric,
 } from './types'
 
 const ACCOUNT_TYPE_FROM_PROTO: Record<ProtoAccountType, PlanAccountType | undefined> = {
@@ -48,6 +55,15 @@ const PLAN_CHANGE_STATUS_FROM_PROTO: Record<ProtoPlanChangeStatus, PlanChangeSta
 // user/customer id is ever set on the request itself.
 const client = new BillingServiceClient(BILLING_API_BASE, null, null)
 
+function metricFromProto(m: ProtoUsageMetric): UsageMetric {
+  return {
+    code: m.getCode(),
+    name: m.getName(),
+    consumedUnits: m.getConsumedUnits(),
+    includedUnits: m.hasIncludedUnits() ? m.getIncludedUnits() : undefined,
+  }
+}
+
 function mapError(err: unknown, context: string): never {
   normalizeAndDispatch(err, context, 'billing request failed')
 }
@@ -61,14 +77,17 @@ export async function getUsage(): Promise<Usage> {
       tier: TIER_FROM_PROTO[resp.getTier()],
       nextPlanCode: resp.hasNextPlanCode() ? resp.getNextPlanCode() : undefined,
       nextPlanAt: resp.getNextPlanAt()?.toDate().toISOString(),
-      metrics: resp.getMetricsList().map((m) => ({
-        code: m.getCode(),
-        name: m.getName(),
-        consumedUnits: m.getConsumedUnits(),
-        includedUnits: m.hasIncludedUnits() ? m.getIncludedUnits() : undefined,
-      })),
+      metrics: resp.getMetricsList().map(metricFromProto),
       periodStart: resp.getPeriodStart()?.toDate().toISOString() ?? '',
       periodEnd: resp.getPeriodEnd()?.toDate().toISOString() ?? '',
+      addons: resp.getAddonsList().map((a) => ({
+        key: a.getAddonKey(),
+        planCode: a.getPlanCode(),
+        planName: a.getPlanName(),
+        status: a.getStatus() === ProtoAddonStatus.ADDON_STATUS_ENDING ? 'ending' : 'active',
+        endsAt: a.getEndsAt()?.toDate().toISOString(),
+        metrics: a.getMetricsList().map(metricFromProto),
+      })),
     }
   } catch (err) {
     mapError(err, 'getUsage')
@@ -159,5 +178,47 @@ export async function getPlans(): Promise<Plan[]> {
       .filter((p): p is Plan => p !== null)
   } catch (err) {
     mapError(err, 'getPlans')
+  }
+}
+
+export async function getAddonPlans(): Promise<AddonPlan[]> {
+  try {
+    const resp = await client.getPlans(new GetPlansRequest(), {})
+    return resp
+      .getPlansList()
+      .filter((p) => p.getKind() === ProtoPlanKind.PLAN_KIND_ADDON)
+      .map((p) => ({
+        code: p.getCode(),
+        key: p.getAddonKey(),
+        displayName: p.getDisplayName(),
+        amountCents: p.getAmountCents(),
+        currency: p.getCurrency(),
+        interval: p.getInterval(),
+        requiresTier: TIER_FROM_PROTO[p.getRequiresTier()],
+        ...(p.hasIncludedUnits() ? { includedUnits: p.getIncludedUnits() } : {}),
+      }))
+  } catch (err) {
+    mapError(err, 'getAddonPlans')
+  }
+}
+
+export async function subscribeAddon(planCode: string): Promise<PlanChangeResult> {
+  try {
+    const resp = await client.subscribeAddon(new SubscribeAddonRequest().setPlanCode(planCode), {})
+    const status = PLAN_CHANGE_STATUS_FROM_PROTO[resp.getStatus()]
+    if (!status) throw new Error(`unknown addon change status ${resp.getStatus()}`)
+
+    return { status, actionUrl: resp.hasActionUrl() ? resp.getActionUrl() : undefined }
+  } catch (err) {
+    mapError(err, 'subscribeAddon')
+  }
+}
+
+export async function cancelAddon(planCode: string): Promise<string | undefined> {
+  try {
+    const resp = await client.cancelAddon(new CancelAddonRequest().setPlanCode(planCode), {})
+    return resp.getEffectiveAt()?.toDate().toISOString()
+  } catch (err) {
+    mapError(err, 'cancelAddon')
   }
 }

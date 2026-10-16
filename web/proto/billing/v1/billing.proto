@@ -19,6 +19,25 @@ service BillingService {
   // The one public/anonymous RPC on this service - called from the still-unauthenticated
   // registration wizard. See access-rules.yml's billing-service-public rule.
   rpc GetPlans(GetPlansRequest) returns (GetPlansResponse);
+  // Tier and active addons without usage, cheap enough for per-request gating.
+  rpc GetEntitlements(GetEntitlementsRequest) returns (GetEntitlementsResponse);
+  // Gated like an upgrade, plus the addon's required tier if it has one.
+  rpc SubscribeAddon(SubscribeAddonRequest) returns (SubscribeAddonResponse);
+  // Ends the addon at the end of its billing period.
+  rpc CancelAddon(CancelAddonRequest) returns (CancelAddonResponse);
+}
+
+enum PlanKind {
+  PLAN_KIND_UNSPECIFIED = 0;
+  PLAN_KIND_BASE = 1;
+  PLAN_KIND_ADDON = 2;
+}
+
+enum AddonStatus {
+  ADDON_STATUS_UNSPECIFIED = 0;
+  ADDON_STATUS_ACTIVE = 1;
+  // Still active until ends_at, then terminated.
+  ADDON_STATUS_ENDING = 2;
 }
 
 enum AccountType {
@@ -51,6 +70,11 @@ message Plan {
   // The plan's free monthly allowance, unset if it has none (e.g. a paid,
   // pay-per-use plan).
   optional double included_units = 8;
+  PlanKind kind = 9;
+  // Set for addon plans, e.g. "planning_agent".
+  string addon_key = 10;
+  // The base tier an addon plan requires.
+  PlanTier requires_tier = 11;
 }
 
 message GetPlansResponse {
@@ -78,6 +102,41 @@ message GetUsageResponse {
   // Set while a downgrade is scheduled for the end of the current period.
   optional string next_plan_code = 7;
   optional google.protobuf.Timestamp next_plan_at = 8;
+  repeated AddonSubscription addons = 9;
+}
+
+message AddonSubscription {
+  string addon_key = 1;
+  string plan_code = 2;
+  string plan_name = 3;
+  AddonStatus status = 4;
+  optional google.protobuf.Timestamp ends_at = 5;
+  // Empty on GetEntitlements.
+  repeated UsageMetric metrics = 6;
+}
+
+message GetEntitlementsRequest {}
+
+message GetEntitlementsResponse {
+  PlanTier tier = 1;
+  repeated AddonSubscription addons = 2;
+}
+
+message SubscribeAddonRequest {
+  string plan_code = 1;
+}
+
+message SubscribeAddonResponse {
+  PlanChangeStatus status = 1;
+  optional string action_url = 2;
+}
+
+message CancelAddonRequest {
+  string plan_code = 1;
+}
+
+message CancelAddonResponse {
+  google.protobuf.Timestamp effective_at = 1;
 }
 
 message ListInvoicesRequest {

@@ -17,6 +17,30 @@ export interface Usage {
   metrics: UsageMetric[]
   periodStart: string
   periodEnd: string
+  addons: Addon[]
+}
+
+export type AddonStatus = 'active' | 'ending'
+
+export interface Addon {
+  key: string
+  planCode: string
+  planName: string
+  status: AddonStatus
+  endsAt?: string
+  metrics: UsageMetric[]
+}
+
+// An optional recurring plan subscribed next to the base plan.
+export interface AddonPlan {
+  code: string
+  key: string
+  displayName: string
+  amountCents: number
+  currency: string
+  interval: string
+  requiresTier?: PlanTier
+  includedUnits?: number
 }
 
 export interface Invoice {
@@ -52,10 +76,7 @@ export interface Plan {
 }
 
 export type PlanChangeStatus =
-  | 'applied'
-  | 'scheduled'
-  | 'outstanding-invoices'
-  | 'payment-method-required'
+  'applied' | 'scheduled' | 'outstanding-invoices' | 'payment-method-required'
 
 export interface PlanChangeResult {
   status: PlanChangeStatus

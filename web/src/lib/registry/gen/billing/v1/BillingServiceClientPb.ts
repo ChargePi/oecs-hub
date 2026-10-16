@@ -254,5 +254,134 @@ export class BillingServiceClient {
     this.methodDescriptorGetPlans);
   }
 
+  methodDescriptorGetEntitlements = new grpcWeb.MethodDescriptor(
+    '/billing.v1.BillingService/GetEntitlements',
+    grpcWeb.MethodType.UNARY,
+    billing_v1_billing_pb.GetEntitlementsRequest,
+    billing_v1_billing_pb.GetEntitlementsResponse,
+    (request: billing_v1_billing_pb.GetEntitlementsRequest) => {
+      return request.serializeBinary();
+    },
+    billing_v1_billing_pb.GetEntitlementsResponse.deserializeBinary
+  );
+
+  getEntitlements(
+    request: billing_v1_billing_pb.GetEntitlementsRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<billing_v1_billing_pb.GetEntitlementsResponse>;
+
+  getEntitlements(
+    request: billing_v1_billing_pb.GetEntitlementsRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.GetEntitlementsResponse) => void): grpcWeb.ClientReadableStream<billing_v1_billing_pb.GetEntitlementsResponse>;
+
+  getEntitlements(
+    request: billing_v1_billing_pb.GetEntitlementsRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.GetEntitlementsResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/billing.v1.BillingService/GetEntitlements',
+        request,
+        metadata || {},
+        this.methodDescriptorGetEntitlements,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/billing.v1.BillingService/GetEntitlements',
+    request,
+    metadata || {},
+    this.methodDescriptorGetEntitlements);
+  }
+
+  methodDescriptorSubscribeAddon = new grpcWeb.MethodDescriptor(
+    '/billing.v1.BillingService/SubscribeAddon',
+    grpcWeb.MethodType.UNARY,
+    billing_v1_billing_pb.SubscribeAddonRequest,
+    billing_v1_billing_pb.SubscribeAddonResponse,
+    (request: billing_v1_billing_pb.SubscribeAddonRequest) => {
+      return request.serializeBinary();
+    },
+    billing_v1_billing_pb.SubscribeAddonResponse.deserializeBinary
+  );
+
+  subscribeAddon(
+    request: billing_v1_billing_pb.SubscribeAddonRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<billing_v1_billing_pb.SubscribeAddonResponse>;
+
+  subscribeAddon(
+    request: billing_v1_billing_pb.SubscribeAddonRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.SubscribeAddonResponse) => void): grpcWeb.ClientReadableStream<billing_v1_billing_pb.SubscribeAddonResponse>;
+
+  subscribeAddon(
+    request: billing_v1_billing_pb.SubscribeAddonRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.SubscribeAddonResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/billing.v1.BillingService/SubscribeAddon',
+        request,
+        metadata || {},
+        this.methodDescriptorSubscribeAddon,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/billing.v1.BillingService/SubscribeAddon',
+    request,
+    metadata || {},
+    this.methodDescriptorSubscribeAddon);
+  }
+
+  methodDescriptorCancelAddon = new grpcWeb.MethodDescriptor(
+    '/billing.v1.BillingService/CancelAddon',
+    grpcWeb.MethodType.UNARY,
+    billing_v1_billing_pb.CancelAddonRequest,
+    billing_v1_billing_pb.CancelAddonResponse,
+    (request: billing_v1_billing_pb.CancelAddonRequest) => {
+      return request.serializeBinary();
+    },
+    billing_v1_billing_pb.CancelAddonResponse.deserializeBinary
+  );
+
+  cancelAddon(
+    request: billing_v1_billing_pb.CancelAddonRequest,
+    metadata?: grpcWeb.Metadata | null): Promise<billing_v1_billing_pb.CancelAddonResponse>;
+
+  cancelAddon(
+    request: billing_v1_billing_pb.CancelAddonRequest,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.CancelAddonResponse) => void): grpcWeb.ClientReadableStream<billing_v1_billing_pb.CancelAddonResponse>;
+
+  cancelAddon(
+    request: billing_v1_billing_pb.CancelAddonRequest,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: billing_v1_billing_pb.CancelAddonResponse) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/billing.v1.BillingService/CancelAddon',
+        request,
+        metadata || {},
+        this.methodDescriptorCancelAddon,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/billing.v1.BillingService/CancelAddon',
+    request,
+    metadata || {},
+    this.methodDescriptorCancelAddon);
+  }
+
 }
 

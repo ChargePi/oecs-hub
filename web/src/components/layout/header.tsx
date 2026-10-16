@@ -6,6 +6,7 @@ import { AuthStatus } from '@/features/auth/auth-status'
 import { AssistantToggle } from '@/features/chat/assistant-toggle'
 import { SearchBar } from '@/components/search-bar'
 import { useIdentity } from '@/lib/auth/use-identity'
+import { usePlannerAccess } from '@/lib/billing/use-planner-access'
 
 const PLANNER_ENABLED = import.meta.env.VITE_FEATURE_PLANNER === 'true'
 
@@ -18,6 +19,7 @@ const NAV_LINKS = [
 export function Header() {
   const { identity } = useIdentity()
   const { pathname } = useLocation()
+  const plannerAccess = usePlannerAccess(!!identity && PLANNER_ENABLED)
   const navLinks = [
     ...NAV_LINKS,
     ...(identity ? [{ to: '/my-chargers', label: 'My chargers' }] : []),
@@ -53,12 +55,12 @@ export function Header() {
               {link.label}
             </NavLink>
           ))}
-          {identity && PLANNER_ENABLED && (
+          {plannerAccess && (
             <a
               href="/planner/"
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              Site planner
+              Planner
             </a>
           )}
         </nav>
