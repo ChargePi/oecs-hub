@@ -2,11 +2,11 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ChargePi/oecs-hub/internal/manufacturer"
 	"github.com/ChargePi/oecs-hub/internal/pagination"
 	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
 )
 
 // ManufacturerService is the subset of manufacturer.Service the
@@ -36,16 +36,17 @@ type ListManufacturersOutput struct {
 
 type listManufacturersHandler struct {
 	manufacturers ManufacturerService
+	logger        *zap.Logger
 }
 
-func newListManufacturersHandler(manufacturers ManufacturerService) *listManufacturersHandler {
-	return &listManufacturersHandler{manufacturers: manufacturers}
+func newListManufacturersHandler(manufacturers ManufacturerService, logger *zap.Logger) *listManufacturersHandler {
+	return &listManufacturersHandler{manufacturers: manufacturers, logger: logger}
 }
 
 func (h *listManufacturersHandler) Handle(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in ListManufacturersInput
 	if err := req.BindArguments(&in); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to bind arguments: %v", err)), nil
+		return mcp.NewToolResultError("invalid arguments"), nil
 	}
 
 	var query, country *string
@@ -58,14 +59,14 @@ func (h *listManufacturersHandler) Handle(ctx context.Context, req mcp.CallToolR
 
 	offset, err := pagination.DecodeOffset(in.PageToken)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("invalid pageToken: %v", err)), nil
+		return mcp.NewToolResultError("invalid pageToken"), nil
 	}
 
 	limit := pagination.ClampPageSize(in.PageSize, manufacturer.DefaultPageSize, manufacturer.MaxPageSize)
 
 	results, total, err := h.manufacturers.List(ctx, query, country, limit, offset)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return toolFailure(h.logger, "failed to list manufacturers", err), nil
 	}
 
 	out := ListManufacturersOutput{

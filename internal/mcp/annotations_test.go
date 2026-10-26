@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	"github.com/mark3labs/mcp-go/server"
+	"go.uber.org/zap"
 )
 
 func TestToolAnnotations(t *testing.T) {
 	s := server.NewMCPServer("test", "0.0.0")
-	RegisterTools(s, nil, nil)
-	RegisterUserTools(s, nil, nil)
+	RegisterTools(s, zap.NewNop(), nil, nil)
+	RegisterUserTools(s, zap.NewNop(), nil, nil)
 
 	actions := map[string]struct{}{"propose_favorite_change": {}, "propose_project_change": {}, "propose_rating": {}}
 

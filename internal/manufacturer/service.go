@@ -146,11 +146,10 @@ func (s *Service) ResolveIDForIdentity(ctx context.Context, ownerIdentityID uuid
 	m := &Manufacturer{Name: name, Country: country}
 
 	err := s.repo.FindOrCreateForIdentity(ctx, ownerIdentityID, m)
-	if err != nil {
-		if errors.Is(err, ErrOwnershipConflict) {
-			return uuid.Nil, err
-		}
-
+	switch {
+	case errors.Is(err, ErrOwnershipConflict):
+		return uuid.Nil, err
+	case err != nil:
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 

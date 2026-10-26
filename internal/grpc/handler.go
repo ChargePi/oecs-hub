@@ -87,7 +87,7 @@ func (h *Handler) SearchChargers(ctx context.Context, req *registryv1.SearchChar
 
 	chargers, total, err := h.charger.Search(ctx, filters, limit, offset)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, internalError(ctx, codes.Internal, "failed to search chargers", err)
 	}
 
 	return &registryv1.SearchChargersResponse{
@@ -192,7 +192,7 @@ func searchChargersFilters(req *registryv1.SearchChargersRequest) (charger.Searc
 	}
 
 	if err := userchargers.ValidateRatingFilters(filters.RatingFilters); err != nil {
-		return filters, status.Errorf(codes.InvalidArgument, "invalid rating filter: %v", err)
+		return filters, status.Error(codes.InvalidArgument, "invalid rating filter")
 	}
 
 	return filters, nil
@@ -267,7 +267,7 @@ func (h *Handler) GetManufacturers(ctx context.Context, req *registryv1.GetManuf
 
 	summaries, total, err := h.manufacturer.List(ctx, req.Query, req.Country, limit, offset)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, internalError(ctx, codes.Internal, "failed to list manufacturers", err)
 	}
 
 	return &registryv1.GetManufacturersResponse{
@@ -284,12 +284,11 @@ func (h *Handler) GetCharger(ctx context.Context, req *registryv1.GetChargerRequ
 	}
 
 	c, err := h.charger.Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, charger.ErrNotFound) {
-			return nil, status.Error(codes.NotFound, "charger not found")
-		}
-
-		return nil, status.Error(codes.Internal, err.Error())
+	switch {
+	case errors.Is(err, charger.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "charger not found")
+	case err != nil:
+		return nil, internalError(ctx, codes.Internal, "failed to get charger", err)
 	}
 
 	return &registryv1.GetChargerResponse{Variant: chargerToProto(c)}, nil
@@ -302,17 +301,16 @@ func (h *Handler) GetManufacturer(ctx context.Context, req *registryv1.GetManufa
 	}
 
 	m, err := h.manufacturer.Get(ctx, id)
-	if err != nil {
-		if errors.Is(err, manufacturer.ErrNotFound) {
-			return nil, status.Error(codes.NotFound, "manufacturer not found")
-		}
-
-		return nil, status.Error(codes.Internal, err.Error())
+	switch {
+	case errors.Is(err, manufacturer.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "manufacturer not found")
+	case err != nil:
+		return nil, internalError(ctx, codes.Internal, "failed to get manufacturer", err)
 	}
 
 	productNodes, err := h.graph.GetManufacturerGraph(ctx, id)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, internalError(ctx, codes.Internal, "failed to get manufacturer products", err)
 	}
 
 	var allIDs []uuid.UUID
@@ -322,7 +320,7 @@ func (h *Handler) GetManufacturer(ctx context.Context, req *registryv1.GetManufa
 
 	chargers, err := h.charger.GetMany(ctx, allIDs)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, internalError(ctx, codes.Internal, "failed to get manufacturer chargers", err)
 	}
 
 	byID := make(map[uuid.UUID]*charger.Charger, len(chargers))
@@ -380,12 +378,11 @@ func (h *Handler) SubmitChargerSpec(ctx context.Context, req *registryv1.SubmitC
 	}
 
 	c, err := h.charger.Submit(ctx, req.GetSpec(), identityID, companyName, identity.Email)
-	if err != nil {
-		if errors.Is(err, charger.ErrInvalidSpec) {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		return nil, status.Error(codes.Internal, err.Error())
+	switch {
+	case errors.Is(err, charger.ErrInvalidSpec):
+		return nil, status.Error(codes.InvalidArgument, charger.ErrInvalidSpec.Error())
+	case err != nil:
+		return nil, internalError(ctx, codes.Internal, "failed to submit charger spec", err)
 	}
 
 	return &registryv1.SubmitChargerSpecResponse{
@@ -419,7 +416,7 @@ func (h *Handler) SubmitVariantRating(ctx context.Context, req *registryv1.Submi
 
 	summary, err := h.ratings.SubmitRating(ctx, variantID, identityID, inputs)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &registryv1.SubmitVariantRatingResponse{

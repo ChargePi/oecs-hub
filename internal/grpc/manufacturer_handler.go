@@ -73,7 +73,7 @@ func (h *ManufacturerHandler) GetManufacturerChargers(ctx context.Context, req *
 
 	chargers, total, err := h.charger.Search(ctx, filters, limit, offset)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, internalError(ctx, codes.Internal, "failed to list chargers", err)
 	}
 
 	return &manufacturerv1.GetManufacturerChargersResponse{
@@ -95,12 +95,11 @@ func (h *ManufacturerHandler) CancelSubmission(ctx context.Context, req *manufac
 	}
 
 	c, err := h.charger.CancelSubmission(ctx, id, identityID)
-	if err != nil {
-		if errors.Is(err, charger.ErrNotFound) {
-			return nil, status.Error(codes.NotFound, "submission not found")
-		}
-
-		return nil, status.Error(codes.Internal, err.Error())
+	switch {
+	case errors.Is(err, charger.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "submission not found")
+	case err != nil:
+		return nil, internalError(ctx, codes.Internal, "failed to cancel submission", err)
 	}
 
 	return &manufacturerv1.CancelSubmissionResponse{Charger: chargerToManufacturerSummaryProto(c)}, nil
@@ -122,16 +121,13 @@ func (h *ManufacturerHandler) EditSpecification(ctx context.Context, req *manufa
 	}
 
 	c, err := h.charger.EditSpecification(ctx, id, identityID, req.GetSpec())
-	if err != nil {
-		if errors.Is(err, charger.ErrInvalidSpec) {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
-		if errors.Is(err, charger.ErrNotFound) {
-			return nil, status.Error(codes.NotFound, "submission not found")
-		}
-
-		return nil, status.Error(codes.Internal, err.Error())
+	switch {
+	case errors.Is(err, charger.ErrInvalidSpec):
+		return nil, status.Error(codes.InvalidArgument, charger.ErrInvalidSpec.Error())
+	case errors.Is(err, charger.ErrNotFound):
+		return nil, status.Error(codes.NotFound, "submission not found")
+	case err != nil:
+		return nil, internalError(ctx, codes.Internal, "failed to edit specification", err)
 	}
 
 	return &manufacturerv1.EditSpecificationResponse{Variant: chargerToProto(c)}, nil

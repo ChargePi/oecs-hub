@@ -42,7 +42,7 @@ func (h *PendingActionHandler) GetPendingAction(ctx context.Context, req *userch
 
 	state, err := h.actions.Get(ctx, id)
 	if err != nil {
-		return nil, pendingActionError(err)
+		return nil, pendingActionError(ctx, err)
 	}
 
 	return &userchargersv1.GetPendingActionResponse{Action: pendingActionToProto(state)}, nil
@@ -51,7 +51,7 @@ func (h *PendingActionHandler) GetPendingAction(ctx context.Context, req *userch
 func (h *PendingActionHandler) ListPendingActions(ctx context.Context, req *userchargersv1.ListPendingActionsRequest) (*userchargersv1.ListPendingActionsResponse, error) {
 	states, err := h.actions.ListByConversation(ctx, req.GetConversationId())
 	if err != nil {
-		return nil, pendingActionError(err)
+		return nil, pendingActionError(ctx, err)
 	}
 
 	actions := make([]*userchargersv1.PendingAction, 0, len(states))
@@ -70,7 +70,7 @@ func (h *PendingActionHandler) ConfirmPendingAction(ctx context.Context, req *us
 
 	state, err := h.actions.Confirm(ctx, id)
 	if err != nil {
-		return nil, pendingActionError(err)
+		return nil, pendingActionError(ctx, err)
 	}
 
 	return &userchargersv1.ConfirmPendingActionResponse{Action: pendingActionToProto(state)}, nil
@@ -84,7 +84,7 @@ func (h *PendingActionHandler) RejectPendingAction(ctx context.Context, req *use
 
 	state, err := h.actions.Reject(ctx, id)
 	if err != nil {
-		return nil, pendingActionError(err)
+		return nil, pendingActionError(ctx, err)
 	}
 
 	return &userchargersv1.RejectPendingActionResponse{Action: pendingActionToProto(state)}, nil
@@ -101,16 +101,16 @@ func parseActionID(raw string) (uuid.UUID, error) {
 
 // pendingActionError adds the pending-action errors to userChargersError's mapping, which
 // still covers whatever the confirmed write itself returns (paid plan, missing project...).
-func pendingActionError(err error) error {
+func pendingActionError(ctx context.Context, err error) error {
 	switch {
 	case errors.Is(err, useraction.ErrNotFound):
 		return status.Error(codes.NotFound, useraction.ErrNotFound.Error())
 	case errors.Is(err, useraction.ErrNotPending):
-		return status.Error(codes.FailedPrecondition, err.Error())
+		return status.Error(codes.FailedPrecondition, useraction.ErrNotPending.Error())
 	case errors.Is(err, useraction.ErrInvalidAction):
-		return status.Error(codes.InvalidArgument, err.Error())
+		return status.Error(codes.InvalidArgument, useraction.ErrInvalidAction.Error())
 	default:
-		return userChargersError(err)
+		return userChargersError(ctx, err)
 	}
 }
 

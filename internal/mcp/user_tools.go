@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"google.golang.org/grpc/status"
+	"go.uber.org/zap"
 )
 
 // conversationIDHeader names the chat conversation an MCP call is made from. Set by the
@@ -185,8 +185,8 @@ type ListConversationActionsOutput struct {
 
 // RegisterUserTools adds the tools that act for the signed-in user. Every one requires an
 // identity resolved by HTTPContextFunc; the writes only ever propose.
-func RegisterUserTools(s *server.MCPServer, userChargers UserChargersReader, actions ActionProposer) {
-	h := &userToolsHandler{userChargers: userChargers, actions: actions}
+func RegisterUserTools(s *server.MCPServer, logger *zap.Logger, userChargers UserChargersReader, actions ActionProposer) {
+	h := &userToolsHandler{userChargers: userChargers, actions: actions, logger: logger}
 
 	s.AddTool(mcp.NewTool("list_my_projects",
 		mcp.WithDescription(listMyProjectsDescription),
@@ -234,17 +234,18 @@ func RegisterUserTools(s *server.MCPServer, userChargers UserChargersReader, act
 type userToolsHandler struct {
 	userChargers UserChargersReader
 	actions      ActionProposer
+	logger       *zap.Logger
 }
 
 func (h *userToolsHandler) listMyProjects(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	ownerID, err := auth.RequireUserChargersIdentity(ctx)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	projects, _, err := h.userChargers.ListProjects(ctx, ownerID, userchargers.MaxPageSize, 0)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	out := ListMyProjectsOutput{Projects: make([]MyProjectOutput, 0, len(projects))}
@@ -268,12 +269,12 @@ func (h *userToolsHandler) listMyProjects(ctx context.Context, _ mcp.CallToolReq
 func (h *userToolsHandler) listMyFavorites(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	ownerID, err := auth.RequireUserChargersIdentity(ctx)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	favorites, _, err := h.userChargers.ListFavorites(ctx, ownerID, userchargers.MaxPageSize, 0)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	out := ListMyFavoritesOutput{Favorites: make([]MyFavoriteOutput, 0, len(favorites))}
@@ -291,7 +292,7 @@ func (h *userToolsHandler) listMyFavorites(ctx context.Context, _ mcp.CallToolRe
 func (h *userToolsHandler) proposeFavoriteChange(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in ProposeFavoriteChangeInput
 	if err := req.BindArguments(&in); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to bind arguments: %v", err)), nil
+		return mcp.NewToolResultError("invalid arguments"), nil
 	}
 
 	variantID, err := uuid.Parse(in.ChargerVariantID)
@@ -301,7 +302,7 @@ func (h *userToolsHandler) proposeFavoriteChange(ctx context.Context, req mcp.Ca
 
 	action, err := h.actions.ProposeFavorite(ctx, variantID, in.Favorited)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	return structured(proposedOutput(action)), nil
@@ -310,7 +311,7 @@ func (h *userToolsHandler) proposeFavoriteChange(ctx context.Context, req mcp.Ca
 func (h *userToolsHandler) proposeProjectChange(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in ProposeProjectChangeInput
 	if err := req.BindArguments(&in); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to bind arguments: %v", err)), nil
+		return mcp.NewToolResultError("invalid arguments"), nil
 	}
 
 	var payload useraction.ProjectPayload
@@ -354,7 +355,7 @@ func (h *userToolsHandler) proposeProjectChange(ctx context.Context, req mcp.Cal
 
 	action, err := h.actions.ProposeProject(ctx, payload)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	return structured(proposedOutput(action)), nil
@@ -363,7 +364,7 @@ func (h *userToolsHandler) proposeProjectChange(ctx context.Context, req mcp.Cal
 func (h *userToolsHandler) proposeRating(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in ProposeRatingInput
 	if err := req.BindArguments(&in); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to bind arguments: %v", err)), nil
+		return mcp.NewToolResultError("invalid arguments"), nil
 	}
 
 	variantID, err := uuid.Parse(in.ChargerVariantID)
@@ -378,7 +379,7 @@ func (h *userToolsHandler) proposeRating(ctx context.Context, req mcp.CallToolRe
 
 	action, err := h.actions.ProposeRating(ctx, variantID, ratings)
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	return structured(proposedOutput(action)), nil
@@ -387,7 +388,7 @@ func (h *userToolsHandler) proposeRating(ctx context.Context, req mcp.CallToolRe
 func (h *userToolsHandler) listConversationActions(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	states, err := h.actions.ListByConversation(ctx, useraction.ConversationIDFromContext(ctx))
 	if err != nil {
-		return toolError(err), nil
+		return toolError(h.logger, err), nil
 	}
 
 	out := ListConversationActionsOutput{Actions: make([]ConversationActionOutput, 0, len(states))}
@@ -416,16 +417,6 @@ func proposedOutput(action *useraction.Action) ProposedActionOutput {
 
 func structured(out any) *mcp.CallToolResult {
 	return &mcp.CallToolResult{Content: []mcp.Content{}, StructuredContent: out}
-}
-
-// toolError reports err to the calling model as a tool error it can relay to the user,
-// unwrapping gRPC status errors (auth failures) to their bare message.
-func toolError(err error) *mcp.CallToolResult {
-	if st, ok := status.FromError(err); ok {
-		return mcp.NewToolResultError(st.Message())
-	}
-
-	return mcp.NewToolResultError(err.Error())
 }
 
 func optional(value string) *string {

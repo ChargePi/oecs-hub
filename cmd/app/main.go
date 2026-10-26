@@ -253,9 +253,9 @@ var (
 			preferencesSvc := preferences.NewService(postgresStorage.NewPreferencesRepository(db))
 
 			mcpSrv := server.NewMCPServer(serviceName, serviceVersion)
-			mcp.RegisterTools(mcpSrv, chargerSvc, manufacturerSvc)
-			mcp.RegisterUserTools(mcpSrv, userChargersSvc, pendingActionSvc)
-			mcp.RegisterPreferencesTool(mcpSrv, preferencesSvc)
+			mcp.RegisterTools(mcpSrv, logger, chargerSvc, manufacturerSvc)
+			mcp.RegisterUserTools(mcpSrv, logger, userChargersSvc, pendingActionSvc)
+			mcp.RegisterPreferencesTool(mcpSrv, logger, preferencesSvc)
 			// The user tools act for whoever the gateway-secret-backed x-user-* headers name,
 			// resolved per request exactly like the gRPC interceptor does.
 			mcpHandler := server.NewStreamableHTTPServer(mcpSrv,

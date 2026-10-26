@@ -111,11 +111,10 @@ func (r *UserChargersRepository) GetProject(ctx context.Context, identityID, id 
 	var entity userProjectEntity
 
 	err := r.db.WithContext(ctx).Where("id = ? AND identity_id = ?", id, identityID).First(&entity).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, userchargers.ErrNotFound
-		}
-
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, userchargers.ErrNotFound
+	case err != nil:
 		return nil, fmt.Errorf("get project: %w", err)
 	}
 
@@ -205,11 +204,10 @@ func (r *UserChargersRepository) ApplyChargerChanges(ctx context.Context, identi
 		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Where("id = ? AND identity_id = ?", id, identityID).
 			First(&entity).Error
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return userchargers.ErrNotFound
-			}
-
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return userchargers.ErrNotFound
+		case err != nil:
 			return fmt.Errorf("lock project: %w", err)
 		}
 
@@ -337,12 +335,11 @@ func (r *UserChargersRepository) UpsertRatings(ctx context.Context, variantID, r
 
 		return nil
 	})
-	if err != nil {
-		if errors.Is(err, userchargers.ErrVariantNotFound) {
-			return nil, userchargers.ErrVariantNotFound
-		}
-
-		return nil, err
+	switch {
+	case errors.Is(err, userchargers.ErrVariantNotFound):
+		return nil, userchargers.ErrVariantNotFound
+	case err != nil:
+		return nil, fmt.Errorf("upsert ratings: %w", err)
 	}
 
 	return summary, nil

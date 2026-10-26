@@ -30,11 +30,10 @@ func (r *ChargerRepository) Get(ctx context.Context, id uuid.UUID) (*charger.Cha
 	err := r.db.WithContext(ctx).
 		Where("id = ? AND status = ?", id, string(charger.StatusVerified)).
 		First(&entity).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, charger.ErrNotFound
-		}
-
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, charger.ErrNotFound
+	case err != nil:
 		return nil, fmt.Errorf("get charger: %w", err)
 	}
 
@@ -44,11 +43,10 @@ func (r *ChargerRepository) Get(ctx context.Context, id uuid.UUID) (*charger.Cha
 func (r *ChargerRepository) GetForReview(ctx context.Context, id uuid.UUID) (*charger.Charger, error) {
 	var entity chargerVariantEntity
 	err := r.db.WithContext(ctx).First(&entity, "id = ?", id).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, charger.ErrNotFound
-		}
-
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, charger.ErrNotFound
+	case err != nil:
 		return nil, fmt.Errorf("get charger for review: %w", err)
 	}
 

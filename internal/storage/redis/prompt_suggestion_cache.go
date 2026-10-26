@@ -42,13 +42,12 @@ func (c *PromptSuggestionCache) Get(ctx context.Context, topic promptsuggestion.
 	defer span.End()
 
 	raw, err := c.client.Get(ctx, key).Bytes()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			span.SetAttributes(attribute.Bool("cache.hit", false))
+	switch {
+	case errors.Is(err, redis.Nil):
+		span.SetAttributes(attribute.Bool("cache.hit", false))
 
-			return nil, false, nil
-		}
-
+		return nil, false, nil
+	case err != nil:
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 

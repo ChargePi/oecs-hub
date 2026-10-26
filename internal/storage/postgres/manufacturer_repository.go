@@ -25,11 +25,10 @@ func NewManufacturerRepository(db *gorm.DB) *ManufacturerRepository {
 func (r *ManufacturerRepository) Get(ctx context.Context, id uuid.UUID) (*manufacturer.Manufacturer, error) {
 	var entity manufacturerEntity
 	err := r.db.WithContext(ctx).First(&entity, "id = ?", id).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, manufacturer.ErrNotFound
-		}
-
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, manufacturer.ErrNotFound
+	case err != nil:
 		return nil, fmt.Errorf("get manufacturer: %w", err)
 	}
 

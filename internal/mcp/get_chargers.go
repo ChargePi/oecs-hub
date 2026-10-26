@@ -7,6 +7,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/charger"
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
 )
 
 type GetChargersInput struct {
@@ -19,16 +20,17 @@ type GetChargersOutput struct {
 
 type getChargersHandler struct {
 	chargers ChargerService
+	logger   *zap.Logger
 }
 
-func newGetChargersHandler(chargers ChargerService) *getChargersHandler {
-	return &getChargersHandler{chargers: chargers}
+func newGetChargersHandler(chargers ChargerService, logger *zap.Logger) *getChargersHandler {
+	return &getChargersHandler{chargers: chargers, logger: logger}
 }
 
 func (h *getChargersHandler) Handle(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in GetChargersInput
 	if err := req.BindArguments(&in); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to bind arguments: %v", err)), nil
+		return mcp.NewToolResultError("invalid arguments"), nil
 	}
 
 	if len(in.IDs) > charger.MaxPageSize {
@@ -46,14 +48,14 @@ func (h *getChargersHandler) Handle(ctx context.Context, req mcp.CallToolRequest
 
 	results, err := h.chargers.GetMany(ctx, ids)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return toolFailure(h.logger, "failed to get chargers", err), nil
 	}
 
 	out := GetChargersOutput{Chargers: make([]ChargerSummaryOutput, 0, len(results))}
 	for _, c := range results {
 		co, err := chargerToOutput(c)
 		if err != nil {
-			return mcp.NewToolResultError(err.Error()), nil
+			return toolFailure(h.logger, "failed to read charger", err), nil
 		}
 		out.Chargers = append(out.Chargers, co)
 	}
