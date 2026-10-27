@@ -41,13 +41,12 @@ func (c *TierCache) Get(ctx context.Context, identityID string) (billingv1.PlanT
 	defer span.End()
 
 	value, err := c.client.Get(ctx, key).Int()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			span.SetAttributes(attribute.Bool("cache.hit", false))
+	switch {
+	case errors.Is(err, redis.Nil):
+		span.SetAttributes(attribute.Bool("cache.hit", false))
 
-			return billingv1.PlanTier_PLAN_TIER_UNSPECIFIED, false, nil
-		}
-
+		return billingv1.PlanTier_PLAN_TIER_UNSPECIFIED, false, nil
+	case err != nil:
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 

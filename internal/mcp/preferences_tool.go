@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"go.uber.org/zap"
 )
 
 //go:embed prompts/get_my_preferences_description.tmpl
@@ -50,25 +51,25 @@ type GetMyPreferencesOutput struct {
 }
 
 // RegisterPreferencesTool adds get_my_preferences, available to every signed-in account type.
-func RegisterPreferencesTool(s *server.MCPServer, prefs PreferencesReader) {
+func RegisterPreferencesTool(s *server.MCPServer, logger *zap.Logger, prefs PreferencesReader) {
 	s.AddTool(mcp.NewTool("get_my_preferences",
 		mcp.WithDescription(getMyPreferencesDescription),
 		mcp.WithInputSchema[GetMyPreferencesInput](),
 		mcp.WithOutputSchema[GetMyPreferencesOutput](),
 		readOnlyAnnotations(),
-	), getMyPreferencesHandler(prefs))
+	), getMyPreferencesHandler(logger, prefs))
 }
 
-func getMyPreferencesHandler(prefs PreferencesReader) server.ToolHandlerFunc {
+func getMyPreferencesHandler(logger *zap.Logger, prefs PreferencesReader) server.ToolHandlerFunc {
 	return func(ctx context.Context, _ mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		identityID, err := auth.RequireIdentityID(ctx)
 		if err != nil {
-			return toolError(err), nil
+			return toolError(logger, err), nil
 		}
 
 		p, err := prefs.Get(ctx, identityID)
 		if err != nil {
-			return toolError(err), nil
+			return toolError(logger, err), nil
 		}
 
 		return structured(GetMyPreferencesOutput{

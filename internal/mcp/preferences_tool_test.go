@@ -10,6 +10,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/preferences"
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
 )
 
 type stubPreferences struct{}
@@ -24,7 +25,7 @@ func (stubPreferences) Get(_ context.Context, identityID uuid.UUID) (*preference
 }
 
 func TestGetMyPreferences_ExposesOnlyAnswerPreferences(t *testing.T) {
-	handler := getMyPreferencesHandler(stubPreferences{})
+	handler := getMyPreferencesHandler(zap.NewNop(), stubPreferences{})
 	ctx := auth.WithIdentity(context.Background(), &auth.Identity{ID: uuid.NewString(), UserType: auth.UserTypeManufacturer})
 
 	result, err := handler(ctx, mcp.CallToolRequest{})
@@ -44,7 +45,7 @@ func TestGetMyPreferences_ExposesOnlyAnswerPreferences(t *testing.T) {
 }
 
 func TestGetMyPreferences_RequiresIdentity(t *testing.T) {
-	result, err := getMyPreferencesHandler(stubPreferences{})(context.Background(), mcp.CallToolRequest{})
+	result, err := getMyPreferencesHandler(zap.NewNop(), stubPreferences{})(context.Background(), mcp.CallToolRequest{})
 	if err != nil {
 		t.Fatalf("handler: %v", err)
 	}

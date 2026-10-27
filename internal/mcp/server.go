@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"go.uber.org/zap"
 )
 
 // ChargerService is the subset of charger.Service the tools in this package
@@ -40,14 +41,14 @@ from the result rather than failing the whole call.`
 // separate parameter from chargers since they're backed by distinct services
 // (manufacturer.Service, not charger.Service) - mirroring how cmd/app/main.go already
 // keeps chargerSvc/manufacturerSvc as separate instances.
-func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers ManufacturerService) {
+func RegisterTools(s *server.MCPServer, logger *zap.Logger, chargers ChargerService, manufacturers ManufacturerService) {
 	searchTool := mcp.NewTool("search_chargers",
 		mcp.WithDescription(searchChargersDescription),
 		mcp.WithInputSchema[SearchChargersInput](),
 		mcp.WithOutputSchema[SearchChargersOutput](),
 		readOnlyAnnotations(),
 	)
-	s.AddTool(searchTool, newSearchChargersHandler(chargers).Handle)
+	s.AddTool(searchTool, newSearchChargersHandler(chargers, logger).Handle)
 
 	getTool := mcp.NewTool("get_chargers",
 		mcp.WithDescription(getChargersDescription),
@@ -55,7 +56,7 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithOutputSchema[GetChargersOutput](),
 		readOnlyAnnotations(),
 	)
-	s.AddTool(getTool, newGetChargersHandler(chargers).Handle)
+	s.AddTool(getTool, newGetChargersHandler(chargers, logger).Handle)
 
 	listManufacturersTool := mcp.NewTool("list_manufacturers",
 		mcp.WithDescription(listManufacturersDescription),
@@ -63,5 +64,5 @@ func RegisterTools(s *server.MCPServer, chargers ChargerService, manufacturers M
 		mcp.WithOutputSchema[ListManufacturersOutput](),
 		readOnlyAnnotations(),
 	)
-	s.AddTool(listManufacturersTool, newListManufacturersHandler(manufacturers).Handle)
+	s.AddTool(listManufacturersTool, newListManufacturersHandler(manufacturers, logger).Handle)
 }

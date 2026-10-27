@@ -38,13 +38,12 @@ func (c *ManufacturerCache) Get(ctx context.Context, id uuid.UUID) (*manufacture
 	defer span.End()
 
 	data, err := c.client.Get(ctx, key).Bytes()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			span.SetAttributes(attribute.Bool("cache.hit", false))
+	switch {
+	case errors.Is(err, redis.Nil):
+		span.SetAttributes(attribute.Bool("cache.hit", false))
 
-			return nil, manufacturer.ErrNotFound
-		}
-
+		return nil, manufacturer.ErrNotFound
+	case err != nil:
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 

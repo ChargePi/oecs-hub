@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ChargePi/oecs-hub/internal/charger"
@@ -10,6 +11,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
 )
 
 // FieldFilterInput matches charger.FieldFilter: it lets a caller filter on any field of
@@ -49,35 +51,41 @@ type SearchChargersOutput struct {
 	NextPageToken string                 `json:"nextPageToken,omitempty"`
 }
 
+var (
+	errInvalidManufacturerID = errors.New("invalid manufacturerId")
+	errInvalidMinRatings     = errors.New("invalid minRatings")
+)
+
 type searchChargersHandler struct {
 	chargers ChargerService
+	logger   *zap.Logger
 }
 
-func newSearchChargersHandler(chargers ChargerService) *searchChargersHandler {
-	return &searchChargersHandler{chargers: chargers}
+func newSearchChargersHandler(chargers ChargerService, logger *zap.Logger) *searchChargersHandler {
+	return &searchChargersHandler{chargers: chargers, logger: logger}
 }
 
 func (h *searchChargersHandler) Handle(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var in SearchChargersInput
 	if err := req.BindArguments(&in); err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("failed to bind arguments: %v", err)), nil
+		return mcp.NewToolResultError("invalid arguments"), nil
 	}
 
 	filters, err := searchChargersFilters(in)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return toolFailure(h.logger, "failed to search chargers", err), nil
 	}
 
 	offset, err := pagination.DecodeOffset(in.PageToken)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("invalid pageToken: %v", err)), nil
+		return mcp.NewToolResultError("invalid pageToken"), nil
 	}
 
 	limit := pagination.ClampPageSize(in.PageSize, charger.DefaultPageSize, charger.MaxPageSize)
 
 	results, total, err := h.chargers.Search(ctx, filters, limit, offset)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return toolFailure(h.logger, "failed to read charger", err), nil
 	}
 
 	out := SearchChargersOutput{
@@ -116,7 +124,7 @@ func searchChargersFilters(in SearchChargersInput) (charger.SearchFilters, error
 	if in.ManufacturerID != "" {
 		id, err := uuid.Parse(in.ManufacturerID)
 		if err != nil {
-			return charger.SearchFilters{}, fmt.Errorf("invalid manufacturerId: %w", err)
+			return charger.SearchFilters{}, errInvalidManufacturerID
 		}
 
 		filters.ManufacturerID = &id
@@ -137,7 +145,7 @@ func searchChargersFilters(in SearchChargersInput) (charger.SearchFilters, error
 	}
 
 	if err := userchargers.ValidateRatingFilters(filters.RatingFilters); err != nil {
-		return charger.SearchFilters{}, fmt.Errorf("invalid minRatings: %w", err)
+		return charger.SearchFilters{}, errInvalidMinRatings
 	}
 
 	return filters, nil

@@ -38,13 +38,12 @@ func (c *ChargerCache) Get(ctx context.Context, id uuid.UUID) (*charger.Charger,
 	defer span.End()
 
 	data, err := c.client.Get(ctx, key).Bytes()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			span.SetAttributes(attribute.Bool("cache.hit", false))
+	switch {
+	case errors.Is(err, redis.Nil):
+		span.SetAttributes(attribute.Bool("cache.hit", false))
 
-			return nil, charger.ErrNotFound
-		}
-
+		return nil, charger.ErrNotFound
+	case err != nil:
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
 

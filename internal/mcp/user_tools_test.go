@@ -12,6 +12,7 @@ import (
 	"github.com/ChargePi/oecs-hub/internal/userchargers"
 	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
+	"go.uber.org/zap"
 )
 
 type recordingProposer struct {
@@ -82,7 +83,7 @@ func TestHTTPContextFunc_TrustsHeadersOnlyWithGatewaySecret(t *testing.T) {
 
 func TestProposeFavoriteChange_AnonymousCallerGetsToolError(t *testing.T) {
 	proposer := &recordingProposer{}
-	h := &userToolsHandler{actions: proposer}
+	h := &userToolsHandler{actions: proposer, logger: zap.NewNop()}
 
 	req := mcp.CallToolRequest{}
 	req.Params.Arguments = map[string]any{"chargerVariantId": uuid.NewString(), "favorited": true}
@@ -98,7 +99,7 @@ func TestProposeFavoriteChange_AnonymousCallerGetsToolError(t *testing.T) {
 }
 
 func TestListMyProjects_AnonymousCallerGetsToolError(t *testing.T) {
-	h := &userToolsHandler{}
+	h := &userToolsHandler{logger: zap.NewNop()}
 
 	result, err := h.listMyProjects(context.Background(), mcp.CallToolRequest{})
 	if err != nil {

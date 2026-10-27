@@ -31,12 +31,12 @@ func NewPreferencesHandler(preferences PreferencesService) *PreferencesHandler {
 func (h *PreferencesHandler) GetPreferences(ctx context.Context, _ *emptypb.Empty) (*preferencesv1.GetPreferencesResponse, error) {
 	identityID, err := auth.RequireIdentityID(ctx)
 	if err != nil {
-		return nil, preferencesError(err)
+		return nil, preferencesError(ctx, err)
 	}
 
 	p, err := h.preferences.Get(ctx, identityID)
 	if err != nil {
-		return nil, preferencesError(err)
+		return nil, preferencesError(ctx, err)
 	}
 
 	return &preferencesv1.GetPreferencesResponse{Preferences: preferencesToProto(p)}, nil
@@ -45,7 +45,7 @@ func (h *PreferencesHandler) GetPreferences(ctx context.Context, _ *emptypb.Empt
 func (h *PreferencesHandler) UpdatePreferences(ctx context.Context, req *preferencesv1.UpdatePreferencesRequest) (*preferencesv1.UpdatePreferencesResponse, error) {
 	identityID, err := auth.RequireIdentityID(ctx)
 	if err != nil {
-		return nil, preferencesError(err)
+		return nil, preferencesError(ctx, err)
 	}
 
 	if req.GetPreferences() == nil {
@@ -54,22 +54,24 @@ func (h *PreferencesHandler) UpdatePreferences(ctx context.Context, req *prefere
 
 	p, err := h.preferences.Update(ctx, preferencesFromProto(identityID, req.GetPreferences()))
 	if err != nil {
-		return nil, preferencesError(err)
+		return nil, preferencesError(ctx, err)
 	}
 
 	return &preferencesv1.UpdatePreferencesResponse{Preferences: preferencesToProto(p)}, nil
 }
 
-func preferencesError(err error) error {
+func preferencesError(ctx context.Context, err error) error {
 	switch {
-	case errors.Is(err, preferences.ErrInvalidCurrency),
-		errors.Is(err, preferences.ErrUnsupportedLanguage),
-		errors.Is(err, preferences.ErrInvalidPreferences):
-		return status.Error(codes.InvalidArgument, err.Error())
+	case errors.Is(err, preferences.ErrInvalidCurrency):
+		return status.Error(codes.InvalidArgument, preferences.ErrInvalidCurrency.Error())
+	case errors.Is(err, preferences.ErrUnsupportedLanguage):
+		return status.Error(codes.InvalidArgument, preferences.ErrUnsupportedLanguage.Error())
+	case errors.Is(err, preferences.ErrInvalidPreferences):
+		return status.Error(codes.InvalidArgument, preferences.ErrInvalidPreferences.Error())
 	case status.Code(err) != codes.Unknown:
-		return status.Errorf(status.Code(err), "preferences: %s", status.Convert(err).Message())
+		return internalError(ctx, status.Code(err), "preferences request failed", err)
 	default:
-		return status.Errorf(codes.Unavailable, "preferences: %s", err.Error())
+		return internalError(ctx, codes.Unavailable, "preferences are unavailable", err)
 	}
 }
 

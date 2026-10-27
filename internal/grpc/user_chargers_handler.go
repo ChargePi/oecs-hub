@@ -82,26 +82,29 @@ func requireUserChargersIdentity(ctx context.Context) (uuid.UUID, error) {
 // userChargersError maps this package's domain errors onto gRPC codes. A free plan and an
 // undeterminable plan deliberately differ: PermissionDenied means "upgrade", Unavailable
 // means "billing didn't answer", and the web app shows different things for each.
-func userChargersError(err error) error {
+func userChargersError(ctx context.Context, err error) error {
 	switch {
 	case errors.Is(err, userchargers.ErrPaidPlanRequired):
 		return status.Error(codes.PermissionDenied, userchargers.ErrPaidPlanRequired.Error())
 	case errors.Is(err, userchargers.ErrNotFound):
 		return status.Error(codes.NotFound, "project not found")
 	case errors.Is(err, userchargers.ErrVariantNotFound):
-		return status.Error(codes.NotFound, err.Error())
-	case errors.Is(err, userchargers.ErrInvalidProject),
-		errors.Is(err, userchargers.ErrInvalidOrdering),
-		errors.Is(err, userchargers.ErrInvalidCategory),
-		errors.Is(err, userchargers.ErrInvalidScore):
-		return status.Error(codes.InvalidArgument, err.Error())
+		return status.Error(codes.NotFound, userchargers.ErrVariantNotFound.Error())
+	case errors.Is(err, userchargers.ErrInvalidProject):
+		return status.Error(codes.InvalidArgument, userchargers.ErrInvalidProject.Error())
+	case errors.Is(err, userchargers.ErrInvalidOrdering):
+		return status.Error(codes.InvalidArgument, userchargers.ErrInvalidOrdering.Error())
+	case errors.Is(err, userchargers.ErrInvalidCategory):
+		return status.Error(codes.InvalidArgument, userchargers.ErrInvalidCategory.Error())
+	case errors.Is(err, userchargers.ErrInvalidScore):
+		return status.Error(codes.InvalidArgument, userchargers.ErrInvalidScore.Error())
 	case status.Code(err) != codes.Unknown:
-		// Already a status error - an auth failure raised further down, typically.
-		return err
+		// A status from further down (auth, billing) - keep its code, not its message.
+		return internalError(ctx, status.Code(err), "request failed", err)
 	default:
 		// Everything left is a failure to reach a dependency (billing, Postgres, Redis)
 		// rather than anything the caller can fix.
-		return status.Error(codes.Unavailable, err.Error())
+		return internalError(ctx, codes.Unavailable, "service unavailable", err)
 	}
 }
 
@@ -131,7 +134,7 @@ func (h *FavoriteHandler) FavoriteCharger(ctx context.Context, req *userchargers
 
 	result, err := h.favorites.SetFavorite(ctx, identityID, variantID, favorited)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &userchargersv1.FavoriteChargerResponse{
@@ -148,14 +151,14 @@ func (h *FavoriteHandler) ListFavorites(ctx context.Context, req *userchargersv1
 
 	offset, err := pagination.DecodeOffset(req.GetPageToken())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, "invalid page_token")
 	}
 
 	limit := pagination.ClampPageSize(int(req.GetPageSize()), userchargers.DefaultPageSize, userchargers.MaxPageSize)
 
 	entries, total, err := h.favorites.ListFavorites(ctx, identityID, limit, offset)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	favorites := make([]*userchargersv1.Favorite, len(entries))
@@ -181,7 +184,7 @@ func (h *ProjectHandler) CreateProject(ctx context.Context, req *userchargersv1.
 
 	project, err := h.projects.CreateProject(ctx, identityID, req.GetName(), req.Description)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &userchargersv1.CreateProjectResponse{Project: projectToProto(project)}, nil
@@ -207,7 +210,7 @@ func (h *ProjectHandler) UpdateProject(ctx context.Context, req *userchargersv1.
 		Description: req.Description,
 	})
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &userchargersv1.UpdateProjectResponse{Project: projectToProto(project)}, nil
@@ -225,7 +228,7 @@ func (h *ProjectHandler) DeleteProject(ctx context.Context, req *userchargersv1.
 	}
 
 	if err := h.projects.DeleteProject(ctx, identityID, id); err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -239,14 +242,14 @@ func (h *ProjectHandler) ListProjects(ctx context.Context, req *userchargersv1.L
 
 	offset, err := pagination.DecodeOffset(req.GetPageToken())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, "invalid page_token")
 	}
 
 	limit := pagination.ClampPageSize(int(req.GetPageSize()), userchargers.DefaultPageSize, userchargers.MaxPageSize)
 
 	projects, total, err := h.projects.ListProjects(ctx, identityID, limit, offset)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	out := make([]*userchargersv1.Project, len(projects))
@@ -274,7 +277,7 @@ func (h *ProjectHandler) GetProject(ctx context.Context, req *userchargersv1.Get
 
 	project, entries, err := h.projects.GetProject(ctx, identityID, id)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &userchargersv1.GetProjectResponse{
@@ -312,7 +315,7 @@ func (h *ProjectHandler) ManageProjectChargers(ctx context.Context, req *usercha
 
 	project, entries, err := h.projects.ManageChargers(ctx, identityID, id, changes, ordering)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &userchargersv1.ManageProjectChargersResponse{
@@ -343,7 +346,7 @@ func (h *RatingHandler) SubmitRating(ctx context.Context, req *userchargersv1.Su
 
 	summary, err := h.ratings.SubmitRating(ctx, variantID, identityID, inputs)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	return &userchargersv1.SubmitRatingResponse{
@@ -360,14 +363,14 @@ func (h *RatingHandler) ListMyRatings(ctx context.Context, req *userchargersv1.L
 
 	offset, err := pagination.DecodeOffset(req.GetPageToken())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, "invalid page_token")
 	}
 
 	limit := pagination.ClampPageSize(int(req.GetPageSize()), userchargers.DefaultPageSize, userchargers.MaxPageSize)
 
 	entries, total, err := h.ratings.ListMyRatings(ctx, identityID, limit, offset)
 	if err != nil {
-		return nil, userChargersError(err)
+		return nil, userChargersError(ctx, err)
 	}
 
 	ratings := make([]*userchargersv1.MyRating, len(entries))
