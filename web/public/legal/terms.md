@@ -13,7 +13,7 @@ Email: [contact@chargepi.cc]
 
 ## Description of Service
 
-OECS Hub is an open, vendor-neutral registry for EV charger specifications, built around the [OECS specification](https://github.com/ChargePi/oecs). It lets users browse and compare chargers, ask an AI assistant about them, and, for verified manufacturers and contributors, submit charger specification data.
+OECS Hub is an open, vendor-neutral registry for EV charger specifications. It lets users browse and compare chargers, ask an AI assistant about them, and, for verified manufacturers and contributors, submit charger specification data.
 
 We may change, add or remove features over time. We will give reasonable advance notice before removing a feature that is part of a paid plan.
 
@@ -52,11 +52,10 @@ You agree not to:
 - You keep any rights you have in your content. You confirm that you have the right to submit it, and that it does not infringe anyone else's rights, including copyright, trademarks and confidential information.
 - The registry is open data. By submitting specification data, you license it under the **[Creative Commons Attribution 4.0 International (CC BY 4.0)]** licence. This does not apply to logos, product images or other brand assets (see "Manufacturer Logos, Product Images and Trademarks" below). For all content you submit, you also grant us a worldwide, royalty-free, non-exclusive licence to host, display, adapt (for example to normalise formats) and distribute it as part of the service.
 - These licences continue after you delete your account, so registry data stays complete and consistent. When you delete your account, we remove the link between the content and your personal account.
-- The OECS specification and the OECS Hub source code are open source. Their license terms are in the [OECS spec](https://github.com/ChargePi/oecs) and [OECS Hub](https://github.com/ChargePi/oecs-hub) repositories.
 
 ## Manufacturer Logos, Product Images and Trademarks
 
-- Manufacturer names, logos, trademarks and product images shown in the service belong to their respective manufacturers or other rights holders. We do not own them, and they are **not** covered by the open data licence of the registry or by the OECS Hub source code licence.
+- Manufacturer names, logos, trademarks and product images shown in the service belong to their respective manufacturers or other rights holders. We do not own them, and they are **not** covered by the open data licence of the registry.
 - We show them only to identify manufacturers and their products, and attribute them to their owners. Showing them does not imply any affiliation with, sponsorship by, or endorsement from the rights holder, or of the rights holder by us.
 - These Terms give you no rights to use these logos, images or trademarks. If you want to reuse them outside the service, you must get permission from the rights holder.
 - If you upload logos or product images, you confirm that you own them or are authorised by the rights holder to submit them. You grant us a non-exclusive, royalty-free licence to display them in the service for identification purposes. This licence ends when the images are removed, except for reasonable backup periods.
@@ -106,6 +105,12 @@ If you use the service as a business user, you will indemnify us against third-p
 - We may suspend or terminate your account if you seriously or repeatedly breach these Terms, or where the law requires it. We will tell you the reasons, as described under "Content Moderation". Where reasonable, we will give advance notice and a chance to fix the issue.
 - If we stop providing the service, we will give registered users at least 30 days' notice, and refund any prepaid fees for the unused period.
 - The sections on your content licence, no warranty, limitation of liability, indemnity and governing law continue after termination.
+
+## Privacy and Data Protection
+
+We process personal data in accordance with the EU General Data Protection Regulation (GDPR) and other applicable EU data protection law. Our [Privacy Policy](/privacy) explains what data we collect, why, how long we keep it, and how to exercise your rights, including access, rectification, erasure, restriction, portability and objection. You can also lodge a complaint with the Slovenian Information Commissioner or the supervisory authority in your own EU country.
+
+If you submit content that contains other people's personal data, you are responsible for having a lawful basis to share it.
 
 ## Changes to These Terms
 

@@ -1,6 +1,6 @@
 _Last updated: October 2026_
 
-This Privacy Policy explains how OECS Hub ("we", "us", "our", "the service") collects and uses personal data when you use the service, and what rights you have. We process personal data in accordance with the EU General Data Protection Regulation (GDPR) and applicable Slovenian data protection law.
+This Privacy Policy explains how OECS Hub ("we", "us", "our", "the service") collects and uses personal data when you use the service, and what rights you have. We process personal data in accordance with the EU General Data Protection Regulation (GDPR) and other applicable EU data protection law.
 
 ## Who We Are
 
@@ -78,7 +78,6 @@ Some providers (Google, Cloudflare) may process data outside the European Econom
 | AI assistant conversations | Until you delete them or your account, and at most [12 months] after the last message |
 | Feedback | Up to [24 months] after it is given, or until you delete your account |
 | Server and security logs | Up to [30 days], longer only where needed to investigate a specific security incident |
-| Invoices and accounting records | 10 years, as required by Slovenian tax law |
 | Submitted charger specification data | Kept in the open registry; when you delete your account we remove the link to your personal account |
 
 ## Cookies and Local Storage
