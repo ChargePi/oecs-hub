@@ -3,6 +3,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { Background, Controls, ReactFlow, ReactFlowProvider, type Node } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 
+import { ChargerLoader } from '@/components/charger-loader'
 import type { GraphNodeData } from '@/features/graph/layout'
 import { buildMultiManufacturerGraphLayout } from '@/features/graph/multi-manufacturer-layout'
 import type { GraphSelection } from '@/features/graph/node-detail-sheet'
@@ -76,8 +77,8 @@ export function GraphView({
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        Loading graph…
+      <div className="flex flex-1 items-center justify-center">
+        <ChargerLoader label="Loading graph…" />
       </div>
     )
   }
