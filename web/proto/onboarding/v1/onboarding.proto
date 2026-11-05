@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package onboarding.v1;
+
+import "google/protobuf/empty.proto";
+import "preferences/v1/preferences.proto";
+
+// UNSPECIFIED means the questionnaire was neither completed nor skipped yet.
+enum OnboardingStatus {
+  ONBOARDING_STATUS_UNSPECIFIED = 0;
+  ONBOARDING_STATUS_SKIPPED = 1;
+  ONBOARDING_STATUS_COMPLETED = 2;
+}
+
+enum QuestionKind {
+  QUESTION_KIND_UNSPECIFIED = 0;
+  QUESTION_KIND_SINGLE_CHOICE = 1;
+  QUESTION_KIND_MULTIPLE_CHOICE = 2;
+}
+
+// What picking an option suggests for the account. Unset fields suggest nothing.
+message OptionEffects {
+  preferences.v1.ViewMode view_mode = 1;
+  preferences.v1.ChatLayout chat_layout = 2;
+  // Same-origin path to open once onboarding is finished.
+  string landing_path = 3;
+}
+
+message Option {
+  string id = 1;
+  string label = 2;
+  string description = 3;
+  OptionEffects effects = 4;
+}
+
+// The question is asked only when the referenced earlier question has any of the options selected.
+message Condition {
+  string question_id = 1;
+  repeated string option_ids = 2;
+}
+
+message Question {
+  string id = 1;
+  // Short name for the progress indicator.
+  string label = 2;
+  string title = 3;
+  string hint = 4;
+  QuestionKind kind = 5;
+  repeated Option options = 6;
+  Condition show_if = 7;
+}
+
+message Questionnaire {
+  repeated Question questions = 1;
+}
+
+message Answer {
+  string question_id = 1;
+  repeated string option_ids = 2;
+}
+
+message OnboardingProfile {
+  // Output only.
+  OnboardingStatus status = 1;
+  repeated Answer answers = 2;
+}
+
+message GetOnboardingResponse {
+  OnboardingProfile profile = 1;
+  // The questionnaire for the caller's account type; empty when it has none.
+  Questionnaire questionnaire = 2;
+}
+
+message CompleteOnboardingRequest {
+  repeated Answer answers = 1;
+}
+
+message CompleteOnboardingResponse {
+  OnboardingProfile profile = 1;
+}
+
+message SkipOnboardingResponse {
+  OnboardingProfile profile = 1;
+}
+
+service OnboardingService {
+  rpc GetOnboarding(google.protobuf.Empty) returns (GetOnboardingResponse);
+  rpc CompleteOnboarding(CompleteOnboardingRequest) returns (CompleteOnboardingResponse);
+  // No-op for a profile that is already completed.
+  rpc SkipOnboarding(google.protobuf.Empty) returns (SkipOnboardingResponse);
+}

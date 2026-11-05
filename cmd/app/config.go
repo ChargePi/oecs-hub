@@ -83,6 +83,13 @@ type PendingActionsConfiguration struct {
 	TTL time.Duration `json:"ttl" mapstructure:"ttl" yaml:"ttl"`
 }
 
+// OnboardingConfiguration configures internal/onboarding.
+type OnboardingConfiguration struct {
+	// QuestionnairesPath points at a YAML file replacing the built-in questionnaires
+	// (internal/onboarding/questionnaires.yaml). Empty uses the built-in ones.
+	QuestionnairesPath string `json:"questionnairesPath" mapstructure:"questionnairesPath" yaml:"questionnairesPath"`
+}
+
 // PromptSuggestionsConfiguration configures internal/promptsuggestion.Service.
 type PromptSuggestionsConfiguration struct {
 	// RefreshInterval is the cache TTL for a topic's pool - expiry is what triggers the next
@@ -131,4 +138,5 @@ type Configuration struct {
 	PromptSuggestions PromptSuggestionsConfiguration `json:"promptSuggestions" mapstructure:"promptSuggestions" validate:"required" yaml:"promptSuggestions"`
 	PendingActions    PendingActionsConfiguration    `json:"pendingActions"    mapstructure:"pendingActions"    yaml:"pendingActions"`
 	SemanticSearch    SemanticSearchConfiguration    `json:"semanticSearch"    mapstructure:"semanticSearch"    yaml:"semanticSearch"`
+	Onboarding        OnboardingConfiguration        `json:"onboarding"        mapstructure:"onboarding"        yaml:"onboarding"`
 }

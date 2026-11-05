@@ -298,6 +298,20 @@
   mutators:
     - handler: header
 
+- id: onboarding-service
+  upstream:
+    url: http://backend:50051
+  match:
+    # Every account type, self-service - no anonymous fallback.
+    url: "http://<.*>/onboarding.v1.OnboardingService/<GetOnboarding|CompleteOnboarding|SkipOnboarding>"
+    methods: ["POST"]
+  authenticators:
+    - handler: cookie_session
+  authorizer:
+    handler: allow
+  mutators:
+    - handler: header
+
 - id: userchargers-project-service
   upstream:
     url: http://backend:50051
