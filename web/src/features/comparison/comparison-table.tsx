@@ -41,10 +41,12 @@ export function ComparisonTable({
   variants,
   baseline,
   groups,
+  onOpen,
 }: {
   variants: ChargerVariant[]
   baseline: ChargerVariant
   groups: ComparisonGroup[]
+  onOpen: (variantId: string) => void
 }) {
   const remove = useComparisonStore((state) => state.remove)
   const setReference = useComparisonStore((state) => state.setReference)
@@ -64,17 +66,25 @@ export function ComparisonTable({
                   className={cn(columnClass(isBaseline, 'top'), 'h-auto py-3 whitespace-normal')}
                 >
                   <div className="flex items-start gap-3">
-                    <ProductImage
-                      src={variant.model.productImageUrl}
-                      alt={variant.model.name}
-                      className="size-14 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold">{variant.model.name}</p>
-                      <p className="truncate text-xs font-normal text-muted-foreground">
-                        {variant.manufacturer.name}
-                      </p>
-                    </div>
+                    <button
+                      type="button"
+                      className="group flex min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => onOpen(variant.id)}
+                    >
+                      <ProductImage
+                        src={variant.model.productImageUrl}
+                        alt={variant.model.name}
+                        className="size-14 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold group-hover:underline">
+                          {variant.model.name}
+                        </p>
+                        <p className="truncate text-xs font-normal text-muted-foreground">
+                          {variant.manufacturer.name}
+                        </p>
+                      </div>
+                    </button>
                     <VariantActions
                       variant={variant}
                       isBaseline={isBaseline}

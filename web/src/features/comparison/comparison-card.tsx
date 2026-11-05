@@ -53,12 +53,14 @@ export function ComparisonHeaderCell({
   baseline,
   onRemove,
   onSetReference,
+  onOpen,
 }: {
   rows: ComparisonRow[]
   variant: ChargerVariant
   baseline: ChargerVariant
   onRemove: () => void
   onSetReference: () => void
+  onOpen: () => void
 }) {
   const highlight = useComparisonStore((state) => state.highlightDifferences)
   const isBaseline = highlight && variant.id === baseline.id
@@ -80,13 +82,27 @@ export function ComparisonHeaderCell({
       </div>
 
       <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-4 sm:grid-cols-2">
-        <ProductImage
-          src={variant.model.productImageUrl}
-          alt={variant.model.name}
-          className="aspect-square w-full self-start"
-        />
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-hidden
+          className="cursor-pointer self-start"
+          onClick={onOpen}
+        >
+          <ProductImage
+            src={variant.model.productImageUrl}
+            alt={variant.model.name}
+            className="aspect-square w-full"
+          />
+        </button>
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold">{variant.model.name}</p>
+          <button
+            type="button"
+            className="block max-w-full cursor-pointer truncate rounded-md text-left text-base font-semibold outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={onOpen}
+          >
+            {variant.model.name}
+          </button>
           <div className="mt-1 flex flex-col gap-1">
             {rows.map((row) => (
               <ComparisonSpecRow key={row.label} row={row} variant={variant} baseline={baseline} />

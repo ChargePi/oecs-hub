@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { GitCompare, LayoutGrid, Table2 } from 'lucide-react'
 
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { ChargerVariant } from '@/lib/oecs/types'
 import { useIsSimplified } from '@/lib/preferences/use-preferences'
+import { VariantDetailSheet } from '@/features/product/variant-detail-sheet'
 import {
   MAX_COMPARISON_ITEMS,
   useComparisonStore,
@@ -28,11 +30,13 @@ function ComparisonCarousel({
   baseline,
   identityGroup,
   groups,
+  onOpen,
 }: {
   variants: ChargerVariant[]
   baseline: ChargerVariant
   identityGroup: ComparisonGroup
   groups: ComparisonGroup[]
+  onOpen: (variantId: string) => void
 }) {
   const remove = useComparisonStore((state) => state.remove)
   const setReference = useComparisonStore((state) => state.setReference)
@@ -55,6 +59,7 @@ function ComparisonCarousel({
               baseline={baseline}
               onRemove={() => remove(variant.id)}
               onSetReference={() => setReference(variant.id)}
+              onOpen={() => onOpen(variant.id)}
             />
           ))}
 
@@ -93,6 +98,7 @@ export function ComparisonView({ variants }: { variants: ChargerVariant[] }) {
   const differencesOnly = useComparisonStore((state) => state.differencesOnly)
   const baseline = variants.find((v) => v.id === referenceId) ?? variants[0]
   const canAddMore = variants.length < MAX_COMPARISON_ITEMS
+  const [openVariantId, setOpenVariantId] = useState<string | null>(null)
 
   const allGroups = [chargerTypeGroup, ...comparisonGroups]
   const [identityGroup, ...groups] = allGroups.map((group) => ({
@@ -139,6 +145,7 @@ export function ComparisonView({ variants }: { variants: ChargerVariant[] }) {
             variants={variants}
             baseline={baseline}
             groups={[identityGroup, ...visibleGroups].filter((group) => group.rows.length > 0)}
+            onOpen={setOpenVariantId}
           />
         ) : (
           <ComparisonCarousel
@@ -146,9 +153,12 @@ export function ComparisonView({ variants }: { variants: ChargerVariant[] }) {
             baseline={baseline}
             identityGroup={identityGroup}
             groups={visibleGroups}
+            onOpen={setOpenVariantId}
           />
         )}
       </div>
+
+      <VariantDetailSheet variantId={openVariantId} onClose={() => setOpenVariantId(null)} />
     </div>
   )
 }
