@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Loader2 } from 'lucide-react'
 
 import { selectedChoicesFromMetadata } from '@/lib/chat/client'
 import type { ChatMessage, SelectedChoice } from '@/lib/chat/types'
+import { ChargerLoader } from '@/components/charger-loader'
 import { MARKDOWN_COMPONENTS } from './chat-markdown'
 import { ChatMessageBubble } from './chat-message-bubble'
 
@@ -83,10 +83,7 @@ export function ChatMessageList({
           (streamingText ? (
             <LiveAssistantBubble text={streamingText} />
           ) : (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Thinking…
-            </div>
+            <ChargerLoader size="sm" label="Thinking…" />
           ))}
       </div>
     </div>

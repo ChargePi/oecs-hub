@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 
+import { ChargerLoader } from '@/components/charger-loader'
 import { registryClient } from '@/lib/registry/client'
 import { ChargerGraph } from './charger-graph'
 import { NodeDetailPanel, type GraphSelection } from './node-detail-sheet'
@@ -32,8 +33,8 @@ export function GraphPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        Loading graph…
+      <div className="flex flex-1 items-center justify-center">
+        <ChargerLoader label="Loading graph…" />
       </div>
     )
   }
