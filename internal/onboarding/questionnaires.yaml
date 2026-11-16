@@ -1,0 +1,126 @@
+# One questionnaire per account type (the identity schema id). Questions are asked in
+# order, one per step. kind is "single" or "multiple". An option's effects suggest a view
+# mode (simplified wins over advanced), a chat layout and the page to open afterwards
+# (the first selected option that names one wins). showIf asks a question only when an
+# earlier question has any of the listed options selected.
+individual:
+  questions:
+    - &experience
+      id: experience
+      label: Experience
+      title: How familiar are you with EV charging?
+      kind: single
+      options:
+        - id: beginner
+          label: New to it
+          description: I am just getting started with EVs
+          effects: { viewMode: simplified }
+        - id: intermediate
+          label: Familiar
+          description: "I know the basics: AC vs DC, connectors, charging speeds"
+          effects: { viewMode: advanced }
+        - id: expert
+          label: Professional
+          description: I work with charging infrastructure
+          effects: { viewMode: advanced }
+    - &detail
+      id: detail
+      label: Detail
+      title: How much technical detail do you want?
+      kind: single
+      options:
+        - id: beginner
+          label: Keep it simple
+          description: Show me only what matters
+          effects: { viewMode: simplified }
+        - id: intermediate
+          label: Comfortable
+          description: "I can read a spec sheet: power, phases, protection ratings"
+          effects: { viewMode: advanced }
+        - id: expert
+          label: Deep
+          description: I care about protocols, metering and grid integration
+          effects: { viewMode: advanced }
+    - id: goals
+      label: Goals
+      title: What brings you here?
+      hint: Select all that apply.
+      kind: multiple
+      options:
+        - id: find_charger
+          label: Find a new charger
+          description: I am shopping for one
+        - id: check_compatibility
+          label: Check compatibility
+          description: With my car, home or electrical installation
+        - id: replace_or_upgrade
+          label: Replace or upgrade
+          description: I already have a charger
+        - id: learn
+          label: Learn
+          description: I want to understand EV charging better
+    - &platform
+      id: platform
+      label: Platform
+      title: What will you mostly use the platform for?
+      kind: single
+      options:
+        - id: browse
+          label: Browsing
+          description: Explore the charger catalog
+          effects: { landingPath: /chargers }
+        - id: compare
+          label: Comparison
+          description: Put chargers side by side
+          effects: { landingPath: /compare }
+        - id: ai_chat
+          label: AI chat
+          description: Ask the assistant for recommendations
+          effects: { chatLayout: page, landingPath: /chat }
+        - id: track_chargers
+          label: Tracking
+          description: Keep favorites and projects organized
+          effects: { landingPath: /my-chargers }
+
+business:
+  questions:
+    - *experience
+    - *detail
+    - id: goals
+      label: Goals
+      title: Which charging use cases matter to you?
+      hint: Select all that apply.
+      kind: multiple
+      options:
+        - id: public_charging
+          label: Public charging
+          description: Charging sites open to drivers
+        - id: fleet
+          label: Fleet charging
+          description: Depot or company vehicle charging
+        - id: employee_home_charging
+          label: Employee home charging
+          description: Chargers installed at employees' homes
+        - id: other
+          label: Something else
+    - *platform
+
+manufacturer:
+  questions:
+    - id: platform
+      label: Platform
+      title: What will you mostly use the platform for?
+      kind: single
+      options:
+        - id: submit_chargers
+          label: Publishing chargers
+          description: List and maintain your models
+          effects: { landingPath: /my-chargers }
+        - id: competitor_analysis
+          label: Competitor analysis
+          description: See how your chargers compare
+          effects: { landingPath: /compare }
+        - id: feedback
+          label: Gathering feedback
+          description: Follow ratings of your chargers
+          effects: { landingPath: /my-chargers }

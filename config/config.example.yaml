@@ -73,3 +73,9 @@ semanticSearch:
   topK: 100
   minScore: 0.25
   manufacturerMinScore: 0.25
+
+# Onboarding questionnaires per account type. Empty uses the built-in ones
+# (internal/onboarding/questionnaires.yaml); point this at a YAML file of the same shape
+# to change questions without a rebuild.
+onboarding:
+  questionnairesPath: ""
