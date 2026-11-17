@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 
+import { ChargerLoader } from '@/components/charger-loader'
 import { BILLING_ENABLED } from '@/lib/billing/config'
 import { getUsage } from '@/lib/billing/client'
 import type { PlanTier } from '@/lib/billing/types'
@@ -74,10 +74,7 @@ export function RegisterCompletePage() {
       {checkedUsage ? (
         <BillingStep tier={tier} planName={planName} onFinish={continueToOnboarding} />
       ) : (
-        <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-          Finishing up...
-        </div>
+        <ChargerLoader label="Finishing up…" />
       )}
     </RegistrationLayout>
   )

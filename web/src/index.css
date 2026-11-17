@@ -373,4 +373,67 @@ html {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+  .oecs-charge-seg {
+    animation: oecs-charge-seg 1.6s ease-in-out infinite;
+  }
+  .oecs-bolt-flash {
+    animation: oecs-bolt-flash 1.6s ease-in-out infinite;
+  }
+  .oecs-plug-pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: oecs-plug-pulse 1.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .oecs-charge-seg,
+    .oecs-bolt-flash,
+    .oecs-plug-pulse {
+      animation: none;
+      opacity: 0.8;
+    }
+  }
+}
+
+@keyframes oecs-charge-seg {
+  0%,
+  10% {
+    opacity: 0.15;
+  }
+  25%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes oecs-bolt-flash {
+  0%,
+  55% {
+    opacity: 0.15;
+    filter: none;
+  }
+  62%,
+  78% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px var(--primary));
+  }
+  90%,
+  100% {
+    opacity: 0.15;
+    filter: none;
+  }
+}
+
+@keyframes oecs-plug-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
